@@ -24,6 +24,14 @@ public class ProcessUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessUtils.class);
 
     /**
+     * Private constructor to prevent instantiation of this utility class.
+     * All methods in this class are static and should be called directly on the class itself.
+     */
+    private ProcessUtils() {
+        // This constructor is intentionally empty.
+    }
+
+    /**
      * Retrieves the user who started a specific process instance.
      * This method accesses the Bonita process and identity APIs to find the initiator's details.
      * If the initiator is not found, or an unexpected error occurs, a default 'unknown_user' is returned.
@@ -53,7 +61,8 @@ public class ProcessUtils {
             return new ProcessInitiator(null, "unknown_user", "unknown_user");
 
         } catch (Exception e) {
-            LOGGER.error("An unexpected error occurred while retrieving the process initiator for process instance ID {}: {}", processInstanceId, e.getMessage(), e);
+            LOGGER.error("An unexpected error occurred while retrieving the process initiator for process instance ID {}: {}"
+                , processInstanceId, e.getMessage(), e);
             return new ProcessInitiator(null, "unknown_user", "unknown_user");
         }
     }
