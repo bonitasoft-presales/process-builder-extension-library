@@ -23,9 +23,15 @@ public class ProcessUtils {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessUtils.class);
 
-
-
-
+    /**
+     * Retrieves the user who started a specific process instance.
+     * This method accesses the Bonita process and identity APIs to find the initiator's details.
+     * If the initiator is not found, or an unexpected error occurs, a default 'unknown_user' is returned.
+     *
+     * @param apiAccessor An instance of {@link APIAccessor} to get the Bonita APIs.
+     * @param processInstanceId The unique identifier of the process instance.
+     * @return A {@link ProcessInitiator} record containing the initiator's ID, username, and full name.
+     */
     public static ProcessInitiator getProcessInitiator(APIAccessor apiAccessor, long processInstanceId) {
         try {
             LOGGER.info("Attempting to retrieve the user who started the process instance ID: {}", processInstanceId);
@@ -52,6 +58,12 @@ public class ProcessUtils {
         }
     }
 
+    /**
+     * A record representing the process initiator.
+     *
+     * @param id The unique identifier of the user who initiated the process.
+     * @param userName The username of the process initiator.
+     * @param fullName The full name (first name + last name) of the process initiator.
+     */
     public record ProcessInitiator(Long id, String userName, String fullName) {}
 }
-
