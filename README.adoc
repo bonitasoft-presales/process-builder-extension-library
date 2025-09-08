@@ -15,47 +15,86 @@
 :doc-url: https://documentation.bonitasoft.com/bonita/{short-bonita-version}
 :java-version: 17
 
-= Action Based Task Assignation Filter
+= Process Builder Extension Library
 
-The project **filter-action-based-task-assignation** is a Bonita actor filter designed for the **Bonita {short-bonita-version} ({short-bonita-tech-version})**  version, specifically to be used with the **ProcessBuilder** project. It is written in `java`.
+The project **process-builder-extension-library** is a reusable library designed for **Bonita {short-bonita-version} ({short-bonita-tech-version})**. This common library centralizes reusable classes, enums, constants, and methods for Bonita projects. It provides extended functionality for use in actor filters, connectors, REST API extensions, and process diagrams, aiming to improve code reuse and consistency across the development environment. It is written in `java`.
 
-This actor filter's purpose is to dynamically assign task candidates based on the actions or roles defined within the process. It enhances the flexibility and efficiency of task assignments in human tasks by linking them to specific, actionable business logic.
+This library's purpose is to provide a shared, common ground for all your Bonita extensions, allowing you to centralize reusable logic rather than duplicating it across different projects. You can add any number of methods to this library and use them in any Bonita resource.
 
 == Features
 
-This filter provides a robust and flexible way to manage task assignment:
+This library provides a robust and flexible way to manage various aspects of Bonita development:
 
-  * **Action-Based Assignment**: Dynamically filters and assigns task candidates based on business actions, rather than static roles.
-  * **Role-based Filtering**: Restricts candidates to users who have a specific role or are part of a particular group.
-  * **Integration with Business Logic**: Allows task assignment to be directly driven by the data and logic of your process.
+  * **Reusable Code**: Centralizes common functionality, such as API calls or business logic, to be used by actor filters, connectors, and other Bonita extensions.
+  * **Consistency**: Promotes a standardized approach to development by sharing common methods and utilities across all projects.
+  * **Improved Efficiency**: Allows for faster development and easier maintenance by avoiding code duplication.
 
-== Getting started
+== Getting Started
 
-To get started, you'll need to create your project from the Bonita actor filter archetype and then customize the filter logic to meet your specific needs.
+To get started, you can add this library as a dependency to your Bonita project.
 
-For detailed information on how to create a custom actor filter, please refer to the {doc-url}/process/actor-filter-archetype[Bonita documentation, window = "\_blank"].
+For detailed information on how to create a custom library, please refer to the {doc-url}/software-extensibility/custom-library-development[Bonita documentation, window = "_blank"].
 
 == Developing
 
 To start developing this project, make sure you have the following tools installed:
 
 - Java ( **jdk {java-version}** or higher): This project is built with Java, so you'll need the Java Development Kit.
-- Maven (optional if you choosed to use https://github.com/takari/maven-wrapper[maven wrapper script] as archetype option): To manage dependencies and the project lifecycle. While the included Maven Wrapper (./mvnw) is sufficient, having Maven installed globally can be helpful.
+- Maven (optional if you chose to use a Maven Wrapper script): To manage dependencies and the project lifecycle. The included Maven Wrapper (./mvnw) is sufficient, but having Maven installed globally can be helpful.
 - A Git client: To clone the repository and contribute your changes.
 
-Once you have everything set up, clone the repository and navigate to the project directory to start working.
+Once everything is set up, clone the repository and navigate to the project directory to start working.
+
+=== Project Versioning
+
+This project's version is managed using **Apache Maven**. The project version is defined in the `<version>` tag of the `pom.xml` file. It's crucial to understand how this version is used and updated, as it directly impacts how the project is built and released.
+
+[source, xml]
+----
+<project>
+  ...
+  <version>${project.version}</version>
+  ...
+  <properties>
+    <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
+  </properties>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>${maven-release-plugin.version}</version>
+          <configuration>
+            <tagNameFormat>v@{project.version}</tagNameFormat>
+            <indentSize>4</indentSize>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>
+----
+
+==== How the Version is Used
+
+* **`@{project.version}`**: This is a Maven variable that automatically references the project's current version from the `pom.xml`. This variable is used in the `maven-release-plugin`'s `<tagNameFormat>v@{project.version}</tagNameFormat>` configuration to create consistent tags.
+* **Tagging**: When the `release:prepare` goal is executed (as part of the `Tag and Release` workflow), a tag is created in the Git repository using the format `v` followed by the project's version. For example, if the `pom.xml` version is `1.0.0`, the created tag will be `v1.0.0`.
+* **Release**: The GitHub Actions workflow (`tagAndRelease.yml`) is configured to automatically create a new GitHub Release based on this `v<version>` tag. This ensures that the releases and the project versions in the `pom.xml` are always synchronized.
+
+**What This Means for You:**
+
+To create a new release, you don't need to manually update the version in the `pom.xml`. The **`Tag and Release`** workflow (triggered via `workflow_dispatch`) handles this automatically. It increments the version, creates a Git tag, and publishes the new release. Your manual interaction is limited to triggering the workflow and confirming the new release version. This process simplifies versioning and reduces the risk of errors.
 
 === Building
 
 To build the project in your local environment, follow these steps. This is useful for development and testing before publishing.
 
 ```bash
-git clone https://github.com/your-username/filter-action-based-task-assignment.git
-cd filter-action-based-task-assignment/
+git clone https://github.com/your-username/process-builder-extension-library.git
+cd process-builder-extension-library/
 ./mvnw clean package
 ```
-
-Once the command is executed, the `filter-action-based-task-assignment-1.0.jar` artifact is created inside the `target/` directory. This process compiles the code, runs tests, and packages the filter into a `.jar` file.
+Once the command is executed, the `process-builder-extension-library-1.0.jar` artifact is created inside the `target/` directory. This process compiles the code, runs tests, and packages the filter into a `.jar` file. 
 
 For more details about Apache Maven, you can refer to its (https://maven.apache.org/guides/getting-started/.
 
@@ -65,20 +104,20 @@ To deploy and publish this project, we've automated the process using GitHub Act
 
 The CI/CD workflow automatically handles compiling and testing the project every time changes are pushed to a branch.
 
-To publish the filter and make it available for the presales team, simply follow these two steps:
+To publish the library and make it available, simply trigger the `Tag and Release` workflow in the GitHub web interface. This will:
 
-1.  **Create a tag**: Add a tag to the `master` branch (for example, `v1.0.0`).
-2.  **Create a release**: In GitHub, go to the releases section and create a new release from the tag you just created.
+* Increment the project version in the `pom.xml`.
+* Create a Git tag for the new version.
+* Generate the final artifact and attach it to a new GitHub release.
+* Publish the artifact to the GitHub Package Registry.
 
-This will trigger a GitHub Action that compiles the project, generates the final artifact, and attaches it to the release.
-
-If you need to test the `.jar` locally, you can manually install it in your Bonita Studio project. To do this, please refer to the https://documentation.bonitasoft.com/bonita/latest/managing-extension-studio.
+If you need to test the `.jar` locally, you can manually install it in your Bonita Studio project. To do this, please refer to the Bonita documentation on managing extensions. To do this, please refer to the https://documentation.bonitasoft.com/bonita/latest/managing-extension-studio.
 
 === Documentation
 
 This project uses Maven to build the application and generate its documentation. The process automatically creates API documentation and a code coverage report, which can be viewed both locally and online.
 
-### Building the Project
+==== Building the Project
 
 To build the project and generate all reports locally, run the following command from the project root directory:
 
@@ -92,7 +131,8 @@ This command performs several key actions:
 2.  verify: Compiles the code, runs all unit tests, and verifies the project's quality.
 3.  site: Generates the documentation site, including Javadoc and JaCoCo reports, into the target/site directory.
 
-### Activating GitHub Pages for Documentation
+==== Activating GitHub Pages for Documentation
+
 To view the Javadoc documentation and JaCoCo reports online, you must first enable GitHub Pages in your repository. This is a one-time configuration.
 
 Follow these steps to enable the deployment of your documentation via GitHub Actions:
@@ -104,7 +144,8 @@ Follow these steps to enable the deployment of your documentation via GitHub Act
 
 After a successful CI/CD workflow run, your documentation will be available online.
 
-### Accessing Reports and Documentation
+==== Accessing Reports and Documentation
+
 You can access the generated reports and documentation in two ways:
 
 1. **Local Access**
@@ -117,42 +158,38 @@ To view the generated reports on your local machine, simply open the correspondi
 2. **Online Access (GitHub Pages)**
 The documentation is automatically deployed to GitHub Pages after a successful workflow run. This provides a clean, web-accessible version of the reports.
 
-* **Project Site Homepage**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/
-* **Javadoc API Documentation**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/apidocs/index.html
-* **JaCoCo Code Coverage Report**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/jacoco/index.html
+* **Project Site Homepage**: https://bonitasoft-presales.github.io/process-builder-extension-library/
+* **Javadoc API Documentation**: https://bonitasoft-presales.github.io/process-builder-extension-library/apidocs/index.html
+* **JaCoCo Code Coverage Report**: https://bonitasoft-presales.github.io/process-builder-extension-library/jacoco/index.html
 
 The JaCoCo report provides a detailed view of your test coverage, highlighting which lines of code were executed by your unit tests and which were not.
 
-
 == Contributing
 
-To facilitate collaboration, we want to ensure all code is clean and adheres to our standards. We will use a dedicated branch for all development, following the principles of Clean Code and the Git Flow workflow.
-
-Clean Code refers to writing code that is readable, maintainable, and easy to understand. Git Flow is a Git branching strategy that organizes development, features, and releases in a structured manner.
+To facilitate collaboration, we want to ensure all code is clean and adheres to our standards. We will use a dedicated branch for all development, following the principles of Clean Code and the Git Flow workflow. Clean Code refers to writing code that is readable, maintainable, and easy to understand. Git Flow is a Git branching strategy that organizes development, features, and releases in a structured manner.
 
 To begin contributing, create a branch from master and name it using the ID of the Jira ticket or user story.
 
 ```bash
 # Create and switch to your new branch
 git checkout -b <jira-ticket-id>_<short-description> master
-If the develop branch does not already exist, create it from master and push it to the repository.
 ```
+
+If the develop branch does not already exist, create it from master and push it to the repository.
+
 
 ```bash
 git checkout -b develop master
 git push origin develop
-``` 
+```
 
 Once your work is complete, submit a pull request to the develop branch. Please ensure your code follows our established conventions and that all tests pass.
 
-
 == Links
-  * **Project homepage**: https://github.com/bonitasoft-presales/filter-action-based-task-assignation
-  * **Repository**: https://github.com/bonitasoft-presales/filter-action-based-task-assignation.git
-  * **Issue tracker**: https://github.com/bonitasoft-presales/filter-action-based-task-assignation/issues
-  * **Project Site Homepage**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/
-  * **Javadoc API Documentation**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/apidocs/index.html
-  * **JaCoCo Code Coverage Report**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/jacoco/index.html
 
-To build the project in your local environment (useful for development and testing), follow these steps:
-
+  * **Project homepage**: https://github.com/bonitasoft-presales/process-builder-extension-library
+  * **Repository**: https://github.com/bonitasoft-presales/process-builder-extension-library.git
+  * **Issue tracker**: https://github.com/bonitasoft-presales/process-builder-extension-library/issues
+  * **Project Site Homepage**: https://bonitasoft-presales.github.io/process-builder-extension-library/
+  * **Javadoc API Documentation**: https://bonitasoft-presales.github.io/process-builder-extension-library/apidocs/index.html
+  * **JaCoCo Code Coverage Report**: https://bonitasoft-presales.github.io/process-builder-extension-library/jacoco/index.html
