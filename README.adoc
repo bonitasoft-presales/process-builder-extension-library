@@ -1,0 +1,158 @@
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+:source-highlighter: highlightjs
+:idprefix:
+:idseparator: -
+:sectlinks:
+:sectanchors:
+:linkcss: false
+
+:short-bonita-tech-version: 10.2.0
+:short-bonita-version: 2024.3
+:doc-url: https://documentation.bonitasoft.com/bonita/{short-bonita-version}
+:java-version: 17
+
+= Action Based Task Assignation Filter
+
+The project **filter-action-based-task-assignation** is a Bonita actor filter designed for the **Bonita {short-bonita-version} ({short-bonita-tech-version})**  version, specifically to be used with the **ProcessBuilder** project. It is written in `java`.
+
+This actor filter's purpose is to dynamically assign task candidates based on the actions or roles defined within the process. It enhances the flexibility and efficiency of task assignments in human tasks by linking them to specific, actionable business logic.
+
+== Features
+
+This filter provides a robust and flexible way to manage task assignment:
+
+  * **Action-Based Assignment**: Dynamically filters and assigns task candidates based on business actions, rather than static roles.
+  * **Role-based Filtering**: Restricts candidates to users who have a specific role or are part of a particular group.
+  * **Integration with Business Logic**: Allows task assignment to be directly driven by the data and logic of your process.
+
+== Getting started
+
+To get started, you'll need to create your project from the Bonita actor filter archetype and then customize the filter logic to meet your specific needs.
+
+For detailed information on how to create a custom actor filter, please refer to the {doc-url}/process/actor-filter-archetype[Bonita documentation, window = "\_blank"].
+
+== Developing
+
+To start developing this project, make sure you have the following tools installed:
+
+- Java ( **jdk {java-version}** or higher): This project is built with Java, so you'll need the Java Development Kit.
+- Maven (optional if you choosed to use https://github.com/takari/maven-wrapper[maven wrapper script] as archetype option): To manage dependencies and the project lifecycle. While the included Maven Wrapper (./mvnw) is sufficient, having Maven installed globally can be helpful.
+- A Git client: To clone the repository and contribute your changes.
+
+Once you have everything set up, clone the repository and navigate to the project directory to start working.
+
+=== Building
+
+To build the project in your local environment, follow these steps. This is useful for development and testing before publishing.
+
+```bash
+git clone https://github.com/your-username/filter-action-based-task-assignment.git
+cd filter-action-based-task-assignment/
+./mvnw clean package
+```
+
+Once the command is executed, the `filter-action-based-task-assignment-1.0.jar` artifact is created inside the `target/` directory. This process compiles the code, runs tests, and packages the filter into a `.jar` file.
+
+For more details about Apache Maven, you can refer to its (https://maven.apache.org/guides/getting-started/.
+
+=== Deploying and Publishing
+
+To deploy and publish this project, we've automated the process using GitHub Actions. This means you **don't need to manually compile it** for publication.
+
+The CI/CD workflow automatically handles compiling and testing the project every time changes are pushed to a branch.
+
+To publish the filter and make it available for the presales team, simply follow these two steps:
+
+1.  **Create a tag**: Add a tag to the `master` branch (for example, `v1.0.0`).
+2.  **Create a release**: In GitHub, go to the releases section and create a new release from the tag you just created.
+
+This will trigger a GitHub Action that compiles the project, generates the final artifact, and attaches it to the release.
+
+If you need to test the `.jar` locally, you can manually install it in your Bonita Studio project. To do this, please refer to the https://documentation.bonitasoft.com/bonita/latest/managing-extension-studio.
+
+=== Documentation
+
+This project uses Maven to build the application and generate its documentation. The process automatically creates API documentation and a code coverage report, which can be viewed both locally and online.
+
+### Building the Project
+
+To build the project and generate all reports locally, run the following command from the project root directory:
+
+```bash
+./mvnw clean verify site
+```
+
+This command performs several key actions:
+
+1.  clean: Deletes the target directory, ensuring a clean build.
+2.  verify: Compiles the code, runs all unit tests, and verifies the project's quality.
+3.  site: Generates the documentation site, including Javadoc and JaCoCo reports, into the target/site directory.
+
+### Activating GitHub Pages for Documentation
+To view the Javadoc documentation and JaCoCo reports online, you must first enable GitHub Pages in your repository. This is a one-time configuration.
+
+Follow these steps to enable the deployment of your documentation via GitHub Actions:
+
+1.  In your GitHub repository, navigate to Settings.
+2.  In the left-hand menu, click on Pages.
+3.  In the "Build and deployment" section, select GitHub Actions from the "Source" dropdown menu.
+4.  Click Save.
+
+After a successful CI/CD workflow run, your documentation will be available online.
+
+### Accessing Reports and Documentation
+You can access the generated reports and documentation in two ways:
+
+1. **Local Access**
+To view the generated reports on your local machine, simply open the corresponding files in your web browser:
+
+* **Project Site Homepage**: file:///<your-project-path>/target/site/index.html
+* **Javadoc API Documentation**: file:///<your-project-path>/target/reports/apidocs/index.html
+* **JaCoCo Code Coverage Report**: file:///<your-project-path>/target/site/jacoco/index.html
+
+2. **Online Access (GitHub Pages)**
+The documentation is automatically deployed to GitHub Pages after a successful workflow run. This provides a clean, web-accessible version of the reports.
+
+* **Project Site Homepage**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/
+* **Javadoc API Documentation**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/apidocs/index.html
+* **JaCoCo Code Coverage Report**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/jacoco/index.html
+
+The JaCoCo report provides a detailed view of your test coverage, highlighting which lines of code were executed by your unit tests and which were not.
+
+
+== Contributing
+
+To facilitate collaboration, we want to ensure all code is clean and adheres to our standards. We will use a dedicated branch for all development, following the principles of Clean Code and the Git Flow workflow.
+
+Clean Code refers to writing code that is readable, maintainable, and easy to understand. Git Flow is a Git branching strategy that organizes development, features, and releases in a structured manner.
+
+To begin contributing, create a branch from master and name it using the ID of the Jira ticket or user story.
+
+```bash
+# Create and switch to your new branch
+git checkout -b <jira-ticket-id>_<short-description> master
+If the develop branch does not already exist, create it from master and push it to the repository.
+```
+
+```bash
+git checkout -b develop master
+git push origin develop
+``` 
+
+Once your work is complete, submit a pull request to the develop branch. Please ensure your code follows our established conventions and that all tests pass.
+
+
+== Links
+  * **Project homepage**: https://github.com/bonitasoft-presales/filter-action-based-task-assignation
+  * **Repository**: https://github.com/bonitasoft-presales/filter-action-based-task-assignation.git
+  * **Issue tracker**: https://github.com/bonitasoft-presales/filter-action-based-task-assignation/issues
+  * **Project Site Homepage**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/
+  * **Javadoc API Documentation**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/apidocs/index.html
+  * **JaCoCo Code Coverage Report**: https://bonitasoft-presales.github.io/filter-action-based-task-assignation/jacoco/index.html
+
+To build the project in your local environment (useful for development and testing), follow these steps:
+
