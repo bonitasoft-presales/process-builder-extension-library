@@ -1,7 +1,5 @@
 package com.bonitasoft.processbuilder.extension;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -19,54 +17,41 @@ public class ExceptionUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionUtils.class);
 
     /**
-     * Logs an error message and throws a generic or specific exception.
-     * This method uses reflection to create a new instance of the provided exception class.
-     *
-     * @param <T> The type of exception to throw. It must extend from Exception and have a constructor that accepts a single String argument.
-     * @param exceptionClass The Class object of the exception to be thrown.
-     * @param errorMessage The detailed message for the error.
-     * @throws T The new instance of the specified exception class.
-     * @throws RuntimeException if the specified exception cannot be instantiated or if a reflection error occurs.
+     * Private constructor to prevent instantiation of this utility class.
+     * All methods in this class are static and should be called directly on the class itself.
      */
-    public static <T extends Exception> void logAndThrowError(Class<T> exceptionClass, String errorMessage) throws T {
-        LOGGER.error(errorMessage);
-        try {
-            // Retrieve the constructor that takes a single String argument.
-            Constructor<T> constructor = exceptionClass.getConstructor(String.class);
-            // Throw a new instance of the specified exception.
-            throw constructor.newInstance(errorMessage);
-        } catch (InvocationTargetException e) {
-            // InvocationTargetException wraps the real exception thrown by the constructor.
-            // We unwrap it and re-throw the original exception.
-            Throwable cause = e.getTargetException();
-            if (cause instanceof Exception) {
-                // We must cast to T to satisfy the method's 'throws T' declaration.
-                throw (T) cause;
-            } else {
-                // If the cause is a non-Exception Throwable, we re-throw it wrapped in a RuntimeException.
-                throw new RuntimeException("Failed to create and throw the specified exception.", e);
-            }
-        } catch (ReflectiveOperationException e) {
-            // This catches other reflection errors like NoSuchMethodException or InstantiationException.
-            throw new RuntimeException("Failed to instantiate the specified exception class.", e);
-        }
+    private ExceptionUtils() {
+        // This constructor is intentionally empty.
     }
 
     /**
-     * Logs an error message and then throws a new instance of a specified exception.
-     * This method is a safe and generic way to handle exceptions by using a Supplier,
-     * which avoids the complexities and potential runtime errors of Reflection.
+     * Logs a formatted error message and then throws a new instance of a specified exception.
+     * This method is a safe and generic way to handle exceptions by using a {@link java.util.function.Supplier},
+     * which avoids the complexities and potential runtime errors of Reflection. It leverages the logging
+     * framework's ability to format messages, which is more efficient because the message is only
+     * constructed if the log level is active.
      *
-     * @param <T> The type of the exception to be thrown. This must be a subclass of Exception.
+     * @param <T> The type of the exception to be thrown. This must be a subclass of {@link java.lang.Exception}.
      * @param exceptionSupplier A {@link java.util.function.Supplier} that provides an instance of the exception to be thrown.
-     * The supplier's {@code get()} method should create and return a new exception instance,
-     * typically via a lambda or a constructor reference.
-     * @param errorMessage A log message describing the error. This message will be recorded by the logger
-     * and used to initialize the thrown exception.
+     * The supplier's {@code get()} method should create and return a new exception instance, typically
+     * via a lambda or a constructor reference (e.g., {@code IllegalArgumentException::new}).
+     * @param format A parameterized message format string compatible with the logging framework's
+     * formatters (e.g., using `{}`). This format string will be logged to the error level.
+     * @param args A variable-length argument list of objects to be substituted into the format string.
+     * These objects correspond to the `{}` placeholders in the {@code format} string.
      * @throws T The exception instance provided by the {@code exceptionSupplier}.
      */
-    public static <T extends Exception> void logAndThrow(Supplier<T> exceptionSupplier, String errorMessage) throws T {
-        LOGGER.error(errorMessage);
+    public static <T extends Exception> void logAndThrow(
+        Supplier<T> exceptionSupplier,
+        String format,
+        Object... args) throws T {
+        
+        // The logger is designed to handle message formatting lazily, which is more performant.
+        // The message is only built if the ERROR log level is enabled.
+        LOGGER.error(format, args);
+        
+        // Throw the exception provided by the supplier. This ensures we're throwing a new,
+        // explicitly defined exception instance.
         throw exceptionSupplier.get();
     }
 }
