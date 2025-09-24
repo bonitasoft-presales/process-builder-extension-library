@@ -79,4 +79,32 @@ class ProcessOptionTypeTest {
         }
         return false;
     }
+    
+    /**
+     * Tests the {@code isValid} method to ensure it correctly validates all
+     * possible input values, including valid, invalid, null, and empty strings.
+     */
+    @Test
+    void isValid_should_correctly_validate_input() {
+        // Test with a valid name
+        assertTrue(ProcessOptionType.isValid("USERS"));
+
+        // Test with a valid name in lowercase
+        assertTrue(ProcessOptionType.isValid("users"));
+
+        // Test with a valid name with extra spaces
+        assertTrue(ProcessOptionType.isValid("  USERS  "));
+
+        // Test with an invalid name
+        assertFalse(ProcessOptionType.isValid("INVALID_TYPE"));
+
+        // Test with a null string
+        assertFalse(ProcessOptionType.isValid(null));
+
+        // Test with an empty string
+        assertFalse(ProcessOptionType.isValid(""));
+
+        // Test with a blank string
+        assertFalse(ProcessOptionType.isValid(" "));
+    }
 }

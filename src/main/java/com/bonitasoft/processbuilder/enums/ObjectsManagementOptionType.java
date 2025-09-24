@@ -11,5 +11,24 @@ public enum ObjectsManagementOptionType {
     /**
      * Represents a category object.
      */
-    CATEGORY
+    CATEGORY;
+
+    /**
+     * Checks if a given string corresponds to a valid enum constant.
+     *
+     * @param optionTypeInput The string to validate.
+     * @return {@code true} if the string is a valid enum constant, {@code false} otherwise.
+     */
+    public static boolean isValid(String optionTypeInput) {
+        try {
+            if (optionTypeInput == null || optionTypeInput.trim().isEmpty()) {
+                return false;
+            }
+            ObjectsManagementOptionType.valueOf(optionTypeInput.trim().toUpperCase());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
 }
+

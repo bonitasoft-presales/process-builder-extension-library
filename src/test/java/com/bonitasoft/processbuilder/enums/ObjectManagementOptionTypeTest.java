@@ -54,4 +54,35 @@ class ObjectsManagementOptionTypeTest {
             ObjectsManagementOptionType.valueOf(invalidName);
         });
     }
+
+    /**
+     * Tests the {@code isValid} method to ensure it correctly validates all
+     * possible input values, including valid, invalid, null, and empty strings.
+     */
+    @Test
+    void isValid_should_correctly_validate_input() {
+        // Test with a valid name
+        assertTrue(ObjectsManagementOptionType.isValid("CATEGORY"));
+
+        // Test with a valid name in lowercase
+        assertTrue(ObjectsManagementOptionType.isValid("category"));
+
+        // Test with a valid name with extra spaces
+        assertTrue(ObjectsManagementOptionType.isValid("  CATEGORY  "));
+
+        // Test with a valid name in mixed case
+        assertTrue(ObjectsManagementOptionType.isValid("CaTeGoRy"));
+
+        // Test with an invalid name
+        assertFalse(ObjectsManagementOptionType.isValid("INVALID_TYPE"));
+
+        // Test with a null string
+        assertFalse(ObjectsManagementOptionType.isValid(null));
+
+        // Test with an empty string
+        assertFalse(ObjectsManagementOptionType.isValid(""));
+
+        // Test with a blank string
+        assertFalse(ObjectsManagementOptionType.isValid(" "));
+    }
 }

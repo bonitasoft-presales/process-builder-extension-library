@@ -32,5 +32,23 @@ public enum ProcessOptionType {
     /**
      * Represents the status of the process.
      */
-    STATUS
+    STATUS;
+
+    /**
+     * Checks if a given string corresponds to a valid enum constant.
+     *
+     * @param optionTypeInput The string to validate.
+     * @return {@code true} if the string is a valid enum constant, {@code false} otherwise.
+     */
+    public static boolean isValid(String optionTypeInput) {
+        try {
+            if (optionTypeInput == null || optionTypeInput.trim().isEmpty()) {
+                return false;
+            }
+            ProcessOptionType.valueOf(optionTypeInput.trim().toUpperCase());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
 }
