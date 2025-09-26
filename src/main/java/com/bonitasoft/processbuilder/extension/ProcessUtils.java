@@ -3,6 +3,8 @@ package com.bonitasoft.processbuilder.extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Function;
+
 import org.bonitasoft.engine.api.APIAccessor;
 import org.bonitasoft.engine.api.IdentityAPI;
 import org.bonitasoft.engine.api.ProcessAPI;
@@ -74,5 +76,69 @@ public class ProcessUtils {
      * @param userName The username of the process initiator.
      * @param fullName The full name (first name + last name) of the process initiator.
      */
-    public record ProcessInitiator(Long id, String userName, String fullName) {}
+    public record ProcessInitiator(Long id, String userName, String fullName) {};
+
+
+/**
+     * Searches for a BDM object by its persistence ID and validates its existence.
+     * * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
+     * @param persistenceId The ID used to search for the object.
+     * @param searchFunction The function (e.g., DAO method) to perform the search: (Long ID -> T Object).
+     * @param objectType The name of the BDM object class (e.g., "PBProcess" or "PBCategory").
+     * @return The found BDM object of type T.
+     * @throws RuntimeException if no object is found for the given ID.
+     */
+    public static <T> T searchAndValidate(
+            Long persistenceId, 
+            Function<Long, T> searchFunction, 
+            String objectType) {
+
+        // Si no hay ID de persistencia, devolvemos null y la llamada debe manejarlo
+        if (persistenceId == null) {
+            return null;
+        }
+
+        // Ejecutar la búsqueda
+        T bdmObject = searchFunction.apply(persistenceId);
+
+        // Si el objeto no se encuentra, lanzar un error
+        if (bdmObject == null) {
+            String errorMessage = String.format(
+                "No existing %s found for persistenceId: '%s'. Cannot update.", 
+                objectType, 
+                persistenceId
+            );
+            
+            // Usamos ExceptionUtils.logAndThrow como lo indicaste
+            ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
+        }
+        
+        return bdmObject;
+    }
+
+    /**
+     * Validates that the BDM object exists before performing a DELETE action.
+     * * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
+     * @param bdmObject The BDM object retrieved from the search (may be null).
+     * @param persistenceId The ID used for logging.
+     * @param objectType The name of the BDM object class.
+     * @return The existing BDM object (T).
+     * @throws RuntimeException if the object is null (not found).
+     */
+    public static <T> T validateForDelete(T bdmObject, Long persistenceId, String objectType) {
+        
+        if (bdmObject == null) {
+            String errorMessage = String.format(
+                "No existing %s found to delete with persistenceId: '%s'.", 
+                objectType, 
+                persistenceId
+            );
+            
+            // Usamos ExceptionUtils.logAndThrow como lo indicaste
+            ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
+        }
+        
+        return bdmObject;
+    }
+
 }
