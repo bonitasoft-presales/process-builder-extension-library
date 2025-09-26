@@ -11,7 +11,7 @@ import com.bonitasoft.processbuilder.extension.ProcessUtils.ProcessInitiator;
  * Utility class providing methods to automatically set creation and modification
  * metadata on Business Data Model (BDM) objects using Java Reflection.
  *
- * <p>This class assumes that all target BDM objects implement the following methods:
+ * <p>This class assumes that all target BDM objects implement the following methods:</p>
  * <ul>
  * <li>{@code getCreationDate()}: returns OffsetDateTime</li>
  * <li>{@code setCreationDate(OffsetDateTime)}</li>
@@ -21,7 +21,7 @@ import com.bonitasoft.processbuilder.extension.ProcessUtils.ProcessInitiator;
  * <li>{@code setModifierId(Long)}</li>
  * <li>{@code setModifierName(String)}</li>
  * </ul>
- * </p>
+ * 
  */
 public class BDMAuditUtils {
 

@@ -81,7 +81,7 @@ public class ProcessUtils {
 
 /**
      * Searches for a BDM object by its persistence ID and validates its existence.
-     * * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
+     * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
      * @param persistenceId The ID used to search for the object.
      * @param searchFunction The function (e.g., DAO method) to perform the search: (Long ID -> T Object).
      * @param objectType The name of the BDM object class (e.g., "PBProcess" or "PBCategory").
@@ -118,7 +118,7 @@ public class ProcessUtils {
 
     /**
      * Validates that the BDM object exists before performing a DELETE action.
-     * * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
+     * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
      * @param bdmObject The BDM object retrieved from the search (may be null).
      * @param persistenceId The ID used for logging.
      * @param objectType The name of the BDM object class.
