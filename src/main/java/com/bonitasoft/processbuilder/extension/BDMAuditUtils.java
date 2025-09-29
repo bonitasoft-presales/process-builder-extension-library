@@ -62,7 +62,7 @@ public class BDMAuditUtils {
         // 1. GENERIC INSTANTIATION MANAGEMENT (if object is null)
         if (targetObject == null) {
             try {
-                Constructor<T> constructor = clazz.getDeclaredConstructor();
+                Constructor<T> constructor = clazz.getConstructor();
                 targetObject = constructor.newInstance();
                 isNewObject = true;
             } catch (NoSuchMethodException e) {
