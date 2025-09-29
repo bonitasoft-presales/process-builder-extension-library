@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 class BDMAuditUtilsTest {
 
-    // --- MOCK BDM CLASSES FOR TESTING ---
+    // --- MOCK BDM CLASSES FOR TESTING COVERAGE ---
     
     /**
      * Mock class for successful auditing. Stores all audit data internally 
@@ -31,7 +31,7 @@ class BDMAuditUtilsTest {
         private Long modifierId;
         private String modifierName;
         
-        // GETTERS
+        // GETTERS (Required for full BDM compliance, but not strictly by this utility method)
         public OffsetDateTime getCreationDate() { return creationDate; }
         public Long getCreatorId() { return creatorId; }
         public OffsetDateTime getModificationDate() { return modificationDate; }
@@ -47,32 +47,35 @@ class BDMAuditUtilsTest {
     }
     
     /**
-     * Mock class to test missing default constructor (Throws NoSuchMethodException in BDMUtils).
+     * Mock class to test missing audit methods (Throws NoSuchMethodException during invokeSetter).
      */
-    public static class NoDefaultConstructorMock {
-        public NoDefaultConstructorMock(String arg) {} // No default constructor
-        // Must have the audit methods to pass the Reflection part of the logic later
-        public OffsetDateTime getCreationDate() { return null; } 
+    public static class MissingSetterMock {
+        // NOTE: setCreatorId and setModifierId are intentionally MISSING.
+        public OffsetDateTime getCreationDate() { return null; }
         public void setCreationDate(OffsetDateTime creationDate) { /* Mock */ }
+        public void setCreatorName(String name) { /* Mock */ }
+        public void setModificationDate(OffsetDateTime date) { /* Mock */ }
+        public void setModifierName(String name) { /* Mock */ }
+    }
+    
+    /**
+     * Mock class to test InvocationTargetException when a setter throws an internal exception.
+     */
+    public static class ThrowingSetterMock {
+        // Must implement all setters/getters required by the audit utility
+        
+        // Throws a runtime exception during the first setter call in the CREATION path
+        public void setCreationDate(OffsetDateTime creationDate) { 
+            throw new UnsupportedOperationException("Mock exception during setCreationDate"); 
+        }
         public void setCreatorId(Long id) { /* Mock */ }
         public void setCreatorName(String name) { /* Mock */ }
         public void setModificationDate(OffsetDateTime date) { /* Mock */ }
         public void setModifierId(Long id) { /* Mock */ }
         public void setModifierName(String name) { /* Mock */ }
-    }
-    
-    /**
-     * Mock class to test missing audit methods (Throws NoSuchMethodException during invokeSetter).
-     */
-    public static class MissingSetterMock {
-        // Missing setCreatorId!
+        
+        // Minimal getters to prevent other reflection failures
         public OffsetDateTime getCreationDate() { return null; }
-        public void setCreationDate(OffsetDateTime creationDate) { /* Mock */ }
-        public void setCreatorName(String name) { /* Mock */ }
-        // public void setCreatorId(Long id) is missing!
-        public void setModificationDate(OffsetDateTime date) { /* Mock */ }
-        //public void setModifierId(Long id) { /* Mock */ }
-        public void setModifierName(String name) { /* Mock */ }
     }
     
     // --- SETUP ---
@@ -80,144 +83,176 @@ class BDMAuditUtilsTest {
     private final ProcessInitiator initiator = new ProcessInitiator(10L, "testUser", "Test User");
     private final Long persistenceId = 100L;
     
+    // =========================================================================
+    // SECTION 1: SUCCESS PATHS (100% Logic Coverage)
+    // =========================================================================
+    
     /**
-     * Tests the successful creation of a new object when {@code bdmObject} is null.
-     * This covers the 'Instanciation' and 'Creation Logic' branches.
+     * Tests the successful creation of a new object.
+     * Covers: {@code bdmObject == null} (true) and {@code isNewObject} (true) paths.
      */
     @Test
-    void createOrUpdateAuditData_should_create_new_object_when_null() {
-        // Given: bdmObject is null
+    void createOrUpdateAuditData_should_handle_creation_path_successfully() {
+        // Given: bdmObject is null, and we pass a new object for creation
+        AuditSuccessMock newInstance = new AuditSuccessMock();
         
         // When: Called to create a new object
         AuditSuccessMock newObject = BDMAuditUtils.createOrUpdateAuditData(
                 null, 
+                newInstance, // Pass pre-instantiated object (newBdmObject)
                 AuditSuccessMock.class, 
                 initiator, 
-                persistenceId
+                null // Use null persistenceId for logging purposes
         );
         
-        // Then: A new object is returned and Creation fields are set
-        assertNotNull(newObject);
+        // Then: The passed instance is returned and Creation fields are set
+        assertSame(newInstance, newObject);
         assertNotNull(newObject.getCreationDate());
         assertEquals(initiator.id(), newObject.getCreatorId());
-        assertNull(newObject.getModificationDate()); // Should not have run modification logic
+        assertNull(newObject.getModificationDate(), "Modification date must be null on creation.");
     }
 
     /**
-     * Tests the logic when an object is passed (non-null) but has no creation date.
-     * Based on the strict requirement: If the object is NON-NULL, it is treated as a MODIFICATION.
-     * The creation date should remain null as only modification setters are called.
+     * Tests the successful update of an existing object.
+     * Covers: {@code bdmObject == null} (false) and {@code isNewObject} (false) paths.
      */
     @Test
-    void createOrUpdateAuditData_should_apply_modification_logic_when_date_is_null() {
-        // Given: An existing object instance but without a creation date (fresh BDM object)
+    void createOrUpdateAuditData_should_handle_update_path_successfully() {
+        // Given: An existing object instance and a valid persistence ID
         AuditSuccessMock existingObject = new AuditSuccessMock();
-        assertNull(existingObject.getCreationDate());
+        existingObject.setCreationDate(OffsetDateTime.now().minusDays(1)); 
 
         // When: Called to update the object
         AuditSuccessMock updatedObject = BDMAuditUtils.createOrUpdateAuditData(
                 existingObject, 
+                null, // newBdmObject is ignored
                 AuditSuccessMock.class, 
                 initiator, 
                 persistenceId
         );
         
-        // Then: The Modification logic was executed (based on the strict requirement)
-        assertSame(existingObject, updatedObject);
-        
-        // The creation date should remain NULL because the method only called modification setters
-        assertNull(updatedObject.getCreationDate(), "Creation date must remain null (Modification path executed).");
-        
-        // Modification fields MUST be set
-        assertNotNull(updatedObject.getModificationDate(), "Modification date must be set.");
-        assertEquals(initiator.id(), updatedObject.getModifierId(), "Modifier ID must be set.");
-        
-    }
-    
-    /**
-     * Tests the successful modification of an existing object.
-     * This covers the 'Modification Logic' branch where the creation date already exists.
-     */
-    @Test
-    void createOrUpdateAuditData_should_apply_modification_logic_when_date_exists() {
-        // Given: An existing object with a creation date already set
-        AuditSuccessMock existingObject = new AuditSuccessMock();
-        existingObject.setCreationDate(OffsetDateTime.now().minusDays(1)); // Simulate existing object
-
-        // When: Called to update the object
-        AuditSuccessMock updatedObject = BDMAuditUtils.createOrUpdateAuditData(
-                existingObject, 
-                AuditSuccessMock.class, 
-                initiator, 
-                persistenceId
-        );
-        
-        // Then: The modification date and ID must be set
+        // Then: The Modification logic was executed
         assertSame(existingObject, updatedObject);
         assertNotNull(updatedObject.getModificationDate(), "Modification date must be set.");
         assertEquals(initiator.id(), updatedObject.getModifierId(), "Modifier ID must be set.");
+        assertNotNull(updatedObject.getCreationDate(), "Creation date must be preserved.");
     }
     
-    // --- EXCEPTION COVERAGE (100% BRANCH COVERAGE) ---
+    // =========================================================================
+    // SECTION 2: EXCEPTION COVERAGE
+    // =========================================================================
 
     /**
-     * Tests the exception path when the BDM class is missing the default constructor 
-     * and a null object is passed (Failure in Instantiation Management).
+     * Tests the exception path when both objects are null (Failure in Safety Validation).
+     * Covers: {@code targetObject == null} internal check (Both are null).
      */
     @Test
-    void createOrUpdateAuditData_should_throw_exception_if_default_constructor_is_missing() {
-        // Given: The object is null, and the class is missing a default constructor
+    void createOrUpdateAuditData_should_throw_illegal_argument_exception_when_both_objects_are_null() {
+        // Given: Both objects are null
         
-        // When / Then: RuntimeException must be thrown due to NoSuchMethodException
-        RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
+        // When / Then: IllegalArgumentException must be thrown
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
             BDMAuditUtils.createOrUpdateAuditData(
                 null, 
-                NoDefaultConstructorMock.class, 
+                null, 
+                AuditSuccessMock.class, // Class is used for logging/error message
                 initiator, 
                 persistenceId
             );
         });
         
-        assertTrue(thrown.getMessage().contains("must have a default (no-argument) constructor"));
+        assertTrue(thrown.getMessage().contains("Both bdmObject (existing) and newBdmObject (pre-instantiated) are null"));
     }
     
     /**
-     * Tests the exception path when a required setter method is missing (Failure in Reflection Logic).
-     * This forces the CREATION path by passing null, which attempts to call the missing setCreatorId method.
+     * Tests the Reflection failure on the CREATION path (missing setter).
+     * Covers: {@code isNewObject} (true) and the generic {@code Exception} catch (specifically {@code NoSuchMethodException}).
      */
     @Test
-    void createOrUpdateAuditData_should_throw_exception_if_audit_setter_is_missing() {
-        // Given: We want to test the MissingSetterMock class, which lacks 'setCreatorId'.
+    void createOrUpdateAuditData_should_throw_reflection_exception_on_creation_if_setter_is_missing() {
+        // Given: MissingSetterMock lacks 'setCreatorId' method
         
-        // When / Then: RuntimeException must be thrown because the Creation path attempts
-        // to call 'setCreatorId' via Reflection, which fails.
+        // When / Then: RuntimeException must be thrown because the Creation path fails on the second setter call.
         RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
             BDMAuditUtils.createOrUpdateAuditData(
-                null, // <-- Pass NULL to force Instantiation and the CREATION path
+                null, // Force CREATION path
+                new MissingSetterMock(), 
                 MissingSetterMock.class, 
                 initiator, 
-                persistenceId
+                null
             );
         });
         
-        // Assert that the exception thrown by the utility class contains the correct error message.
-        assertTrue(thrown.getMessage().contains("failed due to Reflection error"), 
-            "The exception message should indicate a reflection failure.");
+        // Assert that the exception indicates a reflection failure and cause.
+        assertTrue(thrown.getMessage().contains("failed due to Reflection error"));
+        assertTrue(thrown.getCause() instanceof NoSuchMethodException);
     }
 
+    /**
+     * Tests the Reflection failure on the UPDATE path (missing setter).
+     * Covers: {@code isNewObject} (false) and the generic {@code Exception} catch (specifically {@code NoSuchMethodException}).
+     */
+    @Test
+    void createOrUpdateAuditData_should_throw_reflection_exception_on_update_if_setter_is_missing() {
+        // Given: MissingSetterMock lacks 'setModifierId' method and an existing object is passed
+        
+        // When / Then: RuntimeException must be thrown because the Update path fails on the second setter call.
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
+            BDMAuditUtils.createOrUpdateAuditData(
+                new MissingSetterMock(), // Force UPDATE path
+                null, 
+                MissingSetterMock.class, 
+                initiator, 
+                persistenceId // Non-null ID
+            );
+        });
+        
+        // Assert that the exception indicates a reflection failure and cause.
+        assertTrue(thrown.getMessage().contains("failed due to Reflection error"));
+        assertTrue(thrown.getCause() instanceof NoSuchMethodException);
+    }
+
+    /**
+     * Tests the exception path when a setter method throws an exception internally (BDM business logic error).
+     * Covers: {@code InvocationTargetException} catch.
+     */
+    @Test
+    void createOrUpdateAuditData_should_throw_runtime_exception_if_setter_throws_exception() {
+        // Given: ThrowingSetterMock throws an UnsupportedOperationException during setCreationDate
+        
+        // When / Then: RuntimeException must be thrown, wrapping the internal exception.
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
+            BDMAuditUtils.createOrUpdateAuditData(
+                null, // Force CREATION path
+                new ThrowingSetterMock(), 
+                ThrowingSetterMock.class, 
+                initiator, 
+                null
+            );
+        });
+        
+        // Assert the outer RuntimeException message and the root cause type
+        assertTrue(thrown.getMessage().contains("Error during BDM method call"));
+        assertTrue(thrown.getCause() instanceof UnsupportedOperationException);
+    }
+    
+    // =========================================================================
+    // SECTION 3: UTILITY CLASS COVERAGE
+    // =========================================================================
+    
     /**
      * Tests that the utility class cannot be instantiated externally 
      * and ensures 100% coverage of the private constructor by invoking it via Reflection.
      */
     @Test
     void constructor_should_be_private_and_uninvokable() throws Exception {
-        // 1. Arrange: Get the private, no-argument constructor of the utility class.
+        // Arrange: Get the private, no-argument constructor of the utility class.
         final Constructor<BDMAuditUtils> constructor = BDMAuditUtils.class.getDeclaredConstructor();
         
-        // 2. Act: Make the private constructor accessible to force its execution.
+        // Act: Make the private constructor accessible to force its execution.
         constructor.setAccessible(true); 
         
-        // 3. Assert (Invocation): Attempt to call the private constructor.
+        // Assert: The constructor can be called, covering the private constructor line.
         constructor.newInstance(); 
     }
 }

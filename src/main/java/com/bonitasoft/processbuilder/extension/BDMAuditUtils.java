@@ -1,6 +1,5 @@
 package com.bonitasoft.processbuilder.extension;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
@@ -42,44 +41,52 @@ public class BDMAuditUtils {
 
     /**
      * Applies audit metadata (creation or modification) to a BDM object.
-     * If the object passed is {@code null}, it is instantiated generically using its default constructor.
+     * If the object passed as {@code bdmObject} is {@code null}, the object 
+     * provided in {@code newBdmObject} is used as the target (creation).
      *
      * @param <T> The generic type of the BDM object.
-     * @param bdmObject The existing BDM object (may be {@code null}).
-     * @param clazz The class of the BDM (e.g., {@code PBCategory.class}). Required for generic instantiation if {@code bdmObject} is {@code null}.
+     * @param bdmObject The existing BDM object (may be {@code null} for creation/update).
+     * @param newBdmObject The object to use if {@code bdmObject} is {@code null}. 
+     * Must be an already instantiated BDM object.
+     * @param clazz The class of the BDM (used for logging purposes).
      * @param initiator The user performing the action.
-     * @param persistenceId The persistence ID of the object (used for logging purposes).
+     * @param persistenceId The persistence ID of the object (used for logging/update determination).
      * @return The updated (or newly created) BDM object of type T.
-     * @throws RuntimeException If instantiation fails (missing default constructor) or if a reflection error occurs (missing setter/getter methods)
+     * @throws IllegalArgumentException If both {@code bdmObject} and {@code newBdmObject} are {@code null}.
+     * @throws RuntimeException If a reflection error occurs (e.g., missing setter methods).
      */
-    public static <T> T createOrUpdateAuditData(T bdmObject, Class<T> clazz, ProcessInitiator initiator, Long persistenceId) {
+    public static <T> T createOrUpdateAuditData(T bdmObject, T newBdmObject, Class<T> clazz, ProcessInitiator initiator, Long persistenceId) {
         
+        // Target object is initially the existing one
         T targetObject = bdmObject;
         String objectName = clazz.getSimpleName();
         OffsetDateTime now = OffsetDateTime.now();
         boolean isNewObject = false;
 
-        // 1. GENERIC INSTANTIATION MANAGEMENT (if object is null)
+        // 1. CREATION / INSTANTIATION MANAGEMENT
         if (targetObject == null) {
-            try {
-                Constructor<T> constructor = clazz.getConstructor();
-                targetObject = constructor.newInstance();
-                isNewObject = true;
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException("BDM class " + objectName + " must have a default (no-argument) constructor.", e);
-            } catch (Exception e) {
-                // Handles InstantiationException, IllegalAccessException, InvocationTargetException during construction
-                throw new RuntimeException("Failed to instantiate BDM object " + objectName + " generically.", e);
+            // Assign the pre-instantiated object and mark as NEW.
+            targetObject = newBdmObject;
+            isNewObject = true;
+            
+            // Safety Validation: If both are null, we can't proceed.
+            if (targetObject == null) {
+                throw new IllegalArgumentException(
+                    "Both bdmObject (existing) and newBdmObject (pre-instantiated) are null. Cannot proceed without an instantiated BDM object."
+                );
             }
         }
         
+        // If targetObject is NOT null (it's either the existing bdmObject or the newBdmObject):
         try {
             if (isNewObject) {
+                // CREATION Logic
                 invokeSetter(targetObject, "setCreationDate", OffsetDateTime.class, now);
                 invokeSetter(targetObject, "setCreatorId", Long.class, initiator.id());
                 invokeSetter(targetObject, "setCreatorName", String.class, initiator.fullName());
                 LOGGER.warn("No existing {} found. Creating a new record.", objectName);
             } else {
+                // UPDATE Logic (original bdmObject was not null)
                 invokeSetter(targetObject, "setModificationDate", OffsetDateTime.class, now);
                 invokeSetter(targetObject, "setModifierId", Long.class, initiator.id());
                 invokeSetter(targetObject, "setModifierName", String.class, initiator.fullName());
@@ -87,12 +94,12 @@ public class BDMAuditUtils {
             }
 
         } catch (InvocationTargetException e) {
-            // Catches exceptions thrown by the invoked method (setter/getter)
+            // Catches exceptions thrown by the invoked setter/getter method (BDM business logic errors)
             throw new RuntimeException("Error during BDM method call in " + objectName, e.getTargetException());
         } catch (Exception e) {
-            // Catches other Reflection exceptions (NoSuchMethodException, IllegalAccessException, etc.)
+            // Catches Reflection errors (NoSuchMethodException, IllegalAccessException, etc.)
             LOGGER.error("FATAL: Error applying audit data using Reflection to " + objectName 
-                + ". Check method names (getCreationDate, setCreatorId, etc).");
+                + ". Check setter method names (setCreationDate, setCreatorId, etc).");
             throw new RuntimeException("BDM audit update failed due to Reflection error.", e);
         }
 
