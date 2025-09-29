@@ -3,6 +3,8 @@ package com.bonitasoft.processbuilder.extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.bonitasoft.processbuilder.enums.ActionType;
+
 import java.util.function.Function;
 
 import org.bonitasoft.engine.api.APIAccessor;
@@ -76,7 +78,7 @@ public class ProcessUtils {
      * @param userName The username of the process initiator.
      * @param fullName The full name (first name + last name) of the process initiator.
      */
-    public record ProcessInitiator(Long id, String userName, String fullName) {};
+    public record ProcessInitiator(Long id, String userName, String fullName) {}
 
 
 /**
@@ -88,28 +90,20 @@ public class ProcessUtils {
      * @return The found BDM object of type T.
      * @throws RuntimeException if no object is found for the given ID.
      */
-    public static <T> T searchAndValidate(
+    private static <T> T searchAndValidate(
             Long persistenceId, 
             Function<Long, T> searchFunction, 
             String objectType) {
 
-        // Si no hay ID de persistencia, devolvemos null y la llamada debe manejarlo
-        if (persistenceId == null) {
-            return null;
-        }
-
-        // Ejecutar la búsqueda
         T bdmObject = searchFunction.apply(persistenceId);
 
-        // Si el objeto no se encuentra, lanzar un error
         if (bdmObject == null) {
             String errorMessage = String.format(
                 "No existing %s found for persistenceId: '%s'. Cannot update.", 
                 objectType, 
                 persistenceId
             );
-            
-            // Usamos ExceptionUtils.logAndThrow como lo indicaste
+            LOGGER.error(errorMessage);
             ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
         }
         
@@ -125,7 +119,7 @@ public class ProcessUtils {
      * @return The existing BDM object (T).
      * @throws RuntimeException if the object is null (not found).
      */
-    public static <T> T validateForDelete(T bdmObject, Long persistenceId, String objectType) {
+    private static <T> T validateForDelete(T bdmObject, Long persistenceId, String objectType) {
         
         if (bdmObject == null) {
             String errorMessage = String.format(
@@ -138,7 +132,72 @@ public class ProcessUtils {
             ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
         }
         
+        LOGGER.info("Finished processing DELETE action for ID: {}", persistenceId);
         return bdmObject;
     }
 
+/**
+     * Searches for a BDM object by its persistence ID, handling the ID conversion from String to Long.
+     * Validates that the object exists if the persistence ID is present.
+     *
+     * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
+     * @param persistenceIdString The persistence ID as a String (can be null or empty).
+     * @param searchFunction The function (e.g., DAO method) to perform the search: (Long ID -> T Object).
+     * @param objectType The name of the BDM object class (e.g., "PBProcess" or "PBCategory").
+     * @return The found BDM object of type T, or {@code null} if the persistence ID is null or empty.
+     * @throws RuntimeException if the String cannot be converted to Long, or if the object is not found.
+     */
+    public static <T> T searchAndValidateId(
+            String persistenceIdString, 
+            Function<Long, T> searchFunction, 
+            String objectType) {
+
+        Long persistenceId = null;
+
+        if (persistenceIdString != null && !persistenceIdString.isEmpty()) {
+            try {
+                // First: Convert the ID string to Long
+                persistenceId = Long.valueOf(persistenceIdString);
+            } catch (NumberFormatException e) {
+                String errorMessage = String.format(
+                    "Invalid format for %s persistence ID: '%s'. Must be a valid number.", 
+                    objectType, 
+                    persistenceIdString
+                );
+                LOGGER.error(errorMessage, e);
+                ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
+            }
+            
+            T bdmObject = searchAndValidate(persistenceId, searchFunction, objectType);
+            
+            return bdmObject;
+        }
+
+        return null;
+    }
+
+    /**
+     * Combines the check for a DELETE action with the validation that the BDM object exists.
+     *
+     * @param <T> The generic type of the BDM object.
+     * @param bdmObject The BDM object retrieved from the search (may be null).
+     * @param actionTypeInput The action type (e.g., "DELETE", "CREATE").
+     * @param persistenceId The ID used for logging.
+     * @param objectType The name of the BDM object class.
+     * @return The existing BDM object (T) if the action is DELETE and the object exists.
+     * @throws RuntimeException if the action is DELETE but the object is null (not found).
+     * @throws IllegalArgumentException if the actionTypeInput is null or invalid (optional, depending on flow).
+     */
+    public static <T> T validateActionAndDelete(
+            T bdmObject, 
+            String actionTypeInput, 
+            Long persistenceId, 
+            String objectType) {
+        
+        if (actionTypeInput != null && actionTypeInput.equalsIgnoreCase(ActionType.DELETE.name())) {
+            return validateForDelete(bdmObject, persistenceId, objectType);
+        }
+        // Return the object if it's not a DELETE action (e.g., CREATE or UPDATE)
+        return bdmObject;
+    }
 }

@@ -5,6 +5,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.bonitasoft.processbuilder.extension.ProcessUtils.ProcessInitiator;
 
 /**
@@ -26,6 +29,11 @@ import com.bonitasoft.processbuilder.extension.ProcessUtils.ProcessInitiator;
 public class BDMAuditUtils {
 
     /**
+     * A logger for this class, used to record log messages and provide debugging information.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(BDMAuditUtils.class);
+
+    /**
      * Private constructor to prevent instantiation of this utility class.
      */
     private BDMAuditUtils() {
@@ -42,7 +50,7 @@ public class BDMAuditUtils {
      * @param initiator The user performing the action.
      * @param persistenceId The persistence ID of the object (used for logging purposes).
      * @return The updated (or newly created) BDM object of type T.
-     * @throws RuntimeException If instantiation fails (missing default constructor) or if a reflection error occurs (e.g., missing setter/getter methods).
+     * @throws RuntimeException If instantiation fails (missing default constructor) or if a reflection error occurs (missing setter/getter methods)
      */
     public static <T> T createOrUpdateAuditData(T bdmObject, Class<T> clazz, ProcessInitiator initiator, Long persistenceId) {
         
@@ -70,12 +78,12 @@ public class BDMAuditUtils {
                 invokeSetter(targetObject, "setCreationDate", OffsetDateTime.class, now);
                 invokeSetter(targetObject, "setCreatorId", Long.class, initiator.id());
                 invokeSetter(targetObject, "setCreatorName", String.class, initiator.fullName());
-                System.out.println("No existing " + objectName + " found. Creating a new record.");
+                LOGGER.warn("No existing {} found. Creating a new record.", objectName);
             } else {
                 invokeSetter(targetObject, "setModificationDate", OffsetDateTime.class, now);
                 invokeSetter(targetObject, "setModifierId", Long.class, initiator.id());
                 invokeSetter(targetObject, "setModifierName", String.class, initiator.fullName());
-                System.out.println("Found existing " + objectName + " with ID " + persistenceId + ". Updating record.");
+                LOGGER.warn("Found existing {} with ID {}. Updating record.", objectName, persistenceId);
             }
 
         } catch (InvocationTargetException e) {
@@ -83,7 +91,8 @@ public class BDMAuditUtils {
             throw new RuntimeException("Error during BDM method call in " + objectName, e.getTargetException());
         } catch (Exception e) {
             // Catches other Reflection exceptions (NoSuchMethodException, IllegalAccessException, etc.)
-            System.err.println("FATAL: Error applying audit data using Reflection to " + objectName + ". Check method names (getCreationDate, setCreatorId, etc).");
+            LOGGER.error("FATAL: Error applying audit data using Reflection to " + objectName 
+                + ". Check method names (getCreationDate, setCreatorId, etc).");
             throw new RuntimeException("BDM audit update failed due to Reflection error.", e);
         }
 
