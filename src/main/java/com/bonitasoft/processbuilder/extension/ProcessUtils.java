@@ -198,6 +198,6 @@ public class ProcessUtils {
             return validateForDelete(bdmObject, persistenceId, objectType);
         }
         // Return the object if it's not a DELETE action (e.g., CREATE or UPDATE)
-        return bdmObject;
+        return null;
     }
 }
