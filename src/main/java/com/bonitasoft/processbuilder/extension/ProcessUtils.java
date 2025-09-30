@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.bonitasoft.processbuilder.enums.ActionType;
+import com.bonitasoft.processbuilder.enums.ProcessOptionType;
 
 import java.util.function.Function;
 
@@ -190,7 +191,7 @@ public class ProcessUtils {
      *
      * @param <T> The generic type of the BDM object.
      * @param bdmObject The BDM object retrieved from the search (may be null).
-     * @param actionTypeInput The action type (e.g., "DELETE", "CREATE").
+     * @param actionTypeInput The action type (e.g., "DELETE", "INSERT", "UPDATE").
      * @param persistenceId The ID used for logging.
      * @param objectType The name of the BDM object class.
      * @return The existing BDM object (T) if the action is DELETE and the object exists; otherwise, returns {@code null}.
