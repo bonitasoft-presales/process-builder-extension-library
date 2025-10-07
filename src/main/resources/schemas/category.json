@@ -1,11 +1,10 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "category.schema.json",
     "title": "Category",
     "description": "Schema for defining object configuration category.",
     "type": "object",
     "allOf": [
-        { "$ref": "/schemas/common_elements.json#/$defs/ObjectInputBaseSchema" },
+        { "$ref": "common_elements.json#/$defs/ObjectInputBaseSchema" },
         {
             "properties": {
                 "fullName": {

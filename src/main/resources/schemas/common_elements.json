@@ -1,6 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "defs.schema.json",
   "title": "Process Builder Common Definitions",
   "$defs": {
         "ActionSchema": {
@@ -22,15 +21,15 @@
         },
         
         "StepSchema": {
-        "type": "object",
-        "properties": {
-            "name": { "type": "string" },
-            "ref": { "type": "string" },
-            "description": { "type": "string" },
-            "index": { "type": "integer" },
-            "actions": {
-            "type": "array",
-            "items": { "$ref": "#/$defs/ActionSchema" } 
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" },
+                "ref": { "type": "string" },
+                "description": { "type": "string" },
+                "index": { "type": "integer" },
+                "actions": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/ActionSchema" } 
             }
         },
         "required": [
