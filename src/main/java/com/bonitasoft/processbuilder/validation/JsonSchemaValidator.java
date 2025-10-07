@@ -27,7 +27,7 @@ public class JsonSchemaValidator {
 
     /**
      * Loads a JSON schema from the resources folder and validates the input JSON string against it.
-     * * @param schemaPath The full path to the JSON Schema file within the classpath (e.g., "/schemas/steps.json").
+     * @param schemaPath The full path to the JSON Schema file within the classpath (e.g., "/schemas/steps.json").
      * @param jsonInput The raw JSON string to validate.
      * @return {@code true} if validation is successful, {@code false} if the JSON content fails validation.
      * @throws RuntimeException if a critical application error occurs (e.g., schema file not found or IO error).
@@ -87,7 +87,7 @@ public class JsonSchemaValidator {
             throw new RuntimeException("Failed to parse the input JSON string. Ensure it is valid JSON.", e);
         }
     }
-
+    
     /**
      * Validates a JSON string against the specific schema associated with the provided ProcessOptionType.
      * @param optionType The string instance (e.g., STEPS, etc.).
