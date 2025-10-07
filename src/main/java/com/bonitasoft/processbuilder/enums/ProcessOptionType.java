@@ -1,10 +1,6 @@
 package com.bonitasoft.processbuilder.enums;
 
-import com.bonitasoft.processbuilder.exceptions.ValidationException;
 import com.bonitasoft.processbuilder.validation.JsonSchemaValidator;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Defines the valid option types for a process.
@@ -39,9 +35,6 @@ public enum ProcessOptionType {
      * Represents the status of the process.
      */
     STATUS;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessOptionType.class);
-
 
     /**
      * Checks if a given string corresponds to a valid enum constant.
