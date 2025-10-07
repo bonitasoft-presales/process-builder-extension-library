@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bonitasoft-process-builder.com/status.schema.json",
+  "$id": "status.schema.json",
   "title": "Status",
   "description": "Schema for defining initial process configuration status.",
   "type": "object",
   "allOf": [
-    { "$ref": "common_elements.json#/$defs/ObjectInputBaseSchema" }
+    {  "$ref": "/schemas/common_elements.json#/$defs/ObjectInputBaseSchema" }
   ],
   "additionalProperties": true 
 }

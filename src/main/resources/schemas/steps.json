@@ -1,18 +1,18 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://bonitasoft-process-builder.com/steps.schema.json",
+    "$id": "steps.schema.json",
     "title": "Steps",
     "description": "Schema for updating process steps configuration.",
     "type": "object",
     "allOf": [
-        { "$ref": "common_elements.json#/$defs/ObjectInputBaseSchema" },
+        {  "$ref": "/schemas/common_elements.json#/$defs/ObjectInputBaseSchema" },
         {
             "properties": {
                 "steps": {
                     "type": "array",
                     "description": "Array containing all process steps.",
                     "items": { 
-                        "$ref": "common_elements.json#/$defs/StepSchema" 
+                        "$ref": "/schemas/common_elements.json#/$defs/StepSchema" 
                     }
                 }
             },

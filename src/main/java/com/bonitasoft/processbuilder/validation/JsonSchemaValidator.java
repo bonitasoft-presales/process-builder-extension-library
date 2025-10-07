@@ -39,15 +39,16 @@ public class JsonSchemaValidator {
         
         // 1. Load the Schema (Networknt API) - Handled as a critical application task.
         JsonSchema schema;
-        try (InputStream is = JsonSchemaValidator.class.getResourceAsStream(schemaPath)) { // Use Class.getResourceAsStream()
-            if (is == null) {
+        try (InputStream inputStream = JsonSchemaValidator.class.getResourceAsStream(schemaPath)) { // Use Class.getResourceAsStream()
+            if (inputStream == null) {
                 String errorMsg = String.format("JSON Schema file not found at path: %s", schemaPath);
                 LOGGER.error(errorMsg);
                 throw new RuntimeException(errorMsg);
             }
-            
+            LOGGER.info("Successfully loaded JSON Schema resource from path: {}. Size (bytes): {}", 
+                 schemaPath, inputStream.available());
             JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012);
-            schema = factory.getSchema(is);
+            schema = factory.getSchema(inputStream);
             
         } catch (RuntimeException e) {
             // Rethrow critical application errors (e.g., IO, schema loading failure)

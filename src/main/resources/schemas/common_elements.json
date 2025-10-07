@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bonitasoft-process-builder.com/defs.schema.json",
+  "$id": "defs.schema.json",
   "title": "Process Builder Common Definitions",
   "$defs": {
         "ActionSchema": {
