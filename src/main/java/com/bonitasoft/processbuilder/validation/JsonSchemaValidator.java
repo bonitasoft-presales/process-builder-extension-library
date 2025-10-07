@@ -23,7 +23,7 @@ public class JsonSchemaValidator {
     
     // ObjectMapper is made private and final for thread safety, but the static method 
     // must instantiate its own or receive one. We will instantiate it locally.
-    private final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * Loads a JSON schema from the resources folder and validates the input JSON string against it.
@@ -35,11 +35,7 @@ public class JsonSchemaValidator {
      */
     public static boolean isJsonValid(String schemaPath, String jsonInput) throws ValidationException {
         
-        // INSTANTIATION FOR STATIC CONTEXT:
-        // A new instance is created to access non-static members like getResourceAsStream() 
-        // and the ObjectMapper instance (if it were a field).
-        // Since getResourceAsStream is common, we use the class loader directly.
-        final ObjectMapper localMapper = new ObjectMapper(); 
+        // final ObjectMapper localMapper = new ObjectMapper(); 
         
         // 1. Load the Schema (Networknt API) - Handled as a critical application task.
         JsonSchema schema;
@@ -63,7 +59,7 @@ public class JsonSchemaValidator {
 
         // 2. Validate the Input (Handling Business Validation Errors)
         try {
-            JsonNode jsonNode = localMapper.readTree(jsonInput); // Use local ObjectMapper
+            JsonNode jsonNode = mapper.readTree(jsonInput); 
             
             Set<ValidationMessage> validationMessages = schema.validate(jsonNode);
             
@@ -89,5 +85,61 @@ public class JsonSchemaValidator {
             LOGGER.error("Failed to parse the input JSON string. Input: {}", jsonInput, e);
             throw new RuntimeException("Failed to parse the input JSON string. Ensure it is valid JSON.", e);
         }
+    }
+
+    /**
+     * Validates a JSON string against the specific schema associated with the provided ProcessOptionType.
+     * @param optionType The string instance (e.g., STEPS, etc.).
+     * @param jsonInput The JSON content to validate, expected as a Map/Object from the process context.
+     * @return {@code true} if validation is successful and the schema check passes, {@code false} otherwise.
+     */
+    public static boolean isJsonValidForType(String optionType, Object jsonInput) 
+    {
+        final String SCHEMA_BASE_PATH = "/schemas/";
+        String jsonStringForValidation = null;
+
+        // This check is redundant if the calling code already handles null/empty/non-valid input string,
+        // but it's kept here as a defensive measure against null enum instance if called incorrectly.
+        if (optionType == null || jsonInput == null ) {
+             LOGGER.warn("Validation skipped. OptionType or JSON input object is null.");
+             return false;
+        }
+        
+        try {
+            jsonStringForValidation = mapper.writeValueAsString(jsonInput);
+            
+            if (jsonStringForValidation.trim().isEmpty()) {
+                LOGGER.warn("Validation skipped. JSON input is empty after serialization.");
+                return false;
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("CRITICAL error: Failed to serialize input Map to JSON string for validation.", e);
+            return false;
+        }
+
+        // Convert enum name to lowercase to form the file path (e.g., "steps.json").
+        String schemaFileName = optionType.toLowerCase() + ".json";
+        String fullSchemaPath = SCHEMA_BASE_PATH + schemaFileName;
+
+        LOGGER.info("Starting JSON validation for Type '{}' using schema: {}", optionType, fullSchemaPath);
+        
+        try {
+            JsonSchemaValidator.isJsonValid(fullSchemaPath, jsonStringForValidation);
+            
+            LOGGER.info("Schema validation successful for Type: {}", optionType);
+            return true;
+            
+        } catch (ValidationException e) {
+            // Catches validation failures (structural errors in JSON based on schema rules)
+            LOGGER.warn("Schema validation failed for Type {}. Details: {}", optionType, e.getMessage());
+            // The method should return false in case of validation failure
+            return false; 
+        } catch (RuntimeException e) {
+            // Catches critical errors (e.g., Schema file not found, critical IO/Parsing failure)
+            LOGGER.error("CRITICAL application error during schema processing for Type {}.", optionType, e);
+            // The method should return false in case of critical application errors
+            return false;
+        } 
     }
 }

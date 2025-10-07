@@ -1,5 +1,7 @@
 package com.bonitasoft.processbuilder.enums;
 
+import com.bonitasoft.processbuilder.validation.JsonSchemaValidator;
+
 /**
  * Defines the valid option types for the object management process.
  * <p>
@@ -29,6 +31,17 @@ public enum ObjectsManagementOptionType {
         } catch (IllegalArgumentException e) {
             return false;
         }
+    }
+
+    /**
+     * Validates a JSON string against the specific schema associated with the provided ProcessOptionType.
+     * @param optionType The string instance (e.g., STEPS, etc.).
+     * @param jsonInput The JSON content to validate, expected as a Map/Object from the process context.
+     * @return {@code true} if validation is successful and the schema check passes, {@code false} otherwise.
+     */
+    public static boolean isJsonValidForType(String optionType, Object jsonInput) 
+    {
+        return JsonSchemaValidator.isJsonValidForType(optionType, jsonInput);
     }
 }
 

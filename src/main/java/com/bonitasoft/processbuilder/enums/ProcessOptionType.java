@@ -63,43 +63,12 @@ public enum ProcessOptionType {
 
     /**
      * Validates a JSON string against the specific schema associated with the provided ProcessOptionType.
-     * @param optionType The string instance (e.g., STEPS, CATEGORY, etc.).
-     * @param jsonInput The raw JSON content to validate.
+     * @param optionType The string instance (e.g., STEPS, etc.).
+     * @param jsonInput The JSON content to validate, expected as a Map/Object from the process context.
      * @return {@code true} if validation is successful and the schema check passes, {@code false} otherwise.
      */
-    public static boolean isJsonValidForType(String optionType, String jsonInput) 
+    public static boolean isJsonValidForType(String optionType, Object jsonInput) 
     {
-        final String SCHEMA_BASE_PATH = "/schemas/";
-        
-        // This check is redundant if the calling code already handles null/empty/non-valid input string,
-        // but it's kept here as a defensive measure against null enum instance if called incorrectly.
-        if (optionType == null || jsonInput == null || jsonInput.trim().isEmpty()) {
-             LOGGER.warn("Validation skipped. OptionType is null or JSON input is empty.");
-             return false;
-        }
-        
-        // Convert enum name to lowercase to form the file path (e.g., "steps.json").
-        String schemaFileName = optionType.toLowerCase() + ".json";
-        String fullSchemaPath = SCHEMA_BASE_PATH + schemaFileName;
-
-        LOGGER.info("Starting JSON validation for Type '{}' using schema: {}", optionType, fullSchemaPath);
-        
-        try {
-            JsonSchemaValidator.isJsonValid(fullSchemaPath, jsonInput);
-            
-            LOGGER.info("Schema validation successful for Type: {}", optionType);
-            return true;
-            
-        } catch (ValidationException e) {
-            // Catches validation failures (structural errors in JSON based on schema rules)
-            LOGGER.warn("Schema validation failed for Type {}. Details: {}", optionType, e.getMessage());
-            // The method should return false in case of validation failure
-            return false; 
-        } catch (RuntimeException e) {
-            // Catches critical errors (e.g., Schema file not found, critical IO/Parsing failure)
-            LOGGER.error("CRITICAL application error during schema processing for Type {}.", optionType, e);
-            // The method should return false in case of critical application errors
-            return false;
-        } 
+        return JsonSchemaValidator.isJsonValidForType(optionType, jsonInput);
     }
 }
