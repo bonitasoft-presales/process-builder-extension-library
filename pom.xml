@@ -10,7 +10,7 @@
     <url>https://bonitasoft-presales.github.io/process-builder-extension-library/summary.html</url>
     <description>This common library centralizes reusable classes, enums, constants, and methods for Bonita projects. It provides extended functionality for use in actor filters, connectors, REST API extensions, and process diagrams, aiming to improve code reuse and consistency across the development environment.</description>
 
-    
+
     <properties>
         <!-- Maven -->
         <java.version>17</java.version>
@@ -113,7 +113,7 @@
             <version>1.3.1</version> 
         </dependency>
     </dependencies>
-    
+
     <build>
     	<defaultGoal>package</defaultGoal>
         <resources>
@@ -255,9 +255,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <version>${maven-site-plugin.version}</version>
-                
+
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
@@ -279,7 +279,7 @@
                     </reportSet>
                 </reportSets>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -321,9 +321,9 @@
                         </reports>
                     </reportSet>
                 </reportSets>
-                
+
             </plugin>
-            
+
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
