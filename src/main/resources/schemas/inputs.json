@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bonitasoft-process-builder.com/inputs.schema.json",
+  "title": "Inputs",
+  "description": "Schema for defining initial process configuration inputs.",
+  "type": "object",
+  "properties": {
+    "optionTypeInput": { 
+      "$ref": "#/$defs/ProcessOptionTypeSchema",
+      "const": "INPUTS"
+    },
+    "actionTypeInput": { 
+      "$ref": "#/$defs/ActionTypeSchema",
+      "const": "UPDATE"
+    },      
+    "processInput": {
+        "type": "object",
+        "allOf": [
+            { "$ref": "common_elements.json#/$defs/ObjectInputBaseSchema" }
+        ],
+        "additionalProperties": false 
+    }
+  },
+  "required": [
+    "optionTypeInput",
+    "actionTypeInput",
+    "processInput"
+  ]
+}

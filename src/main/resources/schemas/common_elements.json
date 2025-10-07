@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bonitasoft-process-builder.com/defs.schema.json",
+  "title": "Process Builder Common Definitions",
+  "$defs": {
+        "ActionSchema": {
+        "type": "object",
+        "properties": {
+            "actionType": { "type": "string" },
+            "added": { "type": "boolean" },
+            "content": { 
+            "type": "array",
+            "items": {} 
+            }
+        },
+        "required": [
+            "actionType",
+            "added",
+            "content"
+        ],
+        "description": "Defines a single action (form, notification, redirection) within a step."
+        },
+        
+        "StepSchema": {
+        "type": "object",
+        "properties": {
+            "name": { "type": "string" },
+            "ref": { "type": "string" },
+            "description": { "type": "string" },
+            "index": { "type": "integer" },
+            "actions": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/ActionSchema" } 
+            }
+        },
+        "required": [
+            "name",
+            "ref",
+            "description",
+            "index",
+            "actions"
+        ],
+        "description": "Defines the structure for a single process step."
+        }, 
+
+        "ProcessOptionTypeSchema": {
+            "type": "string",
+            "description": "Defines the specific entity type being managed in the process configuration.",
+            "enum": [
+                "PARAMETER",
+                "USERS",
+                "INPUTS",
+                "STEPS",
+                "STATUS"
+            ]
+        },
+
+        "ObjectOptionTypeSchema": {
+            "type": "string",
+            "description": "Defines the specific entity type being managed in the object configuration.",
+            "enum": [
+                "CATEGORY"
+            ]
+        },
+
+        "ActionTypeSchema": {
+            "type": "string",
+            "description": "Defines the type of persistence operation (CRUD) to be performed on the database on the business object..",
+            "enum": [
+                "INSERT",
+                "UPDATE",
+                "DELETE"
+            ]
+        }, 
+
+        "ObjectInputBaseSchema": {
+            "type": "object",
+            "properties": {
+            "persistenceId_string": { 
+                "type": "string",
+                "description": "Unique database ID of the object record." 
+            }
+            },
+            "required": ["persistenceId_string"],
+            "additionalProperties": false 
+        }
+    }
+}
