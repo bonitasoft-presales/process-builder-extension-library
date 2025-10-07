@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bonitasoft-process-builder.com/users.schema.json",
-  "title": "Users",
-  "description": "Schema for defining initial process configuration users.",
+  "$id": "https://bonitasoft-process-builder.com/category.schema.json",
+  "title": "Category",
+  "description": "Schema for defining object configuration category.",
   "type": "object",
   "properties": {
     "optionTypeInput": { 

@@ -63,11 +63,11 @@ public enum ProcessOptionType {
 
     /**
      * Validates a JSON string against the specific schema associated with the provided ProcessOptionType.
-     * * @param optionType The ProcessOptionType enum instance (e.g., STEPS).
+     * @param optionType The string instance (e.g., STEPS, CATEGORY, etc.).
      * @param jsonInput The raw JSON content to validate.
      * @return {@code true} if validation is successful and the schema check passes, {@code false} otherwise.
      */
-    public static boolean isJsonValidForType(ProcessOptionType optionType, String jsonInput) 
+    public static boolean isJsonValidForType(String optionType, String jsonInput) 
     {
         final String SCHEMA_BASE_PATH = "/schemas/";
         
@@ -79,7 +79,7 @@ public enum ProcessOptionType {
         }
         
         // Convert enum name to lowercase to form the file path (e.g., "steps.json").
-        String schemaFileName = optionType.name().toLowerCase() + ".json";
+        String schemaFileName = optionType.toLowerCase() + ".json";
         String fullSchemaPath = SCHEMA_BASE_PATH + schemaFileName;
 
         LOGGER.info("Starting JSON validation for Type '{}' using schema: {}", optionType, fullSchemaPath);
