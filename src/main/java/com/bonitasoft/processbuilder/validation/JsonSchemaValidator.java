@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
 import java.util.Set;
 
 /**
@@ -47,8 +49,14 @@ public class JsonSchemaValidator {
             }
             LOGGER.info("Successfully loaded JSON Schema resource from path: {}. Size (bytes): {}", 
                  schemaPath, inputStream.available());
+
+            String schemaContent = null;
+            try (Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8.name())) {
+                schemaContent = scanner.useDelimiter("\\A").next();
+            }     
+
             JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012);
-            schema = factory.getSchema(inputStream);
+            schema = factory.getSchema(schemaContent);
             
         } catch (RuntimeException e) {
             // Rethrow critical application errors (e.g., IO, schema loading failure)
