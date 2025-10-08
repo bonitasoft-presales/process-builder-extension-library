@@ -49,7 +49,7 @@ public class JsonSchemaValidator {
             }
             LOGGER.info("Successfully loaded JSON Schema resource from path: {}. Size (bytes): {}", 
                  schemaPath, inputStream.available());
-
+            
             String schemaContent = null;
             try (Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8.name())) {
                 schemaContent = scanner.useDelimiter("\\A").next();

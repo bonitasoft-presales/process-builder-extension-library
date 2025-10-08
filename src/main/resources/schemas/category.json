@@ -4,7 +4,7 @@
     "description": "Schema for defining object configuration category.",
     "type": "object",
     "allOf": [
-        { "$ref": "common_elements.json#/$defs/ObjectInputBaseSchema" },
+        { "$ref": "/schemas/common_elements.json#/$defs/ObjectInputBaseSchema" },
         {
             "properties": {
                 "fullName": {
