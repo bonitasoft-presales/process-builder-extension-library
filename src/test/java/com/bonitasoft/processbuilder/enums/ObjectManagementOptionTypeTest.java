@@ -17,10 +17,11 @@ class ObjectsManagementOptionTypeTest {
      * constant is named correctly.
      */
     @Test
-    void enum_should_have_only_one_constant() {
-        // Then the enum should have only one constant
-        assertEquals(1, ObjectsManagementOptionType.values().length);
+    void enum_should_have_only_two_constant() {
+        // Then the enum should have only two constant
+        assertEquals(2, ObjectsManagementOptionType.values().length);
         assertEquals("CATEGORY", ObjectsManagementOptionType.CATEGORY.name());
+        assertEquals("SMTP", ObjectsManagementOptionType.SMTP.name());
     }
 
     /**
