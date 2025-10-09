@@ -1,0 +1,126 @@
+openapi: 3.1.0
+info:
+  title: Process Builder API Schemas
+  version: '1.0.0'
+  description: Define la estructura de datos para la configuración de procesos.
+
+components:
+  schemas:
+    # ----------------------------------------------------------------------
+    # DEFINICIONES COMUNES (Fragmentos de common_elements.json)
+    # ----------------------------------------------------------------------
+    ObjectInputBaseSchema:
+      title: Base Persistence Schema 
+      description: Propiedades base para objetos persistentes.
+      type: object 
+      properties:
+        persistenceId_string:
+          type: string
+          description: Unique database ID of the object record.
+      required:
+        - persistenceId_string
+
+    CategorySpecificProperties:
+      title: Category Details
+      properties:
+        fullName:
+          type: string
+        fullDescription:
+          type: string
+        enabled:
+          type: boolean
+      required:
+        - fullName
+        - fullDescription
+        - enabled
+
+    Category:
+      title: Category Schema
+      description: Esquema final para la categoría.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'
+        - $ref: '#/components/schemas/CategorySpecificProperties'
+      
+      additionalProperties: false
+    
+    Inputs:
+      title: Inputs Schema
+      description: Esquema final para los usuarios.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'      
+      additionalProperties: true
+    
+    Status:
+      title: Status Schema
+      description: Esquema final para los estados.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'      
+      additionalProperties: true
+    
+    ActionSchema:
+      title: Action Schema
+      description: Defines a single action (form, notification, redirection) within a step.
+      type: object
+      properties:
+        actionType: { type: string }
+        added: { type: boolean }
+        content:
+          type: array
+          items: {}
+      required:
+        - actionType
+        - added
+        - content
+
+    StepSchema:
+      title: Step Schema
+      description: Defines the structure for a single process step.
+      type: object
+      properties:
+        name: { type: string }
+        ref: { type: string }
+        description: { type: string }
+        index: { type: integer }
+        actions:
+          type: array
+          items: 
+            $ref: '#/components/schemas/ActionSchema' 
+      required:
+        - name
+        - ref
+        - description
+        - index
+        - actions
+
+    StepsSpecificProperties:
+      title: Process Steps List
+      type: object
+      properties:
+        steps:
+          type: array
+          description: Array containing all process steps.
+          items: 
+            $ref: '#/components/schemas/StepSchema' 
+      required:
+        - steps
+      additionalProperties: false
+
+    Steps:
+      title: Steps Schema
+      description: Esquema final para los pasos.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'    
+        - $ref: '#/components/schemas/StepsSpecificProperties'   
+      additionalProperties: false
+    
+    Users:
+      title: Users Schema
+      description: Esquema final para los usuarios.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'      
+      additionalProperties: true

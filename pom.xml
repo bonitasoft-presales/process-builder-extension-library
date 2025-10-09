@@ -42,8 +42,8 @@
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
         <spotbugs-maven-plugin.version>4.9.4.1</spotbugs-maven-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
-        <com.networknt.json.schema.version>1.3.1</com.networknt.json.schema.version>
-        <org.json.version>20250517</org.json.version>
+        <com.github.fge.json.schema.version>2.2.6</com.github.fge.json.schema.version>
+        <com.google.guava.version>33.0.0-jre</com.google.guava.version>
     </properties>
 
     <dependencyManagement>
@@ -101,22 +101,37 @@
             <version>${logback-classic.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.github.everit-org.json-schema/org.everit.json.schema -->
         <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>${org.json.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
+            <groupId>com.github.fge</groupId>
             <artifactId>json-schema-validator</artifactId>
-            <version>${com.networknt.json.schema.version}</version> 
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>${com.github.fge.json.schema.version}</version> 
+            </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${com.google.guava.version}</version> 
         </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/io.swagger.parser.v3/swagger-parser-v3 -->
+        <dependency>
+            <groupId>io.swagger.parser.v3</groupId>
+            <artifactId>swagger-parser-v3</artifactId>
+            <version>2.1.18</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -362,13 +377,4 @@
             <url>https://maven.pkg.github.com/${github.owner}/${github.repo}</url>
         </repository>
     </distributionManagement>
- <!--<repositories>
-    <repository>
-        <id>central</id>
-        <url>https://repo.maven.apache.org/maven2</url>
-        <snapshots>
-            <enabled>false</enabled>
-        </snapshots>
-    </repository>
-    </repositories>-->
 </project>
