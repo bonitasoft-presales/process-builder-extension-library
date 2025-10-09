@@ -28,6 +28,7 @@ class JsonSchemaValidatorTest {
      */
     @Test
     void isJsonValidForType_should_return_true_for_valid_type_and_json_object() {
+        final String actionType = "UPDATE";
         // Given a valid optionType and valid JSON object (e.g., for CATEGORY)
         final String optionType = "CATEGORY";
         final Object validJsonObject = mapper.createObjectNode()  // Use ObjectNode for easy building
@@ -37,7 +38,7 @@ class JsonSchemaValidatorTest {
             .put("enabled", true);
 
         // When validating
-        boolean result = JsonSchemaValidator.isJsonValidForType(optionType, validJsonObject);
+        boolean result = JsonSchemaValidator.isJsonValidForType(actionType, optionType, validJsonObject);
         System.out.println("Validation result for CATEGORY: " + result);  // Debug print
         // Then it should return true (assuming schema validates it)
         assertTrue(result, "Expected true, but got false. Check schema file and references.");
@@ -51,13 +52,14 @@ class JsonSchemaValidatorTest {
      */
     @Test
     void isJsonValidForType_should_return_false_for_invalid_json_object() {
+        final String actionType = "UPDATE";
         // Given a valid optionType and invalid JSON object (missing required fields)
         final String optionType = "CATEGORY";
         final Object invalidJsonObject = mapper.createObjectNode()
             .put("persistenceId_string", "cat-001");  // Missing fullName, fullDescription, enabled
 
         // When validating
-        boolean result = JsonSchemaValidator.isJsonValidForType(optionType, invalidJsonObject);
+        boolean result = JsonSchemaValidator.isJsonValidForType(actionType, optionType, invalidJsonObject);
 
         // Then it should return false due to validation failure
         assertFalse(result);
@@ -70,18 +72,19 @@ class JsonSchemaValidatorTest {
     @Test
     void isJsonValidForType_should_return_false_for_null_inputs() {
         // Given null optionType and valid JSON object
+        final String actionType = "INSERT";
         final String nullOptionType = null;
         final Object validJsonObject = mapper.createObjectNode().put("name", "test");
 
-        boolean result1 = JsonSchemaValidator.isJsonValidForType(nullOptionType, validJsonObject);
+        boolean result1 = JsonSchemaValidator.isJsonValidForType(actionType, nullOptionType, validJsonObject);
         assertFalse(result1);
 
         // Given valid optionType and null JSON object
-        boolean result2 = JsonSchemaValidator.isJsonValidForType("CATEGORY", null);
+        boolean result2 = JsonSchemaValidator.isJsonValidForType(actionType, "CATEGORY", null);
         assertFalse(result2);
 
         // Given both null
-        boolean result3 = JsonSchemaValidator.isJsonValidForType(null, null);
+        boolean result3 = JsonSchemaValidator.isJsonValidForType(actionType, null, null);
         assertFalse(result3);
     }
 
@@ -91,12 +94,13 @@ class JsonSchemaValidatorTest {
      */
     @Test
     void isJsonValidForType_should_return_false_for_empty_json_object() {
+        final String actionType = "INSERT";
         // Given a valid optionType and empty JSON object
         final String optionType = "CATEGORY";
         final Object emptyJsonObject = mapper.createObjectNode();  // Empty node: {}
 
         // When validating
-        boolean result = JsonSchemaValidator.isJsonValidForType(optionType, emptyJsonObject);
+        boolean result = JsonSchemaValidator.isJsonValidForType(actionType, optionType, emptyJsonObject);
 
         // Then it should return false (empty after serialization)
         assertFalse(result, "Should fail because an empty object often fails required property checks.");
@@ -110,12 +114,13 @@ class JsonSchemaValidatorTest {
      */
     @Test
     void isJsonValidForType_should_return_false_for_missing_schema_file() {
+        final String actionType = "INSERT";
         // Given an optionType with no corresponding schema (e.g., "INVALIDTYPE.json" won't exist)
         final String optionType = "INVALIDTYPE";
         final Object jsonObject = mapper.createObjectNode().put("name", "test");
 
         // When validating
-        boolean result = JsonSchemaValidator.isJsonValidForType(optionType, jsonObject);
+        boolean result = JsonSchemaValidator.isJsonValidForType(actionType, optionType, jsonObject);
 
         // Then it should return false due to critical error (schema not found)
         assertFalse(result);

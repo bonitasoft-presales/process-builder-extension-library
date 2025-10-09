@@ -1,6 +1,7 @@
 package com.bonitasoft.processbuilder.validation;
 
 import com.bonitasoft.processbuilder.constants.SchemaConstants;
+import com.bonitasoft.processbuilder.enums.ActionType;
 import com.bonitasoft.processbuilder.extension.PBStringUtils;
 import com.bonitasoft.processbuilder.records.LoadedSchema;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,12 +33,15 @@ public class JsonSchemaValidator {
     /**
      * Validates an input object against the schema corresponding to the given option type name.
      * This method handles input serialization and delegates the core validation logic.
-     * * @param optionType The name of the schema to validate against (e.g., "Category", "Steps").
+     * @param actionType The action being performed (e.g., "DELETE", "INSERT").
+     * @param optionType The name of the schema to validate against (e.g., "Category", "Steps").
      * @param jsonInput The JSON content to validate (can be String, Map, or any serializable object).
      * @return {@code true} if validation is successful, {@code false} otherwise.
      */
-    public static boolean isJsonValidForType(String optionType, Object jsonInput) 
+    public static boolean isJsonValidForType(String actionType, String optionType, Object jsonInput) 
     {
+
+
         // 1. Basic Input Safety Checks
         if (optionType == null || jsonInput == null ) {
              LOGGER.warn("INPUT_ERROR: Validation skipped. OptionType or JSON input object is null.");
@@ -45,6 +49,9 @@ public class JsonSchemaValidator {
         }
 
         String targetSchemaName = PBStringUtils.normalizeTitleCase(optionType);
+        if (ActionType.DELETE.name().equalsIgnoreCase(actionType)) {
+             targetSchemaName = SchemaConstants.DELETE_BASE_SCHEMA;
+        }
         String jsonStringForValidation;
         
         try {

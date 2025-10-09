@@ -11,4 +11,9 @@ public class SchemaConstants {
 
     /** Prefijo usado en las referencias internas de los componentes del esquema. */
     public static final String SCHEMA_COMPONENTS_PREFIX = "#/components/schemas/";
+
+    /**
+     * The name of the base schema used for DELETE operations, which typically only requires an ID.
+     */
+    public static final String DELETE_BASE_SCHEMA = "ObjectInputBaseSchema";
 }

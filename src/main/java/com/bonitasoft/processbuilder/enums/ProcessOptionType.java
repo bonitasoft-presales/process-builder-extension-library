@@ -56,12 +56,13 @@ public enum ProcessOptionType {
 
     /**
      * Validates a JSON string against the specific schema associated with the provided ProcessOptionType.
+     * @param actionType The action being performed (e.g., "DELETE", "INSERT").
      * @param optionType The string instance (e.g., STEPS, etc.).
      * @param jsonInput The JSON content to validate, expected as a Map/Object from the process context.
      * @return {@code true} if validation is successful and the schema check passes, {@code false} otherwise.
      */
-    public static boolean isJsonValidForType(String optionType, Object jsonInput) 
+    public static boolean isJsonValidForType(String actionType, String optionType, Object jsonInput) 
     {
-        return JsonSchemaValidator.isJsonValidForType(optionType, jsonInput);
+        return JsonSchemaValidator.isJsonValidForType(actionType, optionType, jsonInput);
     }
 }
