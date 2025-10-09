@@ -12,6 +12,8 @@ import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchema;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 
+import io.swagger.v3.core.util.Json;
+import io.swagger.v3.core.util.Yaml;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.parser.OpenAPIV3Parser;
@@ -39,7 +41,7 @@ public class SchemaResolver {
 
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    
+
     // NOTE: Changed to getJsonSchema to adhere to user's specific request
     private static final JsonSchemaFactory SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
 
@@ -64,6 +66,9 @@ public class SchemaResolver {
      */
     public static LoadedSchema getValidatorSchema(String resourcePath, String targetSchemaName, String jsonInput) {
         try {
+            Yaml.mapper();
+            Json.mapper();
+
             // 1. Configure and Parse OpenAPI
             ParseOptions options = new ParseOptions();
             options.setResolve(true);
