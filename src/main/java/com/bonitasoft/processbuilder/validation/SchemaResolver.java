@@ -18,12 +18,9 @@ import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
@@ -45,6 +42,15 @@ public class SchemaResolver {
     
     // NOTE: Changed to getJsonSchema to adhere to user's specific request
     private static final JsonSchemaFactory SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
+
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     * All methods in this class are static and should be called directly on the class itself.
+     */
+    private SchemaResolver() {
+        throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
+    }
+
 
     /**
      * Loads the OpenAPI document, resolves dependencies, and prepares the JsonSchema validator 

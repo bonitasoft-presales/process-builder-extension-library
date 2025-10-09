@@ -3,7 +3,7 @@ package com.bonitasoft.processbuilder.constants;
 public class SchemaConstants {
     
     private SchemaConstants() {
-        throw new UnsupportedOperationException("This is a constants class and cannot be instantiated.");
+        throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
     }
 
     /** Path al archivo principal que contiene todas las definiciones OpenAPI/JSON Schemas. */

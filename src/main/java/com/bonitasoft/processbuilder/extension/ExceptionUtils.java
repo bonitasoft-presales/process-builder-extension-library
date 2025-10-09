@@ -1,5 +1,6 @@
 package com.bonitasoft.processbuilder.extension;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -21,7 +22,7 @@ public class ExceptionUtils {
      * All methods in this class are static and should be called directly on the class itself.
      */
     private ExceptionUtils() {
-        // This constructor is intentionally empty.
+        throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
     }
 
     /**
@@ -52,6 +53,42 @@ public class ExceptionUtils {
         
         // Throw the exception provided by the supplier. This ensures we're throwing a new,
         // explicitly defined exception instance.
+        // throw exceptionSupplier.get();
         throw exceptionSupplier.get();
+    }
+
+    /**
+     * Utility method to safely log an error message and subsequently throw a new
+     * exception instance containing that same formatted message.
+     *
+     * <p>This ensures that the exception thrown, even if generic (like RuntimeException),
+     * always contains the context provided in the 'format' string, which is crucial
+     * for troubleshooting in environments that might discard the original cause's details.</p>
+     *
+     * @param <T> The type of the Exception to be thrown, which must extend Exception.
+     * @param exceptionFunction A function that accepts the final formatted message
+     * (String) and returns a new exception of type T (e.g., {@code message -> new MyCustomException(message)}).
+     * @param format The format string for the error message (compatible with String.format).
+     * @param args Arguments referenced by the format specifiers in the format string.
+     * @throws T The exception created by the provided function.
+     */
+    public static <T extends Exception> void logAndThrowWithMessage(
+            Function<String, T> exceptionFunction, 
+            String format,
+            Object... args) throws T {
+            
+        // 1. EXPLICIT FORMATTING: Construct the complete, formatted error message string.
+        // This is done once to ensure consistency between the log and the exception.
+        String finalMessage = String.format(format, args);
+        
+        // 2. LOGGING: Log the error message using the fully formatted string.
+        // The LOGGER variable must be defined elsewhere (e.g., LOGGER = LoggerFactory.getLogger(YourClass.class)).
+        // Note: Use LOGGER.error, assuming the level is appropriately configured.
+        LOGGER.error(finalMessage);
+        
+        // 3. SECURE THROW: Use the function to create and throw the new exception instance,
+        // explicitly passing the 'finalMessage'. This guarantees the exception (T) 
+        // always contains the detailed error message, avoiding "No message" errors.
+        throw exceptionFunction.apply(finalMessage);
     }
 }

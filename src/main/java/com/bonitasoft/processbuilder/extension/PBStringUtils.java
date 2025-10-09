@@ -11,7 +11,7 @@ public final class PBStringUtils {
      * Private constructor to prevent instantiation of this utility class.
      */
     private PBStringUtils() {
-        throw new UnsupportedOperationException("This is a PBStringUtils class and cannot be instantiated.");
+        throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
     }
 
     // ----------------------------------------------------------------------

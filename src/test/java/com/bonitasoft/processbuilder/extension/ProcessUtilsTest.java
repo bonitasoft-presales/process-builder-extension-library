@@ -17,9 +17,12 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import com.bonitasoft.processbuilder.extension.ProcessUtils.ProcessInitiator;
+import com.bonitasoft.processbuilder.constants.Constants;
 import com.bonitasoft.processbuilder.enums.ActionType;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -353,18 +356,39 @@ class ProcessUtilsTest {
     // =========================================================================
     
     /**
-     * Tests that the utility class cannot be instantiated externally 
-     * and ensures 100% coverage of the private constructor by invoking it via Reflection.
+     * Tests the private constructor to ensure the utility class cannot be instantiated, 
+     * enforcing its static nature and achieving code coverage on the constructor.
      */
     @Test
-    void constructor_should_be_private_and_uninvokable() throws Exception {
-        // 1. Arrange: Get the private, no-argument constructor of the utility class.
-        final Constructor<ProcessUtils> constructor = ProcessUtils.class.getDeclaredConstructor();
+    void constructor_should_throw_unsupported_operation_exception() throws Exception {
+        // 1. Retrieve the Constructor object for the class.
+        Constructor<ProcessUtils> constructor = ProcessUtils.class.getDeclaredConstructor();
         
-        // 2. Act: Make the private constructor accessible to force its execution.
-        constructor.setAccessible(true); 
+        // 2. VERIFICATION: Use getModifiers() to ensure the constructor is PRIVATE.
+        // This confirms we are testing the correct, restricted constructor.
+        assertTrue(Modifier.isPrivate(constructor.getModifiers()), 
+                "The constructor must be declared as private to prevent instantiation.");
         
-        // 3. Assert (Invocation): Attempt to call the private constructor.
-        constructor.newInstance(); 
+        // 3. FORCE ACCESSIBILITY: Override the 'private' restriction for testing purposes.
+        // This is necessary for the newInstance() method to be invokable.
+        constructor.setAccessible(true);
+        
+        // 4. Invoke the constructor and expect the wrapper exception (InvocationTargetException).
+        InvocationTargetException thrownException = assertThrows(InvocationTargetException.class, () -> {
+            // The call must be 'newInstance()', which is the reflection invocation method.
+            constructor.newInstance();
+        }, "Invoking the private constructor should wrap the internal exception in InvocationTargetException.");
+        
+        // 5. Verify the actual cause is the expected exception (UnsupportedOperationException).
+        Throwable actualCause = thrownException.getCause();
+        assertTrue(actualCause instanceof UnsupportedOperationException, 
+                "The internal exception (cause) must be UnsupportedOperationException.");
+                
+        final String expectedMessage = "This is a "+this.getClass().getSimpleName().replace(Constants.TEST, "")+" class and cannot be instantiated.";
+        assertEquals(expectedMessage, actualCause.getMessage(),
+                    "The constructor's message should match the expected text.");
+        
+        // Optional: Revert the accessibility change after the test
+        constructor.setAccessible(false);
     }
 }

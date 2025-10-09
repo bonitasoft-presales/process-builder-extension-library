@@ -21,6 +21,15 @@ public class JsonSchemaValidator {
     private static final ObjectMapper MAPPER = new ObjectMapper();
    
     /**
+     * Private constructor to prevent instantiation of this utility class.
+     * All methods in this class are static and should be called directly on the class itself.
+     */
+    private JsonSchemaValidator() {
+        throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
+    }
+
+
+    /**
      * Validates an input object against the schema corresponding to the given option type name.
      * This method handles input serialization and delegates the core validation logic.
      * * @param optionType The name of the schema to validate against (e.g., "Category", "Steps").

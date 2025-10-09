@@ -33,7 +33,7 @@ public class ProcessUtils {
      * All methods in this class are static and should be called directly on the class itself.
      */
     private ProcessUtils() {
-        // This constructor is intentionally empty.
+        throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
     }
 
     /**
