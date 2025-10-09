@@ -13,7 +13,12 @@ public enum ObjectsManagementOptionType {
     /**
      * Represents a category object.
      */
-    CATEGORY;
+    CATEGORY, 
+    
+    /**
+     * Represents a smtp object.
+     */
+    SMTP;
 
     /**
      * Checks if a given string corresponds to a valid enum constant.
