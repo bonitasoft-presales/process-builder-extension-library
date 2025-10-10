@@ -74,10 +74,12 @@ public class SchemaResolver {
             options.setResolve(true);
             options.setResolveFully(true);
 
-            // Implementation strictly following the user's specific request for parsing calls.
-            // NOTE: The redundancy is necessary to comply with the prompt's instruction.
-            SwaggerParseResult result = new OpenAPIV3Parser().readContents(resourcePath);
-            OpenAPI openAPI = new OpenAPIV3Parser().read(resourcePath, null, options);
+            OpenAPIV3Parser parser = new OpenAPIV3Parser();
+            SwaggerParseResult result = parser.readLocation(resourcePath, null, options); 
+            OpenAPI openAPI = result.getOpenAPI();
+
+            //SwaggerParseResult result = new OpenAPIV3Parser().readContents(resourcePath);
+            //OpenAPI openAPI = new OpenAPIV3Parser().read(resourcePath, null, options);
             
             if (openAPI == null) {
                 // If the resolved object is null, log parsing messages for debugging.
