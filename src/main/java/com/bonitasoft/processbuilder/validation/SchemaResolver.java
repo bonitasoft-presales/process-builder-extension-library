@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map.Entry;
 
 public class SchemaResolver {
@@ -66,8 +67,8 @@ public class SchemaResolver {
      */
     public static LoadedSchema getValidatorSchema(String resourcePath, String targetSchemaName, String jsonInput) {
         try {
-            Yaml.mapper();
-            Json.mapper();
+            // Yaml.mapper();
+            // Json.mapper();
 
             // 1. Configure and Parse OpenAPI
             ParseOptions options = new ParseOptions();
@@ -78,6 +79,9 @@ public class SchemaResolver {
             SwaggerParseResult result = parser.readLocation(resourcePath, null, options); 
             OpenAPI openAPI = result.getOpenAPI();
 
+            
+            
+            //String content = new String(Files.readAllBytes(Paths.get(resourcePath)), StandardCharsets.UTF_8);
             //SwaggerParseResult result = new OpenAPIV3Parser().readContents(resourcePath);
             //OpenAPI openAPI = new OpenAPIV3Parser().read(resourcePath, null, options);
             
