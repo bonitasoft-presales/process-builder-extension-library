@@ -67,8 +67,6 @@ public class SchemaResolver {
      */
     public static LoadedSchema getValidatorSchema(String resourcePath, String targetSchemaName, String jsonInput) {
         try {
-            // Yaml.mapper();
-            // Json.mapper();
 
             // 1. Configure and Parse OpenAPI
             ParseOptions options = new ParseOptions();
@@ -78,12 +76,6 @@ public class SchemaResolver {
             OpenAPIV3Parser parser = new OpenAPIV3Parser();
             SwaggerParseResult result = parser.readLocation(resourcePath, null, options); 
             OpenAPI openAPI = result.getOpenAPI();
-
-            
-            
-            //String content = new String(Files.readAllBytes(Paths.get(resourcePath)), StandardCharsets.UTF_8);
-            //SwaggerParseResult result = new OpenAPIV3Parser().readContents(resourcePath);
-            //OpenAPI openAPI = new OpenAPIV3Parser().read(resourcePath, null, options);
             
             if (openAPI == null) {
                 // If the resolved object is null, log parsing messages for debugging.

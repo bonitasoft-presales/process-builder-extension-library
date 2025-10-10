@@ -2,17 +2,14 @@ openapi: 3.1.0
 info:
   title: Process Builder API Schemas
   version: '1.0.0'
-  description: Define la estructura de datos para la configuración de procesos.
+  description: Defines the data structure for process configuration.
 
 components:
   schemas:
-    # ----------------------------------------------------------------------
-    # DEFINICIONES COMUNES (Fragmentos de common_elements.json)
-    # ----------------------------------------------------------------------
     ObjectInputBaseSchema:
-      title: Base Persistence Schema 
-      description: Propiedades base para objetos persistentes.
-      type: object 
+      title: Base Persistence Schema
+      description: Base properties for persistent objects.
+      type: object
       properties:
         persistenceId_string:
           type: string
@@ -34,32 +31,41 @@ components:
         - fullDescription
         - enabled
 
-    Category:
-      title: Category Schema
-      description: Esquema final para la categoría.
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/ObjectInputBaseSchema'
-        - $ref: '#/components/schemas/CategorySpecificProperties'
-      
-      additionalProperties: false
-    
-    Inputs:
-      title: Inputs Schema
-      description: Esquema final para los usuarios.
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/ObjectInputBaseSchema'      
-      additionalProperties: true
-    
-    Status:
-      title: Status Schema
-      description: Esquema final para los estados.
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/ObjectInputBaseSchema'      
-      additionalProperties: true
-    
+    ParameterSpecificProperties:
+      title: Parameter Details
+      properties:
+        fullName:
+          type: string
+        fullDescription:
+          type: string
+        version:
+          type: string
+        criticality:
+          type: string
+        token:
+          type: string
+        displayName:
+          type: string
+        documentsFolder:
+          type: string
+        cancellationDelay:
+          type: integer
+        category:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/ObjectInputBaseSchema'
+      required:
+        - fullName
+        - fullDescription
+        - enabled
+        - version
+        - criticality
+        - token
+        - displayName
+        - documentsFolder
+        - cancellationDelay
+        - category
+
     ActionSchema:
       title: Action Schema
       description: Defines a single action (form, notification, redirection) within a step.
@@ -82,12 +88,12 @@ components:
       properties:
         name: { type: string }
         ref: { type: string }
-        description: { type: string }
+        description: { type: string, description: "Detailed description of the process step." }
         index: { type: integer }
         actions:
           type: array
-          items: 
-            $ref: '#/components/schemas/ActionSchema' 
+          items:
+            $ref: '#/components/schemas/ActionSchema'
       required:
         - name
         - ref
@@ -102,25 +108,59 @@ components:
         steps:
           type: array
           description: Array containing all process steps.
-          items: 
-            $ref: '#/components/schemas/StepSchema' 
+          items:
+            $ref: '#/components/schemas/StepSchema'
       required:
         - steps
       additionalProperties: false
 
+    Category:
+      title: Category Schema
+      description: Final schema structure for a category.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'
+        - $ref: '#/components/schemas/CategorySpecificProperties'
+      additionalProperties: false
+
+    Parameter:
+      title: Parameter Schema
+      description: Final schema structure for parameters.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'
+        - $ref: '#/components/schemas/ParameterSpecificProperties'
+      additionalProperties: false
+
+    Inputs:
+      title: Inputs Schema
+      description: Final schema structure for the process inputs.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'
+      additionalProperties: true
+
+    Status:
+      title: Status Schema
+      description: Final schema structure for statuses.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'
+      additionalProperties: true
+
     Steps:
       title: Steps Schema
-      description: Esquema final para los pasos.
+      description: Final schema structure for the steps collection.
       type: object
       allOf:
-        - $ref: '#/components/schemas/ObjectInputBaseSchema'    
-        - $ref: '#/components/schemas/StepsSpecificProperties'   
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'
+        - $ref: '#/components/schemas/StepsSpecificProperties'
       additionalProperties: false
-    
+
     Users:
       title: Users Schema
-      description: Esquema final para los usuarios.
+      description: Final schema structure for users.
       type: object
       allOf:
-        - $ref: '#/components/schemas/ObjectInputBaseSchema'      
+        - $ref: '#/components/schemas/ObjectInputBaseSchema'
       additionalProperties: true
