@@ -42,12 +42,16 @@
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
         <spotbugs-maven-plugin.version>4.9.4.1</spotbugs-maven-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+
+        <!-- Specials -->
         <com.github.fge.json.schema.version>2.2.6</com.github.fge.json.schema.version>
         <com.google.guava.version>33.0.0-jre</com.google.guava.version>
         <swagger-parser-v3.version>2.1.18</swagger-parser-v3.version>
         <com.fasterxml.jackson.version>2.15.2</com.fasterxml.jackson.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <commons-io.version>2.17.0</commons-io.version>
+
+        <openapi-generator-maven-plugin.version>7.2.0</openapi-generator-maven-plugin.version> 
     </properties>
 
     <dependencyManagement>
@@ -346,13 +350,48 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <version>${maven-site-plugin.version}</version>
-
+                <configuration>
+                    <skin>
+                        <groupId>org.apache.maven.skins</groupId>
+                        <artifactId>maven-fluido-skin</artifactId>
+                        <version>1.11.2</version>
+                    </skin>
+                </configuration>
             </plugin>
+
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
                 <version>${maven-project-info-reports-plugin.version}</version>
+            </plugin>
+             <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-schema-doc</id>
+                        <phase>pre-site</phase> 
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <generatorName>html</generatorName> 
+                            <inputSpec>${project.basedir}/src/main/resources/schemas/openapi.yaml</inputSpec>
+                            <output>${project.build.directory}/site/schema-doc</output>
+                            
+                            <generateApis>false</generateApis>
+                            <generateModels>true</generateModels> 
+                            <generateModelDocumentation>true</generateModelDocumentation>
+                            
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiTests>false</generateApiTests>
+                            <skipValidateSpec>true</skipValidateSpec> 
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
