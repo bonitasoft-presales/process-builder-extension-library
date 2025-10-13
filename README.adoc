@@ -193,3 +193,4 @@ Once your work is complete, submit a pull request to the develop branch. Please 
   * **Project Site Homepage**: https://bonitasoft-presales.github.io/process-builder-extension-library/
   * **Javadoc API Documentation**: https://bonitasoft-presales.github.io/process-builder-extension-library/apidocs/index.html
   * **JaCoCo Code Coverage Report**: https://bonitasoft-presales.github.io/process-builder-extension-library/jacoco/index.html
+  * **Json Schema Report**: https://bonitasoft-presales.github.io/process-builder-extension-library/schema-doc/index.html

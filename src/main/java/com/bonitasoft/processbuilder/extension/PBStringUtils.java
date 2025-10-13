@@ -3,15 +3,23 @@ package com.bonitasoft.processbuilder.extension;
 /**
  * Utility class providing common String manipulation methods, focusing on
  * normalization and case formatting.
- * * This class cannot be instantiated.
+ * <p>
+ * This class is designed to be non-instantiable and should only be accessed
+ * via static methods.
+ * </p>
+ *
+ * @author [Your Name or Company Name]
+ * @since 1.0
  */
 public final class PBStringUtils {
 
     /**
      * Private constructor to prevent instantiation of this utility class.
+     *
+     * @throws UnsupportedOperationException always, to enforce the utility pattern.
      */
     private PBStringUtils() {
-        throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
+        throw new UnsupportedOperationException("This is a " + this.getClass().getSimpleName() + " class and cannot be instantiated.");
     }
 
     // ----------------------------------------------------------------------
@@ -21,14 +29,16 @@ public final class PBStringUtils {
     /**
      * Normalizes the input String to Title Case format: the first letter is 
      * capitalized, and all subsequent letters are lowercased.
-     * * This implementation is optimized to minimize intermediate String object creation.
-     * * Examples:
+     * <p>
+     * This implementation is optimized to minimize intermediate String object creation.
+     * </p>
      * <ul>
-     * <li>"CATEGORY" becomes "Category"</li>
-     * <li>"category" becomes "Category"</li>
-     * <li>"CaTegory" becomes "Category"</li>
-     * <li>null becomes null</li>
-     * <li>"" becomes ""</li>
+     * <li>{@code "CATEGORY"} becomes {@code "Category"}</li>
+     * <li>{@code "category"} becomes {@code "Category"}</li>
+     * <li>{@code "CaTegory"} becomes {@code "Category"}</li>
+     * <li>{@code null} remains {@code null}</li>
+     * <li>{@code ""} remains {@code ""}</li>
+     * <li>{@code "a"} becomes {@code "A"}</li>
      * </ul>
      * * @param str The string to normalize.
      * @return The string in Title Case, or the original string if null or empty.
@@ -40,12 +50,15 @@ public final class PBStringUtils {
             return str;
         }
         
+        // Handle single character case separately for clarity, though it works below
+        if (str.length() == 1) {
+            return str.toUpperCase();
+        }
+
         // 1. Get the first character, convert to uppercase.
-        // Using String.valueOf(char) is cleaner than substring(0, 1).toUpperCase().
         String firstChar = String.valueOf(str.charAt(0)).toUpperCase();
         
         // 2. Get the rest of the string and convert it to lowercase.
-        // This is where the optimization lies: we only lowercase the remaining fragment.
         String rest = str.substring(1).toLowerCase();
         
         // 3. Return the combined string.

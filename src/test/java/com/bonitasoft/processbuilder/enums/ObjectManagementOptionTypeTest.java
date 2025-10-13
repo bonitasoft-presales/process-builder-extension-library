@@ -1,89 +1,140 @@
 package com.bonitasoft.processbuilder.enums;
 
+import com.bonitasoft.processbuilder.validation.JsonSchemaValidator;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.mockito.MockedStatic;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the {@link ObjectsManagementOptionType} enumeration.
  * <p>
- * This class ensures that the enum constants are correctly defined and that the
- * {@code valueOf} method handles both valid and invalid input as expected.
+ * This class validates enum constants, the {@code isValid} logic, and ensures
+ * proper delegation to the mocked {@code JsonSchemaValidator} for schema validation.
  * </p>
  */
 class ObjectsManagementOptionTypeTest {
 
+    private MockedStatic<JsonSchemaValidator> mockedJsonValidator;
+
     /**
-     * Tests that the enum has the expected number of constants and that the
-     * constant is named correctly.
+     * Set up Mockito before each test to mock the static JsonSchemaValidator class.
+     * This is necessary to test the delegation logic in isJsonValidForType()
+     * without relying on the actual validator implementation.
      */
+    @BeforeEach
+    void setup() {
+        mockedJsonValidator = mockStatic(JsonSchemaValidator.class);
+    }
+
+    /**
+     * Tear down Mockito after each test to close the mock.
+     */
+    @AfterEach
+    void tearDown() {
+        mockedJsonValidator.close();
+    }
+
+    // -------------------------------------------------------------------------
+    // ENUM CONSTANTS & VALUEOF TESTS
+    // -------------------------------------------------------------------------
+
     @Test
+    @DisplayName("Should contain exactly two constants (CATEGORY and SMTP)")
     void enum_should_have_only_two_constant() {
-        // Then the enum should have only two constant
-        assertEquals(2, ObjectsManagementOptionType.values().length);
+        // Given & When: Get array of enum values
+        ObjectsManagementOptionType[] types = ObjectsManagementOptionType.values();
+
+        // Then the enum should have only two constant and their names must be correct
+        assertEquals(2, types.length, "The enum should contain exactly 2 constants.");
         assertEquals("CATEGORY", ObjectsManagementOptionType.CATEGORY.name());
         assertEquals("SMTP", ObjectsManagementOptionType.SMTP.name());
     }
 
-    /**
-     * Tests that the {@code valueOf} method returns the correct enum constant
-     * for a valid string name.
-     */
     @Test
+    @DisplayName("Should successfully return the correct constant for a valid name")
     void valueOf_should_return_correct_enum_constant() {
-        // Given a valid string
         String categoryName = "CATEGORY";
-
-        // When getting the enum constant by its name
         ObjectsManagementOptionType enumConstant = ObjectsManagementOptionType.valueOf(categoryName);
-
-        // Then the returned constant should be the CATEGORY enum
         assertEquals(ObjectsManagementOptionType.CATEGORY, enumConstant);
     }
 
-    /**
-     * Tests that the {@code valueOf} method throws an {@code IllegalArgumentException}
-     * when an invalid string name is provided.
-     */
     @Test
+    @DisplayName("Should throw IllegalArgumentException for an invalid constant name")
     void valueOf_should_throw_exception_for_invalid_constant() {
-        // Given an invalid string
         String invalidName = "INVALID_TYPE";
-
-        // When getting the enum constant by its name
-        // Then it should throw an IllegalArgumentException
         assertThrows(IllegalArgumentException.class, () -> {
             ObjectsManagementOptionType.valueOf(invalidName);
         });
     }
 
-    /**
-     * Tests the {@code isValid} method to ensure it correctly validates all
-     * possible input values, including valid, invalid, null, and empty strings.
-     */
+    // -------------------------------------------------------------------------
+    // ISVALID LOGIC TESTS
+    // -------------------------------------------------------------------------
+
     @Test
+    @DisplayName("isValid() should correctly validate various string inputs")
     void isValid_should_correctly_validate_input() {
-        // Test with a valid name
+        // Success cases (valid, case-insensitive, trimmed)
         assertTrue(ObjectsManagementOptionType.isValid("CATEGORY"));
-
-        // Test with a valid name in lowercase
-        assertTrue(ObjectsManagementOptionType.isValid("category"));
-
-        // Test with a valid name with extra spaces
+        assertTrue(ObjectsManagementOptionType.isValid("smtp"));
         assertTrue(ObjectsManagementOptionType.isValid("  CATEGORY  "));
-
-        // Test with a valid name in mixed case
         assertTrue(ObjectsManagementOptionType.isValid("CaTeGoRy"));
+        assertTrue(ObjectsManagementOptionType.isValid("sMtP"));
 
-        // Test with an invalid name
+        // Failure cases (invalid, null, empty, blank)
         assertFalse(ObjectsManagementOptionType.isValid("INVALID_TYPE"));
-
-        // Test with a null string
         assertFalse(ObjectsManagementOptionType.isValid(null));
-
-        // Test with an empty string
         assertFalse(ObjectsManagementOptionType.isValid(""));
-
-        // Test with a blank string
         assertFalse(ObjectsManagementOptionType.isValid(" "));
+        assertFalse(ObjectsManagementOptionType.isValid("\t")); // Test with tab
+    }
+
+    // -------------------------------------------------------------------------
+    // ISJSONVALIDFORTYPE DELEGATION TESTS (NEW COVERAGE)
+    // -------------------------------------------------------------------------
+
+    @Test
+    @DisplayName("isJsonValidForType should return TRUE when JsonSchemaValidator returns TRUE")
+    void isJsonValidForType_should_delegate_and_return_true() {
+        // Given mock parameters
+        String action = "INSERT";
+        String option = "CATEGORY";
+        Object json = new Object(); 
+
+        // When the static validator is called, mock it to return TRUE
+        mockedJsonValidator.when(() -> JsonSchemaValidator.isJsonValidForType(action, option, json))
+                           .thenReturn(true);
+
+        // Then the delegation method should also return TRUE
+        assertTrue(ObjectsManagementOptionType.isJsonValidForType(action, option, json), 
+                   "The method should return TRUE, delegating the successful result from the validator.");
+
+        // Verify the static method was called exactly once with the correct parameters
+        mockedJsonValidator.verify(() -> JsonSchemaValidator.isJsonValidForType(action, option, json), times(1));
+    }
+
+    @Test
+    @DisplayName("isJsonValidForType should return FALSE when JsonSchemaValidator returns FALSE")
+    void isJsonValidForType_should_delegate_and_return_false() {
+        // Given mock parameters
+        String action = "DELETE";
+        String option = "SMTP";
+        Object json = new Object();
+
+        // When the static validator is called, mock it to return FALSE
+        mockedJsonValidator.when(() -> JsonSchemaValidator.isJsonValidForType(action, option, json))
+                           .thenReturn(false);
+
+        // Then the delegation method should also return FALSE
+        assertFalse(ObjectsManagementOptionType.isJsonValidForType(action, option, json),
+                    "The method should return FALSE, delegating the failed result from the validator.");
+
+        // Verify the static method was called exactly once with the correct parameters
+        mockedJsonValidator.verify(() -> JsonSchemaValidator.isJsonValidForType(action, option, json), times(1));
     }
 }

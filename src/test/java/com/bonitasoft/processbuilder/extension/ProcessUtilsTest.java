@@ -8,6 +8,7 @@ import org.bonitasoft.engine.bpm.process.ProcessInstanceNotFoundException;
 import org.bonitasoft.engine.identity.User;
 import org.bonitasoft.engine.identity.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -17,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import com.bonitasoft.processbuilder.extension.ProcessUtils.ProcessInitiator;
-import com.bonitasoft.processbuilder.constants.Constants;
 import com.bonitasoft.processbuilder.enums.ActionType;
 
 import java.lang.reflect.Constructor;
@@ -33,7 +33,8 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the {@link ProcessUtils} utility class, designed for maximum code coverage.
- * This class uses Mockito to isolate dependencies on Bonita APIs and static utility methods.
+ * This class uses Mockito to isolate dependencies on Bonita APIs and static utility methods
+ * (especially {@code ExceptionUtils}).
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -63,6 +64,8 @@ class ProcessUtilsTest {
     private static final String USER_NAME = "jdoe";
     private static final String OBJECT_TYPE = "TestObject";
     private static final long PERSISTENCE_ID = 50L;
+    private static final String FAKE_ERROR_MESSAGE = "Simulated ExceptionUtils error";
+
 
     /**
      * Mock class representing a BDM object for search/validation tests.
@@ -88,7 +91,6 @@ class ProcessUtilsTest {
         when(user.getUserName()).thenReturn(USER_NAME);
 
         // General BDM stubbing (Happy Path)
-        // Stub the search function to return a mock object for any ID, used as the default behavior.
         when(searchFunction.apply(anyLong())).thenReturn(new MockBDM(PERSISTENCE_ID));
     }
 
@@ -96,10 +98,8 @@ class ProcessUtilsTest {
     // SECTION 1: getProcessInitiator TESTS
     // =========================================================================
 
-    /**
-     * Tests the successful retrieval of the process initiator.
-     */
     @Test
+    @DisplayName("Should successfully retrieve the process initiator details")
     void getProcessInitiator_should_return_valid_initiator_on_success() {
         // When
         ProcessInitiator result = ProcessUtils.getProcessInitiator(apiAccessor, PROCESS_INSTANCE_ID);
@@ -111,10 +111,8 @@ class ProcessUtilsTest {
         assertEquals(FIRST_NAME + " " + LAST_NAME, result.fullName());
     }
 
-    /**
-     * Tests the graceful handling of a UserNotFoundException (covers UserNotFoundException catch branch).
-     */
     @Test
+    @DisplayName("Should return 'unknown_user' on UserNotFoundException")
     void getProcessInitiator_should_return_unknown_user_on_UserNotFoundException() throws Exception {
         // Given
         when(identityAPI.getUser(anyLong())).thenThrow(new UserNotFoundException("User not found"));
@@ -128,10 +126,8 @@ class ProcessUtilsTest {
         assertEquals("unknown_user", result.userName());
     }
 
-    /**
-     * Tests the graceful handling of a ProcessInstanceNotFoundException (covers general Exception catch branch).
-     */
     @Test
+    @DisplayName("Should return 'unknown_user' on ProcessInstanceNotFoundException (general exception path)")
     void getProcessInitiator_should_return_unknown_user_on_ProcessInstanceNotFoundException() throws Exception {
         // Given
         when(processApi.getProcessInstance(anyLong())).thenThrow(new ProcessInstanceNotFoundException("Process instance not found"));
@@ -145,12 +141,10 @@ class ProcessUtilsTest {
         assertEquals("unknown_user", result.userName());
     }
 
-    /**
-     * Tests the graceful handling of any other unexpected exception (covers general Exception catch branch).
-     */
     @Test
+    @DisplayName("Should return 'unknown_user' on any other unexpected API exception")
     void getProcessInitiator_should_return_unknown_user_on_any_other_exception() throws Exception {
-        // Given: Simulate an error deep inside the logic (e.g., getting startedBy fails)
+        // Given: Simulate an error deep inside the logic 
         when(processInstance.getStartedBy()).thenThrow(new RuntimeException("Unexpected API error"));
 
         // When
@@ -163,13 +157,11 @@ class ProcessUtilsTest {
     }
 
     // =========================================================================
-    // SECTION 2: searchAndValidateId TESTS (Covers String ID parsing and internal validation)
+    // SECTION 2: searchAndValidateId TESTS
     // =========================================================================
 
-    /**
-     * Tests successful retrieval when a valid ID string is passed.
-     */
     @Test
+    @DisplayName("searchAndValidateId should return object on valid ID string")
     void searchAndValidateId_should_return_object_on_valid_id() {
         // Given
         MockBDM expectedObject = new MockBDM(PERSISTENCE_ID);
@@ -184,10 +176,8 @@ class ProcessUtilsTest {
         verify(searchFunction, times(1)).apply(PERSISTENCE_ID);
     }
     
-    /**
-     * Tests returning null when the ID string is null (covers if condition false).
-     */
     @Test
+    @DisplayName("searchAndValidateId should return null on null ID string")
     void searchAndValidateId_should_return_null_on_null_id_string() {
         // When
         MockBDM result = ProcessUtils.searchAndValidateId(null, searchFunction, OBJECT_TYPE);
@@ -197,10 +187,8 @@ class ProcessUtilsTest {
         verify(searchFunction, never()).apply(anyLong());
     }
     
-    /**
-     * Tests returning null when the ID string is empty (covers if condition false).
-     */
     @Test
+    @DisplayName("searchAndValidateId should return null on empty ID string")
     void searchAndValidateId_should_return_null_on_empty_id_string() {
         // When
         MockBDM result = ProcessUtils.searchAndValidateId("", searchFunction, OBJECT_TYPE);
@@ -210,46 +198,46 @@ class ProcessUtilsTest {
         verify(searchFunction, never()).apply(anyLong());
     }
 
-    /**
-     * Tests the error path when the ID string is not a valid number (covers NumberFormatException catch branch).
-     */
     @Test
+    @DisplayName("searchAndValidateId should throw exception on invalid ID format (NumberFormatException)")
     void searchAndValidateId_should_throw_runtime_exception_on_invalid_id_format() {
         // Use Mockito to simulate the behavior of ExceptionUtils.logAndThrow
         try (MockedStatic<ExceptionUtils> mocked = mockStatic(ExceptionUtils.class)) {
-            // FIX: Set the static mock to THROW a RuntimeException when called, fulfilling assertThrows.
+            // Setup the mock to THROW a RuntimeException when called, fulfilling assertThrows.
             mocked.when(() -> ExceptionUtils.logAndThrow(any(), anyString()))
-                  .thenThrow(new RuntimeException("Simulated Format Error"));
+                  .thenThrow(new RuntimeException(FAKE_ERROR_MESSAGE));
             
             // When / Then: RuntimeException must be thrown due to NumberFormatException
-            assertThrows(RuntimeException.class, () -> {
+            RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
                 ProcessUtils.searchAndValidateId("abc", searchFunction, OBJECT_TYPE);
             });
-            // Verify that the custom logging/throwing method was called
+
+            // Verify the mock was called
             mocked.verify(() -> ExceptionUtils.logAndThrow(any(), anyString()), times(1));
+            assertEquals(FAKE_ERROR_MESSAGE, thrown.getMessage());
         }
     }
 
-    /**
-     * Tests the error path when the object is not found (covers the internal searchAndValidate error path).
-     */
     @Test
+    @DisplayName("searchAndValidateId should throw exception if object not found (internal searchAndValidate error)")
     void searchAndValidateId_should_throw_runtime_exception_if_object_not_found() {
         // Given: The search function returns null
         when(searchFunction.apply(PERSISTENCE_ID)).thenReturn(null);
 
         // Use Mockito to simulate the behavior of ExceptionUtils.logAndThrow
         try (MockedStatic<ExceptionUtils> mocked = mockStatic(ExceptionUtils.class)) {
-            // FIX: Set the static mock to THROW a RuntimeException when called, fulfilling assertThrows.
+            // Setup the mock to THROW a RuntimeException when called, fulfilling assertThrows.
             mocked.when(() -> ExceptionUtils.logAndThrow(any(), anyString()))
-                  .thenThrow(new RuntimeException("Simulated Object Not Found Error"));
+                  .thenThrow(new RuntimeException(FAKE_ERROR_MESSAGE));
 
             // When / Then: RuntimeException must be thrown due to object not found
-            assertThrows(RuntimeException.class, () -> {
+            RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
                 ProcessUtils.searchAndValidateId(String.valueOf(PERSISTENCE_ID), searchFunction, OBJECT_TYPE);
             });
-            // Verify that the custom logging/throwing method was called
+
+            // Verify the mock was called
             mocked.verify(() -> ExceptionUtils.logAndThrow(any(), anyString()), times(1));
+            assertEquals(FAKE_ERROR_MESSAGE, thrown.getMessage());
         }
     }
     
@@ -257,10 +245,8 @@ class ProcessUtilsTest {
     // SECTION 3: validateActionAndDelete TESTS
     // =========================================================================
 
-    /**
-     * Tests successful validation for a DELETE action when the BDM object is found.
-     */
     @Test
+    @DisplayName("validateActionAndDelete should return object on DELETE action if found")
     void validateActionAndDelete_should_return_object_on_delete_if_found() {
         // Given
         MockBDM bdmObject = new MockBDM(PERSISTENCE_ID);
@@ -277,19 +263,17 @@ class ProcessUtilsTest {
         assertSame(bdmObject, result);
     }
     
-    /**
-     * Tests the error path for a DELETE action when the BDM object is NOT found (null).
-     */
     @Test
+    @DisplayName("validateActionAndDelete should throw exception on DELETE action if not found")
     void validateActionAndDelete_should_throw_exception_on_delete_if_not_found() {
         // Use Mockito to simulate the behavior of ExceptionUtils.logAndThrow
         try (MockedStatic<ExceptionUtils> mocked = mockStatic(ExceptionUtils.class)) {
-            // FIX: Set the static mock to THROW a RuntimeException when called, fulfilling assertThrows.
+            // Setup the mock to THROW a RuntimeException when called, fulfilling assertThrows.
             mocked.when(() -> ExceptionUtils.logAndThrow(any(), anyString()))
-                  .thenThrow(new RuntimeException("Simulated Deletion Not Found Error"));
+                  .thenThrow(new RuntimeException(FAKE_ERROR_MESSAGE));
 
             // When / Then: RuntimeException must be thrown
-            assertThrows(RuntimeException.class, () -> {
+            RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
                 ProcessUtils.validateActionAndDelete(
                         null, // Object is null (not found)
                         ActionType.DELETE.name(), 
@@ -297,20 +281,19 @@ class ProcessUtilsTest {
                         OBJECT_TYPE
                 );
             });
-            // Verify that the custom logging/throwing method was called
+            // Verify the mock was called
             mocked.verify(() -> ExceptionUtils.logAndThrow(any(), anyString()), times(1));
+            assertEquals(FAKE_ERROR_MESSAGE, thrown.getMessage());
         }
     }
 
-    /**
-     * Tests the case where the action is NOT DELETE, so it returns null and bypasses validation.
-     */
     @Test
+    @DisplayName("validateActionAndDelete should return null on non-DELETE action (INSERT/UPDATE/null)")
     void validateActionAndDelete_should_return_null_on_non_delete_action() {
         // Given
         MockBDM bdmObject = new MockBDM(PERSISTENCE_ID);
         
-        // When: Action is "INSERT" (any non-DELETE action)
+        // When: Action is "INSERT"
         MockBDM resultCreate = ProcessUtils.validateActionAndDelete(
                 bdmObject, 
                 ActionType.INSERT.name(), 
@@ -331,10 +314,8 @@ class ProcessUtilsTest {
         assertNull(resultNullAction);
     }
     
-    /**
-     * Tests the case where the action is DELETE but in lowercase/mixed case (covers equalsIgnoreCase).
-     */
     @Test
+    @DisplayName("validateActionAndDelete should handle mixed case 'DELETE' action")
     void validateActionAndDelete_should_work_with_mixed_case_delete_action() {
         // Given
         MockBDM bdmObject = new MockBDM(PERSISTENCE_ID);
@@ -355,36 +336,31 @@ class ProcessUtilsTest {
     // SECTION 4: Private Constructor Coverage
     // =========================================================================
     
-    /**
-     * Tests the private constructor to ensure the utility class cannot be instantiated, 
-     * enforcing its static nature and achieving code coverage on the constructor.
-     */
     @Test
+    @DisplayName("Constructor should throw UnsupportedOperationException")
     void constructor_should_throw_unsupported_operation_exception() throws Exception {
         // 1. Retrieve the Constructor object for the class.
         Constructor<ProcessUtils> constructor = ProcessUtils.class.getDeclaredConstructor();
         
-        // 2. VERIFICATION: Use getModifiers() to ensure the constructor is PRIVATE.
-        // This confirms we are testing the correct, restricted constructor.
+        // 2. VERIFICATION: Ensure the constructor is PRIVATE.
         assertTrue(Modifier.isPrivate(constructor.getModifiers()), 
-                "The constructor must be declared as private to prevent instantiation.");
+                "The constructor must be private.");
         
-        // 3. FORCE ACCESSIBILITY: Override the 'private' restriction for testing purposes.
-        // This is necessary for the newInstance() method to be invokable.
+        // 3. FORCE ACCESSIBILITY: Override the 'private' restriction for testing.
         constructor.setAccessible(true);
         
         // 4. Invoke the constructor and expect the wrapper exception (InvocationTargetException).
         InvocationTargetException thrownException = assertThrows(InvocationTargetException.class, () -> {
-            // The call must be 'newInstance()', which is the reflection invocation method.
             constructor.newInstance();
-        }, "Invoking the private constructor should wrap the internal exception in InvocationTargetException.");
+        }, "Invoking the private constructor should wrap the internal exception.");
         
-        // 5. Verify the actual cause is the expected exception (UnsupportedOperationException).
+        // 5. Verify the actual cause is the expected exception.
         Throwable actualCause = thrownException.getCause();
         assertTrue(actualCause instanceof UnsupportedOperationException, 
                 "The internal exception (cause) must be UnsupportedOperationException.");
                 
-        final String expectedMessage = "This is a "+this.getClass().getSimpleName().replace(Constants.TEST, "")+" class and cannot be instantiated.";
+        final String expectedMessage = "This is a ProcessUtils class and cannot be instantiated.";
+        // Note: The original test used a complex String replace that is not necessary here.
         assertEquals(expectedMessage, actualCause.getMessage(),
                     "The constructor's message should match the expected text.");
         

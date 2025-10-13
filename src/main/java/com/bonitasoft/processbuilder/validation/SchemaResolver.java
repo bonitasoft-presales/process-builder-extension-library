@@ -36,19 +36,35 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map.Entry;
 
-public class SchemaResolver {
+/**
+ * Utility class responsible for loading, resolving, and validating JSON data against 
+ * OpenAPI (Swagger) schema definitions.
+ * <p>
+ * This class handles file parsing, recursive reference resolution, schema extraction,
+ * and detailed logging of validation reports. It is non-instantiable.
+ * </p>
+ * @author [Your Name or Company Name]
+ * @since 1.0
+ */
+public final class SchemaResolver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SchemaResolver.class);
 
+    /**
+     * ObjectMapper for JSON serialization and deserialization, configured to ignore null fields.
+     */
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-    // NOTE: Changed to getJsonSchema to adhere to user's specific request
+    /**
+     * Factory instance used to create the final JsonSchema validator (from fge/json-schema-validator).
+     */
     private static final JsonSchemaFactory SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
 
     /**
      * Private constructor to prevent instantiation of this utility class.
      * All methods in this class are static and should be called directly on the class itself.
+     * @throws UnsupportedOperationException always, to enforce the utility pattern.
      */
     private SchemaResolver() {
         throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
@@ -56,14 +72,14 @@ public class SchemaResolver {
 
 
     /**
-     * Loads the OpenAPI document, resolves dependencies, and prepares the JsonSchema validator 
-     * for a specific target schema.
+     * Loads the OpenAPI document from a resource, resolves dependencies, and prepares the 
+     * {@link JsonSchema} validator for a specific target schema.
      *
      * @param resourcePath The path to the OpenAPI resource (e.g., "schemas/openapi.yaml").
-     * @param targetSchemaName The name of the schema to extract (e.g., "Category").
+     * @param targetSchemaName The name of the schema to extract from the components section (e.g., "Category").
      * @param jsonInput The raw JSON input string (stored in LoadedSchema).
-     * @return A LoadedSchema record containing the validator, titles map, and input.
-     * @throws RuntimeException If reading, parsing, or schema resolution fails.
+     * @return A {@link LoadedSchema} record containing the validator, titles map, and input.
+     * @throws RuntimeException If reading, parsing, schema resolution, or serialization fails.
      */
     public static LoadedSchema getValidatorSchema(String resourcePath, String targetSchemaName, String jsonInput) {
         try {
@@ -73,6 +89,7 @@ public class SchemaResolver {
             options.setResolve(true);
             options.setResolveFully(true);
 
+            // Using new OpenAPIV3Parser() inside the method for test isolation (can be mocked statically)
             OpenAPIV3Parser parser = new OpenAPIV3Parser();
             SwaggerParseResult result = parser.readLocation(resourcePath, null, options); 
             OpenAPI openAPI = result.getOpenAPI();
@@ -104,11 +121,10 @@ public class SchemaResolver {
             String schemaJson = JSON_MAPPER.writeValueAsString(targetSchema);
             JsonNode schemaJsonNode = parseJson(schemaJson);
 
-            // Clean $schema and create fge Validator (using getJsonSchema as requested)
+            // Clean $schema and create fge Validator
             if (schemaJsonNode.isObject()) {
                 ((ObjectNode) schemaJsonNode).remove("$schema");
             }
-            // Implementation strictly following the user's specific request
             JsonSchema validator = SCHEMA_FACTORY.getJsonSchema(schemaJsonNode);        
             
             return new LoadedSchema(validator, componentTitles, targetSchemaName, jsonInput);
@@ -125,8 +141,11 @@ public class SchemaResolver {
     }
 
     /**
-     * Creates a map associating the allOf pointer (/allOf/N) with the original component's title.
-     * (Uses Streams for optimization.)
+     * Creates a map associating the allOf pointer (/allOf/N) with the original component's title 
+     * for enhanced error reporting.
+     *
+     * @param targetSchema The schema being validated, containing the 'allOf' structure.
+     * @return A map where the key is the JSON pointer (e.g., "/allOf/0") and the value is the component name/title.
      */
     private static Map<String, String> createComponentTitleMap(Schema<?> targetSchema) {
     
@@ -142,6 +161,7 @@ public class SchemaResolver {
                     String refString = refSchema.get$ref();
                     String title = refSchema.getTitle(); 
 
+                    // Logic to determine the final, user-friendly title
                     String finalTitle = title != null ? title : 
                                         (refString != null && refString.startsWith(SchemaConstants.SCHEMA_COMPONENTS_PREFIX)) 
                                         ? refString.substring(SchemaConstants.SCHEMA_COMPONENTS_PREFIX.length()) 
@@ -155,6 +175,9 @@ public class SchemaResolver {
 
     /**
      * Parses a JSON string into a Jackson JsonNode.
+     * * @param json The JSON string to parse.
+     * @return The resulting {@link JsonNode}.
+     * @throws RuntimeException if the JSON string is malformed.
      */
     public static JsonNode parseJson(String json) {
         try {
@@ -167,9 +190,9 @@ public class SchemaResolver {
 
 
     /**
-     * Performs JSON validation, logging the outcome and detailed errors.
-     * (Uses the optimized stream pattern for logging.)
-     * * @param loadedSchema The record containing the validator, titles, and input JSON.
+     * Performs JSON validation against the loaded schema, logging the outcome and detailed errors.
+     *
+     * @param loadedSchema The record containing the validator, titles map, and input JSON.
      * @return {@code true} if validation is successful, {@code false} otherwise.
      */
 	public static boolean isJsonValid(LoadedSchema loadedSchema) {
@@ -190,7 +213,7 @@ public class SchemaResolver {
                 
                 LOGGER.warn("VALIDATION_FAILED: Failed for {} payload. Reporting detailed errors...", loadedSchema.targetSchemaName());
                 
-                // Log all specific, translated errors using the optimized stream method
+                // Log all specific, translated errors 
                 SchemaResolver.printRelevantValidationErrors(jsonReport, loadedSchema.titles());
                 
                 return false;
@@ -201,7 +224,7 @@ public class SchemaResolver {
             return true;
 
         } catch (Exception e) {
-            // Catches critical errors during validation (e.g., malformed schema definition itself)
+            // Catches critical errors during validation (e.g., malformed schema definition itself or JSON parsing failure)
             LOGGER.error("FATAL_ERROR: Schema processing failed during validation for {}.", loadedSchema.targetSchemaName(), e);
             return false;
         }
@@ -210,7 +233,9 @@ public class SchemaResolver {
 
     /**
      * Logs the relevant validation errors (ERROR/FATAL) by descending into the 'allOf' structure.
-     * (Uses the optimized stream pattern for fast logging.)
+     *
+     * @param report The processing report containing validation errors.
+     * @param componentTitles Map of internal pointer names to user-friendly component names.
      */
     public static void printRelevantValidationErrors(ProcessingReport report, Map<String, String> componentTitles) {
         

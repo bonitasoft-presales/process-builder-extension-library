@@ -1,30 +1,55 @@
 package com.bonitasoft.processbuilder.enums;
 
+import com.bonitasoft.processbuilder.validation.JsonSchemaValidator;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.mockito.MockedStatic;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the {@link ProcessOptionType} enumeration.
  * <p>
- * This class validates that the enum contains all expected constants and that
- * the {@code valueOf} method works as expected for both valid and invalid inputs.
+ * This class validates enum constants, the {@code isValid} logic, and ensures
+ * proper delegation to the {@code JsonSchemaValidator} for schema validation.
  * </p>
  */
 class ProcessOptionTypeTest {
 
-    /**
-     * Tests that the enum contains the expected number of constants and that
-     * all specific constants are present.
-     */
-    @Test
-    void enum_should_contain_all_expected_constants() {
-        // Given the array of enum values
-        ProcessOptionType[] types = ProcessOptionType.values();
+    private MockedStatic<JsonSchemaValidator> mockedJsonValidator;
 
-        // Then the enum should contain the expected number of constants
+    /**
+     * Set up Mockito before each test to mock the static JsonSchemaValidator class.
+     */
+    @BeforeEach
+    void setup() {
+        // Mocking static methods requires wrapping the class in MockedStatic
+        mockedJsonValidator = mockStatic(JsonSchemaValidator.class);
+    }
+
+    /**
+     * Tear down Mockito after each test to close the mock.
+     */
+    @AfterEach
+    void tearDown() {
+        // Must close the mock after use to avoid impacting other tests
+        mockedJsonValidator.close();
+    }
+
+    // -------------------------------------------------------------------------
+    // ENUM CONSTANTS & VALUEOF TESTS (Copied and retained from original)
+    // -------------------------------------------------------------------------
+
+    @Test
+    @DisplayName("Should contain exactly 5 expected enum constants")
+    void enum_should_contain_all_expected_constants() {
+        ProcessOptionType[] types = ProcessOptionType.values();
         assertEquals(5, types.length);
         
-        // And it should contain all specific constants
+        // Ensure all required constants exist
         assertTrue(containsEnum(types, "PARAMETER"));
         assertTrue(containsEnum(types, "USERS"));
         assertTrue(containsEnum(types, "INPUTS"));
@@ -32,44 +57,25 @@ class ProcessOptionTypeTest {
         assertTrue(containsEnum(types, "STATUS"));
     }
 
-    /**
-     * Tests that the {@code valueOf} method returns the correct enum constant
-     * for a valid string name.
-     */
     @Test
+    @DisplayName("Should successfully return the correct constant for a valid name")
     void valueOf_should_return_correct_enum_constant() {
-        // Given a valid string
         String usersName = "USERS";
-
-        // When getting the enum constant by its name
         ProcessOptionType enumConstant = ProcessOptionType.valueOf(usersName);
-
-        // Then the returned constant should be the USERS enum
         assertEquals(ProcessOptionType.USERS, enumConstant);
     }
     
-    /**
-     * Tests that the {@code valueOf} method throws an {@code IllegalArgumentException}
-     * when an invalid string name is provided.
-     */
     @Test
+    @DisplayName("Should throw IllegalArgumentException for an invalid constant name")
     void valueOf_should_throw_exception_for_invalid_constant() {
-        // Given an invalid string
         String invalidName = "INVALID_TYPE";
-
-        // When getting the enum constant by its name
-        // Then it should throw an IllegalArgumentException
         assertThrows(IllegalArgumentException.class, () -> {
             ProcessOptionType.valueOf(invalidName);
         });
     }
-    
+
     /**
      * Helper method to check if an array of enums contains a specific constant name.
-     *
-     * @param enums An array of {@link ProcessOptionType} enums.
-     * @param name The name of the enum constant to check for.
-     * @return {@code true} if the name exists in the enum array, otherwise {@code false}.
      */
     private boolean containsEnum(ProcessOptionType[] enums, String name) {
         for (ProcessOptionType e : enums) {
@@ -79,32 +85,63 @@ class ProcessOptionTypeTest {
         }
         return false;
     }
-    
-    /**
-     * Tests the {@code isValid} method to ensure it correctly validates all
-     * possible input values, including valid, invalid, null, and empty strings.
-     */
+
     @Test
+    @DisplayName("isValid() should correctly validate various string inputs")
     void isValid_should_correctly_validate_input() {
-        // Test with a valid name
+        // Success cases (valid, case-insensitive, trimmed)
         assertTrue(ProcessOptionType.isValid("USERS"));
-
-        // Test with a valid name in lowercase
         assertTrue(ProcessOptionType.isValid("users"));
-
-        // Test with a valid name with extra spaces
         assertTrue(ProcessOptionType.isValid("  USERS  "));
+        assertTrue(ProcessOptionType.isValid("parameter"));
+        assertTrue(ProcessOptionType.isValid("STATUS"));
 
-        // Test with an invalid name
+
+        // Failure cases (invalid, null, empty, blank)
         assertFalse(ProcessOptionType.isValid("INVALID_TYPE"));
-
-        // Test with a null string
         assertFalse(ProcessOptionType.isValid(null));
-
-        // Test with an empty string
         assertFalse(ProcessOptionType.isValid(""));
-
-        // Test with a blank string
         assertFalse(ProcessOptionType.isValid(" "));
+        assertFalse(ProcessOptionType.isValid("\t")); // Test with tab
+    }
+
+    @Test
+    @DisplayName("isJsonValidForType should return TRUE when JsonSchemaValidator returns TRUE")
+    void isJsonValidForType_should_delegate_and_return_true() {
+        // Given parameters
+        String action = "INSERT";
+        String option = "INPUTS";
+        Object json = new Object(); // Mock JSON object
+
+        // When JsonSchemaValidator is called, it should return TRUE
+        mockedJsonValidator.when(() -> JsonSchemaValidator.isJsonValidForType(action, option, json))
+                           .thenReturn(true);
+
+        // Then the delegation method should also return TRUE
+        assertTrue(ProcessOptionType.isJsonValidForType(action, option, json), 
+                   "The method should return TRUE, delegating the result from the validator.");
+
+        // Verify the static method was called exactly once with the correct parameters
+        mockedJsonValidator.verify(() -> JsonSchemaValidator.isJsonValidForType(action, option, json), times(1));
+    }
+
+    @Test
+    @DisplayName("isJsonValidForType should return FALSE when JsonSchemaValidator returns FALSE")
+    void isJsonValidForType_should_delegate_and_return_false() {
+        // Given parameters
+        String action = "DELETE";
+        String option = "STATUS";
+        Object json = new Object();
+
+        // When JsonSchemaValidator is called, it should return FALSE
+        mockedJsonValidator.when(() -> JsonSchemaValidator.isJsonValidForType(action, option, json))
+                           .thenReturn(false);
+
+        // Then the delegation method should also return FALSE
+        assertFalse(ProcessOptionType.isJsonValidForType(action, option, json),
+                    "The method should return FALSE, delegating the result from the validator.");
+
+        // Verify the static method was called exactly once with the correct parameters
+        mockedJsonValidator.verify(() -> JsonSchemaValidator.isJsonValidForType(action, option, json), times(1));
     }
 }

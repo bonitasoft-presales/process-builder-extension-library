@@ -19,9 +19,14 @@ import org.bonitasoft.engine.identity.UserNotFoundException;
 /**
  * Utility class providing common process and BDM (Business Data Model) operations.
  * This includes retrieving the process initiator and utility methods for BDM validation
- * and deletion handling.
+ * and deletion handling, specifically tailored for Bonita API interaction.
+ * <p>
+ * This class is non-instantiable and all methods are static.
+ * </p>
+ * * @author [Your Name or Company Name]
+ * @since 1.0
  */
-public class ProcessUtils {
+public final class ProcessUtils {
 
     /**
      * A logger for this class, used to record log messages and provide debugging information.
@@ -31,6 +36,7 @@ public class ProcessUtils {
     /**
      * Private constructor to prevent instantiation of this utility class.
      * All methods in this class are static and should be called directly on the class itself.
+     * * @throws UnsupportedOperationException always, to enforce the utility pattern.
      */
     private ProcessUtils() {
         throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
@@ -73,7 +79,7 @@ public class ProcessUtils {
     }
 
     /**
-     * A record representing the process initiator.
+     * A record representing the process initiator details.
      *
      * @param id The unique identifier of the user who initiated the process.
      * @param userName The username of the process initiator.
@@ -82,7 +88,7 @@ public class ProcessUtils {
     public record ProcessInitiator(Long id, String userName, String fullName) {}
 
 
-/**
+    /**
      * Searches for a BDM object by its persistence ID and validates its existence.
      * This method should be used internally after the persistence ID has been successfully converted to a Long.
      * * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
@@ -141,7 +147,7 @@ public class ProcessUtils {
         return bdmObject;
     }
 
-/**
+    /**
      * Searches for a BDM object by its persistence ID, handling the ID conversion from String to Long.
      * Validates that the object exists if the persistence ID is present.
      *
