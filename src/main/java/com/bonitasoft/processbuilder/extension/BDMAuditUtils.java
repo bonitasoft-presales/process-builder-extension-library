@@ -34,6 +34,8 @@ public class BDMAuditUtils {
 
     /**
      * Private constructor to prevent instantiation of this utility class.
+     *
+     * @throws UnsupportedOperationException always, to enforce the utility pattern.
      */
     private BDMAuditUtils() {
         throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");

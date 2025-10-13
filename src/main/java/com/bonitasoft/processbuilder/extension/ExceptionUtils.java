@@ -19,7 +19,8 @@ public class ExceptionUtils {
 
     /**
      * Private constructor to prevent instantiation of this utility class.
-     * All methods in this class are static and should be called directly on the class itself.
+     *
+     * @throws UnsupportedOperationException always, to enforce the utility pattern.
      */
     private ExceptionUtils() {
         throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
@@ -42,7 +43,7 @@ public class ExceptionUtils {
      * These objects correspond to the `{}` placeholders in the {@code format} string.
      * @throws T The exception instance provided by the {@code exceptionSupplier}.
      */
-    public static <T extends Exception> void logAndThrow(
+    public static <T extends Exception> T logAndThrow(
         Supplier<T> exceptionSupplier,
         String format,
         Object... args) throws T {

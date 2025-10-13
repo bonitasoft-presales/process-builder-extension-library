@@ -1,5 +1,6 @@
 package com.bonitasoft.processbuilder.extension;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -279,6 +280,36 @@ class BDMAuditUtilsTest {
         
         // Optional: Revert the accessibility change after the test
         constructor.setAccessible(false);
+    }
+
+    /**
+     * Test case to ensure the private constructor throws an
+     * {@link UnsupportedOperationException} when accessed via reflection,
+     * confirming that the utility class cannot be instantiated.
+     */
+    @Test
+    @DisplayName("Should throw UnsupportedOperationException on instantiation attempt")
+    void shouldThrowExceptionOnInstantiation() throws Exception { 
+        // 1. Get the private constructor using reflection
+        Constructor<BDMAuditUtils> constructor = BDMAuditUtils.class.getDeclaredConstructor();
+        
+        assertTrue(Modifier.isPrivate(constructor.getModifiers()), "Constructor must be private.");
+        
+        // 2. Make the constructor accessible (it's private)
+        constructor.setAccessible(true);
+
+        // 3. Assert that calling the constructor throws InvocationTargetException,
+        // which wraps the actual UnsupportedOperationException
+        InvocationTargetException thrown = assertThrows(InvocationTargetException.class, constructor::newInstance,
+                "The constructor call must throw an exception.");
+
+        // 4. Check the cause of the exception
+        assertEquals(UnsupportedOperationException.class, thrown.getCause().getClass(),
+                "The exception cause should be UnsupportedOperationException to enforce the utility pattern.");
+        
+        final String expectedMessage = "This is a BDMAuditUtils class and cannot be instantiated.";
+        assertTrue(thrown.getCause().getMessage().contains(expectedMessage.substring(10, 29)), 
+                   "The exception message should contain 'BDMAuditUtils class and cannot be instantiated.'");
     }
 
 }

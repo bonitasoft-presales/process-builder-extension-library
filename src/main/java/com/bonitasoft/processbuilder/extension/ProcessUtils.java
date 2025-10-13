@@ -4,8 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.bonitasoft.processbuilder.enums.ActionType;
-import com.bonitasoft.processbuilder.enums.ProcessOptionType;
-
 import java.util.function.Function;
 
 import org.bonitasoft.engine.api.APIAccessor;
@@ -23,7 +21,7 @@ import org.bonitasoft.engine.identity.UserNotFoundException;
  * <p>
  * This class is non-instantiable and all methods are static.
  * </p>
- * * @author [Your Name or Company Name]
+ * @author [Your Name or Company Name]
  * @since 1.0
  */
 public final class ProcessUtils {
@@ -101,7 +99,7 @@ public final class ProcessUtils {
     private static <T> T searchAndValidate(
             Long persistenceId, 
             Function<Long, T> searchFunction, 
-            String objectType) {
+            String objectType) throws RuntimeException {
 
         // Apply the search function
         T bdmObject = searchFunction.apply(persistenceId);
@@ -114,7 +112,7 @@ public final class ProcessUtils {
             );
             LOGGER.error(errorMessage);
             // Uses an external utility to log the error and throw the exception
-            ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
+            throw ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
         }
         
         return bdmObject;
@@ -130,7 +128,7 @@ public final class ProcessUtils {
      * @return The existing BDM object (T).
      * @throws RuntimeException if the object is null (not found for deletion).
      */
-    private static <T> T validateForDelete(T bdmObject, Long persistenceId, String objectType) {
+    private static <T> T validateForDelete(T bdmObject, Long persistenceId, String objectType) throws RuntimeException {
         
         if (bdmObject == null) {
             String errorMessage = String.format(
@@ -140,7 +138,7 @@ public final class ProcessUtils {
             );
             
             // Uses an external utility to log the error and throw the exception
-            ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
+            throw ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
         }
         
         LOGGER.info("Finished processing DELETE action for ID: {}", persistenceId);
@@ -161,7 +159,7 @@ public final class ProcessUtils {
     public static <T> T searchAndValidateId(
             String persistenceIdString, 
             Function<Long, T> searchFunction, 
-            String objectType) {
+            String objectType) throws RuntimeException  {
 
         Long persistenceId = null;
 
@@ -176,7 +174,7 @@ public final class ProcessUtils {
                     persistenceIdString
                 );
                 LOGGER.error(errorMessage, e);
-                ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
+                throw ExceptionUtils.logAndThrow(() -> new RuntimeException(errorMessage), errorMessage);
             }
             
             // Second: Search and validate the object's existence

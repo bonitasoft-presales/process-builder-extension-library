@@ -100,15 +100,22 @@ class ProcessOptionValidatorTest {
         assertFalse(ProcessOptionValidator.isMatchingActionAndOption(null, EXPECTED_OBJ_OPTION.name(), EXPECTED_ACTION, EXPECTED_OBJ_OPTION));
         // Empty optionType
         assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), "", EXPECTED_ACTION, EXPECTED_OBJ_OPTION));
+        // Empty actionType
+        assertFalse(ProcessOptionValidator.isMatchingActionAndOption("", EXPECTED_OBJ_OPTION.name(), EXPECTED_ACTION, EXPECTED_OBJ_OPTION));
+        // Null optionType
+        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), null, EXPECTED_ACTION, EXPECTED_OBJ_OPTION));
     }
     
     @Test
     @DisplayName("isMatchingActionAndOption(Obj) should return false on null expected enums")
     void isMatchingActionAndOption_Obj_should_return_false_on_null_expected_enums() {
-        // Null expectedActionType
-        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), EXPECTED_OBJ_OPTION.name(), null, EXPECTED_OBJ_OPTION));
-        // Null expectedOptionType
-        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), EXPECTED_OBJ_OPTION.name(), EXPECTED_ACTION, (ObjectsManagementOptionType) null));
+        // Null expectedActionType (NEW/FIXED TEST)
+        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), EXPECTED_OBJ_OPTION.name(), null, EXPECTED_OBJ_OPTION), 
+            "Should fail if expectedActionType is null.");
+            
+        // Null expectedOptionType (NEW/FIXED TEST)
+        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), EXPECTED_OBJ_OPTION.name(), EXPECTED_ACTION, (ObjectsManagementOptionType) null),
+            "Should fail if expectedOptionType is null.");
     }
 
 
@@ -167,14 +174,21 @@ class ProcessOptionValidatorTest {
         assertFalse(ProcessOptionValidator.isMatchingActionAndOption("", EXPECTED_PROCESS_OPTION.name(), EXPECTED_ACTION, EXPECTED_PROCESS_OPTION));
         // Null optionType
         assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), null, EXPECTED_ACTION, EXPECTED_PROCESS_OPTION));
+        // Null actionType
+        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(null, EXPECTED_PROCESS_OPTION.name(), EXPECTED_ACTION, EXPECTED_PROCESS_OPTION));
+        // Empty optionType
+        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), "", EXPECTED_ACTION, EXPECTED_PROCESS_OPTION));
     }
     
     @Test
     @DisplayName("isMatchingActionAndOption(Process) should return false on null expected enums")
     void isMatchingActionAndOption_Process_should_return_false_on_null_expected_enums() {
-        // Null expectedActionType
-        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), EXPECTED_PROCESS_OPTION.name(), null, EXPECTED_PROCESS_OPTION));
-        // Null expectedProcessOptionType
-        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), EXPECTED_PROCESS_OPTION.name(), EXPECTED_ACTION, (ObjectsManagementOptionType) null));
+        // Null expectedActionType (NEW/FIXED TEST)
+        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), EXPECTED_PROCESS_OPTION.name(), null, EXPECTED_PROCESS_OPTION),
+            "Should fail if expectedActionType is null.");
+            
+        // Null expectedProcessOptionType (NEW/FIXED TEST)
+        assertFalse(ProcessOptionValidator.isMatchingActionAndOption(EXPECTED_ACTION.name(), EXPECTED_PROCESS_OPTION.name(), EXPECTED_ACTION, (ProcessOptionType) null),
+            "Should fail if expectedProcessOptionType is null.");
     }
 }

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier; // Import necesario si el constructor es privado
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,9 +29,12 @@ class PBStringUtilsTest {
      */
     @Test
     @DisplayName("Should throw UnsupportedOperationException on instantiation attempt")
-    void shouldThrowExceptionOnInstantiation() throws NoSuchMethodException {
+    void shouldThrowExceptionOnInstantiation() throws Exception { 
         // 1. Get the private constructor using reflection
         Constructor<PBStringUtils> constructor = PBStringUtils.class.getDeclaredConstructor();
+        
+        assertTrue(Modifier.isPrivate(constructor.getModifiers()), "Constructor must be private.");
+        
         // 2. Make the constructor accessible (it's private)
         constructor.setAccessible(true);
 
@@ -42,6 +46,10 @@ class PBStringUtilsTest {
         // 4. Check the cause of the exception
         assertEquals(UnsupportedOperationException.class, thrown.getCause().getClass(),
                 "The exception cause should be UnsupportedOperationException to enforce the utility pattern.");
+        
+        final String expectedMessage = "This is a PBStringUtils class and cannot be instantiated.";
+        assertTrue(thrown.getCause().getMessage().contains(expectedMessage.substring(10, 29)), 
+                   "The exception message should contain 'PBStringUtils class and cannot be instantiated.'");
     }
 
     // -------------------------------------------------------------------------
@@ -79,21 +87,20 @@ class PBStringUtilsTest {
     }
 
     @Test
-    @DisplayName("normalizeTitleCase should handle single lowercase character input")
+    @DisplayName("normalizeTitleCase should handle single lowercase character input (Covers length == 1)")
     void normalizeTitleCase_should_handle_single_lowercase_char() {
         assertEquals("A", PBStringUtils.normalizeTitleCase("a"));
     }
 
     @Test
-    @DisplayName("normalizeTitleCase should handle single uppercase character input")
+    @DisplayName("normalizeTitleCase should handle single uppercase character input (Covers length == 1)")
     void normalizeTitleCase_should_handle_single_uppercase_char() {
         assertEquals("A", PBStringUtils.normalizeTitleCase("A"));
     }
 
     @Test
-    @DisplayName("normalizeTitleCase should handle multi-word inputs (only first word is Title Cased)")
+    @DisplayName("normalizeTitleCase should handle multi-word inputs (only first letter capitalized)")
     void normalizeTitleCase_should_handle_multi_word_input() {
-        // Note: This implementation only title cases the first letter of the entire string
         assertEquals("Vacation request", PBStringUtils.normalizeTitleCase("VACATION REQUEST"));
     }
 }

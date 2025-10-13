@@ -27,6 +27,7 @@ import org.mockito.quality.Strictness;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.List;
@@ -53,7 +54,7 @@ class SchemaResolverTest {
     private static final String BASE_SCHEMA_TITLE = "Base Persistence Schema";
     private static final String GENERIC_PROCESSING_FAILED_MESSAGE = "Schema processing failed.";
     
-    // Exact messages from SchemaResolver.java for assertion consistency
+    // Mensajes exactos del SchemaResolver.java
     private static final String MESSAGE_PARSE_NULL = "OpenAPI file failed to parse or could not be found.";
     private static final String MESSAGE_MISSING_COMPONENTS = "OpenAPI document loaded, but schema components are missing.";
     private static final String MESSAGE_IO_ERROR = "File I/O error during schema loading.";
@@ -89,9 +90,6 @@ class SchemaResolverTest {
     // SECTION 1: getValidatorSchema TESTS (Success & Failure Paths)
     // =========================================================================
 
-    /**
-     * Tests the successful flow of loading, resolving, serializing, and returning a LoadedSchema.
-     */
     @Test
     void getValidatorSchema_should_load_and_resolve_successfully() throws Exception {
         
@@ -122,7 +120,6 @@ class SchemaResolverTest {
                 // ASSERT
                 assertNotNull(loadedData, "LoadedSchema object must not be null.");
                 assertNotNull(loadedData.validator(), "JsonSchema validator must be successfully created.");
-                // Implicitly verifies that createComponentTitleMap was successfully executed 
                 assertEquals(2, loadedData.titles().size()); 
                 
                 // VERIFY
@@ -132,8 +129,27 @@ class SchemaResolverTest {
     }
 
     /**
-     * Tests the critical failure path when the OpenAPI file cannot be parsed (openAPI == null).
+     * Tests the failure path where OpenAPI object is null, but messages list is also null.
+     * (Cubre la línea 90: if (result.getMessages() != null && !result.getMessages().isEmpty()) es FALSO)
      */
+    @Test
+    @DisplayName("getValidatorSchema should throw exception when openAPI is null (with no parsing messages)")
+    void getValidatorSchema_should_throw_exception_when_openAPI_is_null_no_messages() throws Exception {
+        when(parseResult.getOpenAPI()).thenReturn(null);
+        // Messages is null, forcing the first 'if' check in the failure block to pass the condition check
+        when(parseResult.getMessages()).thenReturn(null); 
+
+        try (MockedConstruction<OpenAPIV3Parser> mockedParser = mockConstruction(OpenAPIV3Parser.class, 
+             (mock, context) -> when(mock.readLocation(anyString(), any(), any())).thenReturn(parseResult))) 
+        {
+            RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
+                SchemaResolver.getValidatorSchema(RESOURCE_PATH, TARGET_SCHEMA, DUMMY_JSON_INPUT);
+            });
+            assertEquals(MESSAGE_PARSE_NULL, thrown.getMessage(), 
+                "The exception message must exactly match the parser failure message.");
+        }
+    }
+
     @Test
     void getValidatorSchema_should_throw_exception_when_openAPI_is_null() throws Exception {
         when(parseResult.getOpenAPI()).thenReturn(null);
@@ -145,15 +161,11 @@ class SchemaResolverTest {
             RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
                 SchemaResolver.getValidatorSchema(RESOURCE_PATH, TARGET_SCHEMA, DUMMY_JSON_INPUT);
             });
-            // FIX: Use exact string comparison (assertEquals)
             assertEquals(MESSAGE_PARSE_NULL, thrown.getMessage(), 
                 "The exception message must exactly match the parser failure message.");
         }
     }
 
-    /**
-     * Tests the failure path when components or schemas section is missing from the loaded OpenAPI object.
-     */
     @Test
     void getValidatorSchema_should_throw_exception_when_schemas_are_missing() throws Exception {
         when(openAPI.getComponents()).thenReturn(null); 
@@ -164,15 +176,11 @@ class SchemaResolverTest {
             RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
                 SchemaResolver.getValidatorSchema(RESOURCE_PATH, TARGET_SCHEMA, DUMMY_JSON_INPUT);
             });
-            // FIX: Use exact string comparison (assertEquals)
             assertEquals(MESSAGE_MISSING_COMPONENTS, thrown.getMessage(),
                 "The exception message must exactly match the missing components message.");
         }
     }
 
-    /**
-     * Tests the failure path when the target schema name is not found in the components map.
-     */
     @Test
     void getValidatorSchema_should_throw_exception_when_target_schema_not_found() throws Exception {
         when(schemas.get(TARGET_SCHEMA)).thenReturn(null); 
@@ -183,35 +191,28 @@ class SchemaResolverTest {
             RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
                 SchemaResolver.getValidatorSchema(RESOURCE_PATH, TARGET_SCHEMA, DUMMY_JSON_INPUT);
             });
-            
-            // This case hits the final generic catch block in SchemaResolver.java
             assertEquals(GENERIC_PROCESSING_FAILED_MESSAGE, thrown.getMessage(), 
                 "The exception should be caught by the generic catch block and re-wrapped.");
         }
     }
 
-    /**
-     * Tests the failure path when an IOException (I/O error, file system error, or deep Jackson failure) occurs.
-     */
     @Test
     void getValidatorSchema_should_throw_runtime_exception_on_io_exception() throws Exception {
+        final IOException ioCause = new IOException("Simulated I/O Error");
         try (MockedConstruction<OpenAPIV3Parser> mockedParser = mockConstruction(OpenAPIV3Parser.class, 
-             (mock, context) -> when(mock.readLocation(anyString(), any(), any())).thenThrow(new IOException("Simulated I/O Error")))) 
+             (mock, context) -> when(mock.readLocation(anyString(), any(), any())).thenThrow(new RuntimeException(ioCause)))) 
         {
             RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
                 SchemaResolver.getValidatorSchema(RESOURCE_PATH, TARGET_SCHEMA, DUMMY_JSON_INPUT);
             });
-            // FIX: Use exact string comparison (assertEquals)
-            assertEquals(MESSAGE_IO_ERROR, thrown.getMessage(),
-                "The exception message must exactly match the outer RuntimeException catch block.");
-            assertTrue(thrown.getCause() instanceof IOException, 
-                "The cause of the exception should be the original IOException.");
+            
+            assertEquals(MESSAGE_IO_ERROR, thrown.getMessage(), "El mensaje debe coincidir con el error de I/O.");
+            
+            assertEquals(ioCause, thrown.getCause().getCause(), "La causa raíz debe ser la IOException simulada.");
+            
         }
     }
 
-    /**
-     * Tests the failure path when an unexpected Exception occurs during processing (e.g., deep internal serialization issue).
-     */
     @Test
     void getValidatorSchema_should_throw_runtime_exception_on_processing_failure() throws Exception {
         try (MockedConstruction<OpenAPIV3Parser> mockedParser = mockConstruction(OpenAPIV3Parser.class, 
@@ -235,6 +236,22 @@ class SchemaResolverTest {
         }
     }
 
+    @Test
+    @DisplayName("getValidatorSchema should throw exception on generic parsing failure")
+    void getValidatorSchema_should_throw_exception_on_generic_parsing_failure() throws Exception {
+        // Given: Force the parser to throw a non-IO-related Exception, hitting the second catch block.
+        try (MockedConstruction<OpenAPIV3Parser> mockedParser = mockConstruction(OpenAPIV3Parser.class,
+             (mock, context) -> when(mock.readLocation(anyString(), any(), any())).thenThrow(new IllegalStateException("Parsing library crashed")))) 
+        {
+            // ACT & ASSERT
+            RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
+                SchemaResolver.getValidatorSchema(RESOURCE_PATH, TARGET_SCHEMA, DUMMY_JSON_INPUT);
+            });
+            
+            assertEquals("OpenAPI parsing failed unexpectedly.", thrown.getMessage(),
+                "The exception message must match the generic parsing failure message.");
+        }
+    }
 
     // =========================================================================
     // SECTION 2: parseJson TESTS (Success & Failure)
@@ -359,6 +376,9 @@ class SchemaResolverTest {
     // SECTION 5: printRelevantValidationErrors TESTS (Complex Coverage)
     // =========================================================================
     
+    /**
+     * CUBRE: La rama 'else' final del 'if (allOf.equals(keyword) && errorJson.has("reports"))' (errores genéricos)
+     */
     @Test
     void printRelevantValidationErrors_should_handle_generic_error() {
         
@@ -366,10 +386,9 @@ class SchemaResolverTest {
         ProcessingMessage mockMessage = mock(ProcessingMessage.class);
         
         ObjectNode errorJson = JsonNodeFactory.instance.objectNode();
-        errorJson.put("keyword", "maxLength");
+        errorJson.put("keyword", "maxLength"); // No es "allOf"
         errorJson.put("message", "String too long");
         
-        // Fix type safety for spliterator
         List<ProcessingMessage> messages = Collections.singletonList(mockMessage);
         Spliterator<ProcessingMessage> messageSpliterator = Spliterators.spliterator(messages, Spliterator.ORDERED);
         when(mockReport.spliterator()).thenReturn(messageSpliterator);
@@ -382,6 +401,9 @@ class SchemaResolverTest {
         SchemaResolver.printRelevantValidationErrors(mockReport, Collections.emptyMap());
     }
     
+    /**
+     * CUBRE: La rama principal 'if (allOf.equals(keyword) && errorJson.has("reports"))' (Línea 47)
+     */
     @Test
     void printRelevantValidationErrors_should_handle_required_property_error() {
         
@@ -391,6 +413,7 @@ class SchemaResolverTest {
         // Build the nested JSON structure for a specific 'required' failure within 'allOf'
         ObjectNode allOfError = JsonNodeFactory.instance.objectNode();
         allOfError.put("keyword", "allOf");
+        allOfError.put("reports", JsonNodeFactory.instance.objectNode()); // Debe tener reports para no caer en el else
         
         ObjectNode requiredError = JsonNodeFactory.instance.objectNode();
         requiredError.put("keyword", "required");
@@ -400,10 +423,10 @@ class SchemaResolverTest {
         requiredError.set("schema", JsonNodeFactory.instance.objectNode().put("pointer", "/allOf/0"));
         
         ObjectNode reportsNode = JsonNodeFactory.instance.objectNode();
-        reportsNode.set("/allOf/0", JsonNodeFactory.instance.arrayNode().add(requiredError));
+        // CUBRE la rama if (reportNode.isArray())
+        reportsNode.set("/allOf/0", JsonNodeFactory.instance.arrayNode().add(requiredError)); 
         allOfError.set("reports", reportsNode);
         
-        // Fix type safety for spliterator
         List<ProcessingMessage> messages = Collections.singletonList(mockMessage);
         Spliterator<ProcessingMessage> messageSpliterator = Spliterators.spliterator(messages, Spliterator.ORDERED);
         when(mockReport.spliterator()).thenReturn(messageSpliterator);
@@ -414,5 +437,108 @@ class SchemaResolverTest {
         // ACT
         Map<String, String> titles = Map.of("/allOf/0", BASE_SCHEMA_TITLE);
         SchemaResolver.printRelevantValidationErrors(mockReport, titles);
+    }
+    
+    // =========================================================================
+    // SECTION 6: createComponentTitleMap COVERAGE (Reflection Tests)
+    // =========================================================================
+
+    @Test
+    @DisplayName("createComponentTitleMap should return empty map when allOf is null")
+    void createComponentTitleMap_should_return_empty_map_when_allOf_is_null() throws Exception {
+        // Given: targetSchema.getAllOf() returns null by default (from setup).
+        
+        // 1. Get the private method using Reflection
+        Method method = SchemaResolver.class.getDeclaredMethod("createComponentTitleMap", Schema.class);
+        method.setAccessible(true);
+        
+        // 2. ACT: Invoke the static method with targetSchema (which returns null for allOf)
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(null, targetSchema); 
+
+        // ASSERT: Should be an empty map.
+        assertTrue(result.isEmpty(), "Result map must be empty when allOf list is null.");
+    }
+    
+    @Test
+    @DisplayName("createComponentTitleMap should use Schema title if present")
+    void createComponentTitleMap_should_use_schema_title() throws Exception {
+        
+        final String expectedTitle = "MyCustomTitle";
+
+        // Given: Schema with a title (Cubre 'title != null')
+        Schema<?> titledSchema = mock(Schema.class);
+        when(titledSchema.getTitle()).thenReturn(expectedTitle);
+        when(titledSchema.get$ref()).thenReturn(SchemaConstants.SCHEMA_COMPONENTS_PREFIX + "IgnoredRef");
+
+        List<Schema> allOfList = List.of(titledSchema);
+        when(targetSchema.getAllOf()).thenReturn(allOfList);
+        
+        // 1. Get the private method using Reflection
+        Method method = SchemaResolver.class.getDeclaredMethod("createComponentTitleMap", Schema.class);
+        method.setAccessible(true);
+        
+        // 2. ACT: Invoke the static method
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(null, targetSchema); 
+
+        // ASSERT
+        assertEquals(1, result.size(), "Result map size must be 1.");
+        assertEquals(expectedTitle, result.get("/allOf/0"),
+            "Should use the schema's 'title' property.");
+    }
+
+    @Test
+    @DisplayName("createComponentTitleMap should use default title if ref is invalid")
+    void createComponentTitleMap_should_use_default_title_on_missing_ref() throws Exception {
+        
+        // Given: Schema with no title and an invalid $ref prefix (Cubre la rama 'else' final del ternario)
+        Schema<?> missingRefSchema = mock(Schema.class);
+        when(missingRefSchema.getTitle()).thenReturn(null);
+        when(missingRefSchema.get$ref()).thenReturn("/invalid/ref/path"); 
+
+        List<Schema> allOfList = List.of(missingRefSchema);
+        when(targetSchema.getAllOf()).thenReturn(allOfList);
+        
+        // 1. Get the private method using Reflection
+        Method method = SchemaResolver.class.getDeclaredMethod("createComponentTitleMap", Schema.class);
+        method.setAccessible(true);
+        
+        // 2. ACT: Invoke the static method
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(null, targetSchema); 
+
+        // ASSERT
+        assertEquals(1, result.size(), "Result map size must be 1.");
+        assertEquals("Inline Schema Component", result.get("/allOf/0"),
+            "Should default to 'Inline Schema Component' when ref is invalid or missing.");
+    }
+    
+    @Test
+    @DisplayName("createComponentTitleMap should use substring for valid ref without title")
+    void createComponentTitleMap_should_use_substring_on_valid_ref() throws Exception {
+        
+        final String refSegment = "MyObjectReference";
+
+        // Given: Schema with no title and a valid $ref prefix (Cubre la rama 'refString != null && refString.startsWith(...)')
+        Schema<?> validRefSchema = mock(Schema.class);
+        when(validRefSchema.getTitle()).thenReturn(null);
+        when(validRefSchema.get$ref()).thenReturn(SchemaConstants.SCHEMA_COMPONENTS_PREFIX + refSegment); 
+
+        List<Schema> allOfList = List.of(validRefSchema);
+        when(targetSchema.getAllOf()).thenReturn(allOfList);
+        
+        // 1. Get the private method using Reflection
+        Method method = SchemaResolver.class.getDeclaredMethod("createComponentTitleMap", Schema.class);
+        method.setAccessible(true);
+        
+        // 2. ACT: Invoke the static method
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(null, targetSchema); 
+
+        // ASSERT: Debe usar el segmento después del prefijo
+        assertEquals(1, result.size(), "Result map size must be 1.");
+        assertEquals(refSegment, result.get("/allOf/0"),
+            "Should use the substring segment from the valid reference string.");
     }
 }

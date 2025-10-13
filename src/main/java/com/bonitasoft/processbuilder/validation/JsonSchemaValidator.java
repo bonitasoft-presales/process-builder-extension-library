@@ -60,9 +60,11 @@ public final class JsonSchemaValidator {
         }
 
         // Determine target schema name: normalize optionType, or use base schema for DELETE
-        String targetSchemaName = PBStringUtils.normalizeTitleCase(optionType);
+        String targetSchemaName = "";
         if (ActionType.DELETE.name().equalsIgnoreCase(actionType)) {
              targetSchemaName = SchemaConstants.DELETE_BASE_SCHEMA;
+        } else {
+             targetSchemaName = PBStringUtils.normalizeTitleCase(optionType);
         }
         
         String jsonStringForValidation;

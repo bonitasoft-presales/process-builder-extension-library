@@ -12,8 +12,6 @@ import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchema;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 
-import io.swagger.v3.core.util.Json;
-import io.swagger.v3.core.util.Yaml;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.parser.OpenAPIV3Parser;
@@ -33,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map.Entry;
 
 /**
@@ -82,42 +79,64 @@ public final class SchemaResolver {
      * @throws RuntimeException If reading, parsing, schema resolution, or serialization fails.
      */
     public static LoadedSchema getValidatorSchema(String resourcePath, String targetSchemaName, String jsonInput) {
-        try {
 
-            // 1. Configure and Parse OpenAPI
+        OpenAPI openAPI;
+        SwaggerParseResult result;
+        
+        // 1. Configure and Parse OpenAPI (First try-catch block for reading/parsing errors)
+        try {
             ParseOptions options = new ParseOptions();
             options.setResolve(true);
             options.setResolveFully(true);
 
             // Using new OpenAPIV3Parser() inside the method for test isolation (can be mocked statically)
             OpenAPIV3Parser parser = new OpenAPIV3Parser();
-            SwaggerParseResult result = parser.readLocation(resourcePath, null, options); 
-            OpenAPI openAPI = result.getOpenAPI();
-            
-            if (openAPI == null) {
-                // If the resolved object is null, log parsing messages for debugging.
-                if (result.getMessages() != null && !result.getMessages().isEmpty()) {
-                     LOGGER.error("PARSING_ERROR: Swagger Parser reported messages during loading: {}", result.getMessages());
-                }
-                throw new RuntimeException("OpenAPI file failed to parse or could not be found.");
-            }
-            
-            if (openAPI.getComponents() == null || openAPI.getComponents().getSchemas() == null) {
-                throw new RuntimeException("OpenAPI document loaded, but schema components are missing.");
-            }
+            result = parser.readLocation(resourcePath, null, options); 
+            openAPI = result.getOpenAPI();
 
-            // 2. Get Target Schema
+        } catch (Exception e) {
+            if (e.getCause() instanceof IOException) {
+                LOGGER.error("FILE_IO_ERROR: Failed to load OpenAPI resource: {}", resourcePath, e);
+                throw new RuntimeException("File I/O error during schema loading.", e);
+            }
+            
+            LOGGER.error("PARSING_FATAL: Critical error during OpenAPI parsing.", e);
+            throw new RuntimeException("OpenAPI parsing failed unexpectedly.", e);
+        }
+
+        // 2. Validate Parsed Object State (Checks that must be OUTSIDE the generic processing catch)
+        
+        if (openAPI == null) {
+            // If the resolved object is null, log parsing messages for debugging.
+            if (result.getMessages() != null && !result.getMessages().isEmpty()) {
+                 LOGGER.error("PARSING_ERROR: Swagger Parser reported messages during loading: {}", result.getMessages());
+            }
+            // THIS EXCEPTION IS THROWN NOW OUTSIDE THE GENERIC CATCH BLOCK
+            throw new RuntimeException("OpenAPI file failed to parse or could not be found.");
+        }
+        
+        if (openAPI.getComponents() == null || openAPI.getComponents().getSchemas() == null) {
+            // THIS EXCEPTION IS THROWN NOW OUTSIDE THE GENERIC CATCH BLOCK
+            throw new RuntimeException("OpenAPI document loaded, but schema components are missing.");
+        }
+
+
+        // 3. Process Schema and Create Validator (Second try-catch block for internal processing errors)
+        try {
+            // Get Target Schema
             Schema<?> targetSchema = openAPI.getComponents().getSchemas().get(targetSchemaName);
 
             if (targetSchema == null) {
+                // This is a specific validation error, but as it's inside this try-block, 
+                // it will be caught by the generic catch below (which is what the failing test confirms).
                 throw new RuntimeException("Target schema '" + targetSchemaName + "' not found in OpenAPI components.");
             }
             
 
-            // 3. Create Dynamic Title Map
+            // Create Dynamic Title Map
             Map<String, String> componentTitles = createComponentTitleMap(targetSchema);
 
-            // 4. Serialize, Clean, and Parse to JsonNode for fge Validator
+            // Serialize, Clean, and Parse to JsonNode for fge Validator
             String schemaJson = JSON_MAPPER.writeValueAsString(targetSchema);
             JsonNode schemaJsonNode = parseJson(schemaJson);
 
@@ -129,13 +148,10 @@ public final class SchemaResolver {
             
             return new LoadedSchema(validator, componentTitles, targetSchemaName, jsonInput);
 
-        } catch (IOException e) {
-            // EXCEPTION MANAGEMENT: Clear failure point (File I/O or bad file structure)
-            LOGGER.error("FILE_IO_ERROR: Failed to load OpenAPI resource: {}", resourcePath, e);
-            throw new RuntimeException("File I/O error during schema loading.", e);
         } catch (Exception e) {
-            // EXCEPTION MANAGEMENT: Catches all processing errors (e.g., JsonNode parsing)
+            // EXCEPTION MANAGEMENT: Catches all processing errors (JsonNode parsing, schema not found, serialization etc.)
             LOGGER.error("PROCESSING_FATAL: Critical error in schema resolution for target {}.", targetSchemaName, e);
+            // This re-wraps the 'Target schema not found' error, matching your current passing test logic.
             throw new RuntimeException("Schema processing failed.", e);
         }
     }
@@ -214,7 +230,7 @@ public final class SchemaResolver {
                 LOGGER.warn("VALIDATION_FAILED: Failed for {} payload. Reporting detailed errors...", loadedSchema.targetSchemaName());
                 
                 // Log all specific, translated errors 
-                SchemaResolver.printRelevantValidationErrors(jsonReport, loadedSchema.titles());
+                printRelevantValidationErrors(jsonReport, loadedSchema.titles());
                 
                 return false;
             }
