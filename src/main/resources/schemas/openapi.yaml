@@ -36,18 +36,25 @@ components:
       properties:
         fullName:
           type: string
+          maxLength: 255
         fullDescription:
           type: string
+          maxLength: 1024
         version:
           type: string
+          maxLength: 10
         criticality:
           type: string
+          maxLength: 12
         token:
           type: string
+          maxLength: 255
         displayName:
           type: string
+          maxLength: 255
         documentsFolder:
           type: string
+          maxLength: 255
         cancellationDelay:
           type: integer
         category:
