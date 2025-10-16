@@ -92,4 +92,59 @@ public class ExceptionUtils {
         // always contains the detailed error message, avoiding "No message" errors.
         throw exceptionFunction.apply(finalMessage);
     }
+
+    /**
+     * Logs an error message and then securely throws a new instance of the specified exception class.
+     * <p>
+     * This method uses Java Reflection to reliably instantiate the exception by explicitly
+     * calling the constructor that accepts a single {@code String} argument (the message).
+     * This approach avoids the 'Ambiguous method overloading' errors often encountered 
+     * in Groovy environments when using dynamic closures or constructors with {@code null} parameters.
+     * </p>
+     * <p>
+     * The method ensures that the thrown exception always contains the detailed, formatted
+     * error message, preventing common 'No message' issues in the calling environment.
+     * </p>
+     *
+     * @param <T> The type of Exception to be thrown, which must extend {@link Exception}.
+     * @param exceptionClass The {@link Class} object of the exception to instantiate (e.g., {@code IllegalArgumentException.class}).
+     * @param format The format string for the error message, compliant with {@link String#format(String, Object...)}.
+     * @param args The arguments referenced by the format specifiers in the format string.
+     * @throws T The instantiated and thrown exception of type T, containing the formatted message.
+     * @throws RuntimeException if the specified exception class does not have a public constructor
+     * that accepts a single String argument, or if instantiation fails due to reflection errors.
+     */
+    public static <T extends Exception> void logAndThrowWithClass(
+            Class<T> exceptionClass, 
+            String format,
+            Object... args) throws T {
+                
+        // 1. FORMATTING AND LOGGING
+        String finalMessage = String.format(format, args);
+        LOGGER.error(finalMessage);
+        
+        // 2. SECURE THROW USING REFLECTION
+        try {
+            // Retrieve the constructor that accepts a single String (the message).
+            // This explicitly resolves the constructor ambiguity issue.
+            java.lang.reflect.Constructor<T> constructor = exceptionClass.getConstructor(String.class);
+            
+            // Create and instantiate the exception, passing the formatted message
+            T exceptionInstance = constructor.newInstance(finalMessage);
+            
+            // Throw the generated exception instance
+            throw exceptionInstance;
+            
+        } catch (NoSuchMethodException e) {
+            // This occurs if the class T does not have the required String constructor.
+            LOGGER.error("Fatal Error: Exception class '{}' does not have a public constructor that accepts a single String message.", exceptionClass.getName(), e);
+            throw new RuntimeException("Error during exception construction for class: " + exceptionClass.getName(), e);
+        } catch (Exception e) {
+            // Catches other reflection-related issues (IllegalAccessException, InvocationTargetException, etc.)
+            LOGGER.error("Fatal Error: Could not instantiate exception class '{}'.", exceptionClass.getName(), e);
+            throw new RuntimeException("Could not instantiate exception class: " + exceptionClass.getName(), e);
+        }
+    }
+
+
 }
