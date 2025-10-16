@@ -68,13 +68,13 @@ public final class PBStringUtils {
     /**
      * Converts a string from human-readable format (e.g., spaces) to 
      * {@code snake_case} format.
-     * <p>
+     * 
      * The conversion process involves:
      * <ul>
      * <li>Converting the entire string to lowercase.</li>
      * <li>Replacing all space characters (' ') with underscores ('_').</li>
      * </ul>
-     * </p>
+     * 
      * <ul>
      * <li>{@code "Bonita and delete"} becomes {@code "bonita_and_delete"}</li>
      * <li>{@code "A Long Name"} becomes {@code "a_long_name"}</li>
