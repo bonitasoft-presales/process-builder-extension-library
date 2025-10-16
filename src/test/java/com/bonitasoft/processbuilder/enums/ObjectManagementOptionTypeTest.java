@@ -44,15 +44,17 @@ class ObjectsManagementOptionTypeTest {
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("Should contain exactly two constants (CATEGORY and SMTP)")
+    @DisplayName("Should contain exactly two constants (CATEGORY, SMTP, ...)")
     void enum_should_have_only_two_constant() {
         // Given & When: Get array of enum values
         ObjectsManagementOptionType[] types = ObjectsManagementOptionType.values();
 
         // Then the enum should have only two constant and their names must be correct
-        assertEquals(2, types.length, "The enum should contain exactly 2 constants.");
+        assertEquals(4, types.length, "The enum should contain exactly 2 constants.");
         assertEquals("CATEGORY", ObjectsManagementOptionType.CATEGORY.name());
         assertEquals("SMTP", ObjectsManagementOptionType.SMTP.name());
+        assertEquals("GENERIC_ENTRY", ObjectsManagementOptionType.GENERIC_ENTRY.name());
+        assertEquals("ENTITY_TYPE", ObjectsManagementOptionType.ENTITY_TYPE.name());
     }
 
     @Test
@@ -85,6 +87,9 @@ class ObjectsManagementOptionTypeTest {
         assertTrue(ObjectsManagementOptionType.isValid("  CATEGORY  "));
         assertTrue(ObjectsManagementOptionType.isValid("CaTeGoRy"));
         assertTrue(ObjectsManagementOptionType.isValid("sMtP"));
+        assertTrue(ObjectsManagementOptionType.isValid("GENERIC_eNtRY"));
+        assertTrue(ObjectsManagementOptionType.isValid("ENTiTY_TYPE  "));
+        assertTrue(ObjectsManagementOptionType.isValid(" ENTITy_TYPE "));
 
         // Failure cases (invalid, null, empty, blank)
         assertFalse(ObjectsManagementOptionType.isValid("INVALID_TYPE"));

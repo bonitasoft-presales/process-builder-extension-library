@@ -21,7 +21,22 @@ public enum ObjectsManagementOptionType {
     /**
      * Represents an SMTP (Simple Mail Transfer Protocol) configuration object.
      */
-    SMTP;
+    SMTP,
+
+    /**
+     * Represents a **generic entry** or record, typically originating from a master data table.
+     * This object holds the actual data values (e.g., records from a "lookup" table).
+     */
+    GENERIC_ENTRY,
+
+
+    /**
+     * Represents the **entity type** or classification identifier for a record.
+     * This field is embedded within a GENERIC_ENTRY object to specify the kind
+     * of master data or lookup object the entry represents, allowing a single table
+     * structure (GENERIC_ENTRY) to contain multiple logical object types.
+     */
+    ENTITY_TYPE;
 
     /**
      * Checks if a given string corresponds to a valid enum constant, ignoring case and leading/trailing spaces.
