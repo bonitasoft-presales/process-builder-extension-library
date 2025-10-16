@@ -37,24 +37,31 @@ components:
         fullName:
           type: string
           maxLength: 255
+          minLength: 1
         fullDescription:
           type: string
           maxLength: 1024
+          minLength: 1
         version:
           type: string
           maxLength: 10
+          minLength: 1
         criticality:
           type: string
           maxLength: 12
+          minLength: 1
         token:
           type: string
           maxLength: 255
+          minLength: 1
         displayName:
           type: string
           maxLength: 255
+          minLength: 1
         documentsFolder:
           type: string
           maxLength: 255
+          minLength: 1
         cancellationDelay:
           type: integer
         category:
