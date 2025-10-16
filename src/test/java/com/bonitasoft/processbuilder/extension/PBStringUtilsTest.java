@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for the {@link PBStringUtils} utility class.
  * <p>
  * This class ensures that the utility class cannot be instantiated and
- * that all string manipulation methods, especially {@code normalizeTitleCase}
- * and {@code convertToSnakeCase}, function correctly across various input scenarios.
+ * that all string manipulation methods, especially {@code normalizeTitleCase}, {@code toLowerSnakeCase}
+ * and {@code toUpperSnakeCase}, function correctly across various input scenarios.
  * </p>
  */
 class PBStringUtilsTest {
@@ -105,53 +105,104 @@ class PBStringUtilsTest {
     }
     
     // -------------------------------------------------------------------------
-    // convertToSnakeCase Tests (New for full coverage)
+    // toLowerSnakeCase Tests (New for full coverage)
     // -------------------------------------------------------------------------
 
     /**
-     * Test case for {@code convertToSnakeCase} with a null input.
+     * Test case for {@code toLowerSnakeCase} with a null input.
      */
     @Test
-    @DisplayName("convertToSnakeCase should return null for null input")
-    void convertToSnakeCase_should_return_null_for_null() {
-        assertNull(PBStringUtils.convertToSnakeCase(null));
+    @DisplayName("toLowerSnakeCase should return null for null input")
+    void toLowerSnakeCase_should_return_null_for_null() {
+        assertNull(PBStringUtils.toLowerSnakeCase(null));
     }
 
     /**
-     * Test case for {@code convertToSnakeCase} with standard mixed-case, multi-word input.
+     * Test case for {@code toLowerSnakeCase} with standard mixed-case, multi-word input.
      */
     @Test
-    @DisplayName("convertToSnakeCase should convert mixed-case space-separated string to snake_case")
-    void convertToSnakeCase_should_handle_mixed_case_input() {
-        assertEquals("bonita_and_delete", PBStringUtils.convertToSnakeCase("Bonita and delete"));
+    @DisplayName("toLowerSnakeCase should convert mixed-case space-separated string to snake_case")
+    void toLowerSnakeCase_should_handle_mixed_case_input() {
+        assertEquals("bonita_and_delete", PBStringUtils.toLowerSnakeCase("Bonita and delete"));
     }
 
     /**
-     * Test case for {@code convertToSnakeCase} with all uppercase input.
+     * Test case for {@code toLowerSnakeCase} with all uppercase input.
      */
     @Test
-    @DisplayName("convertToSnakeCase should convert fully uppercase input to snake_case")
-    void convertToSnakeCase_should_handle_uppercase_input() {
+    @DisplayName("toLowerSnakeCase should convert fully uppercase input to snake_case")
+    void toLowerSnakeCase_should_handle_uppercase_input() {
         // "PROCESS NAME" -> "process_name"
-        assertEquals("process_name", PBStringUtils.convertToSnakeCase("PROCESS NAME"));
+        assertEquals("process_name", PBStringUtils.toLowerSnakeCase("PROCESS NAME"));
     }
 
     /**
-     * Test case for {@code convertToSnakeCase} with single word input (should only lowercase).
+     * Test case for {@code toLowerSnakeCase} with single word input (should only lowercase).
      */
     @Test
-    @DisplayName("convertToSnakeCase should handle single word input by only lowercasing")
-    void convertToSnakeCase_should_handle_single_word() {
+    @DisplayName("toLowerSnakeCase should handle single word input by only lowercasing")
+    void toLowerSnakeCase_should_handle_single_word() {
         // "Category" -> "category"
-        assertEquals("category", PBStringUtils.convertToSnakeCase("Category"));
+        assertEquals("category", PBStringUtils.toLowerSnakeCase("Category"));
     }
     
     /**
-     * Test case for {@code convertToSnakeCase} with empty string input.
+     * Test case for {@code toLowerSnakeCase} with empty string input.
      */
     @Test
-    @DisplayName("convertToSnakeCase should return empty string for empty input")
-    void convertToSnakeCase_should_return_empty_string() {
-        assertEquals("", PBStringUtils.convertToSnakeCase(""));
+    @DisplayName("toLowerSnakeCase should return empty string for empty input")
+    void toLowerSnakeCase_should_return_empty_string() {
+        assertEquals("", PBStringUtils.toLowerSnakeCase(""));
+    }
+
+     // -------------------------------------------------------------------------
+    // toUpperSnakeCase Tests (New for full coverage)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Test case for {@code toUpperSnakeCase} with a null input.
+     */
+    @Test
+    @DisplayName("toUpperSnakeCase should return null for null input")
+    void toUpperSnakeCase_should_return_null_for_null() {
+        assertNull(PBStringUtils.toUpperSnakeCase(null));
+    }
+
+    /**
+     * Test case for {@code toUpperSnakeCase} with standard mixed-case, multi-word input.
+     */
+    @Test
+    @DisplayName("toUpperSnakeCase should convert mixed-case space-separated string to snake_case")
+    void toUpperSnakeCase_should_handle_mixed_case_input() {
+        assertEquals("BONITA_AND_DELETE", PBStringUtils.toUpperSnakeCase("Bonita and delete"));
+    }
+
+    /**
+     * Test case for {@code toUpperSnakeCase} with all uppercase input.
+     */
+    @Test
+    @DisplayName("toUpperSnakeCase should convert fully uppercase input to snake_case")
+    void toUpperSnakeCase_should_handle_uppercase_input() {
+        // "PROCESS NAME" -> "PROCESS NAME"
+        assertEquals("PROCESS_NAME", PBStringUtils.toUpperSnakeCase("PROCESS NAME"));
+    }
+
+    /**
+     * Test case for {@code toUpperSnakeCase} with single word input (should only lowercase).
+     */
+    @Test
+    @DisplayName("toUpperSnakeCase should handle single word input by only lowercasing")
+    void toUpperSnakeCase_should_handle_single_word() {
+        // "Category" -> "CATEGORY"
+        assertEquals("CATEGORY", PBStringUtils.toUpperSnakeCase("Category"));
+    }
+    
+    /**
+     * Test case for {@code toUpperSnakeCase} with empty string input.
+     */
+    @Test
+    @DisplayName("toUpperSnakeCase should return empty string for empty input")
+    void toUpperSnakeCase_should_return_empty_string() {
+        assertEquals("", PBStringUtils.toUpperSnakeCase(""));
     }
 }

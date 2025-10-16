@@ -84,7 +84,7 @@ public final class PBStringUtils {
      * @param input The string to convert.
      * @return The string in snake_case format, or the original string if null.
      */
-    public static String convertToSnakeCase(String input) {
+    public static String toLowerSnakeCase(String input) {
         if (input == null) {
             return null;
         }
@@ -94,6 +94,39 @@ public final class PBStringUtils {
         
         // 2. Replace all spaces with underscores.
         String snakeCase = lowerCase.replace(' ', '_'); 
+        
+        return snakeCase;
+    }
+
+     /**
+     * Converts a string from human-readable format (e.g., spaces) to 
+     * {@code snake_case} format.
+     * 
+     * The conversion process involves:
+     * <ul>
+     * <li>Converting the entire string to uppercase.</li>
+     * <li>Replacing all space characters (' ') with underscores ('_').</li>
+     * </ul>
+     * 
+     * <ul>
+     * <li>{@code "Bonita and delete"} becomes {@code "BONITA_AND_DELETE"}</li>
+     * <li>{@code "A Long Name"} becomes {@code "A_LONG_NAME"}</li>
+     * <li>{@code null} remains {@code null}</li>
+     * </ul>
+     *
+     * @param input The string to convert.
+     * @return The string in snake_case format, or the original string if null.
+     */
+    public static String toUpperSnakeCase(String input) {
+        if (input == null) {
+            return null;
+        }
+        
+        // 1. Convert to uppercase.
+        String upperCase = input.toUpperCase(); 
+        
+        // 2. Replace all spaces with underscores.
+        String snakeCase = upperCase.replace(' ', '_'); 
         
         return snakeCase;
     }

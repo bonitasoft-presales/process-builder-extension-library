@@ -16,8 +16,7 @@ import com.github.fge.jsonschema.main.JsonSchema;
  * @param targetSchemaName The name of the schema component being validated (e.g., "Category").
  * @param jsonInput The raw JSON content string being validated.
  *
- * @author Bonitasoft
- * @since 1.0
+ * 
  */
 public record LoadedSchema (
     JsonSchema validator,
