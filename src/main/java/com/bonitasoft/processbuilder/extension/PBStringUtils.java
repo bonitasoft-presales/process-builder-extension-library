@@ -8,7 +8,7 @@ package com.bonitasoft.processbuilder.extension;
  * via static methods.
  * </p>
  *
- * @author [Your Name or Company Name]
+ * @author Bonitasoft
  * @since 1.0
  */
 public final class PBStringUtils {
@@ -40,7 +40,7 @@ public final class PBStringUtils {
      * <li>{@code ""} remains {@code ""}</li>
      * <li>{@code "a"} becomes {@code "A"}</li>
      * </ul>
-     * * @param str The string to normalize.
+     * @param str The string to normalize.
      * @return The string in Title Case, or the original string if null or empty.
      */
     public static String normalizeTitleCase(String str) {
@@ -63,5 +63,38 @@ public final class PBStringUtils {
         
         // 3. Return the combined string.
         return firstChar + rest;
+    }
+
+    /**
+     * Converts a string from human-readable format (e.g., spaces) to 
+     * {@code snake_case} format.
+     * <p>
+     * The conversion process involves:
+     * <ul>
+     * <li>Converting the entire string to lowercase.</li>
+     * <li>Replacing all space characters (' ') with underscores ('_').</li>
+     * </ul>
+     * </p>
+     * <ul>
+     * <li>{@code "Bonita and delete"} becomes {@code "bonita_and_delete"}</li>
+     * <li>{@code "A Long Name"} becomes {@code "a_long_name"}</li>
+     * <li>{@code null} remains {@code null}</li>
+     * </ul>
+     *
+     * @param input The string to convert.
+     * @return The string in snake_case format, or the original string if null.
+     */
+    public static String convertToSnakeCase(String input) {
+        if (input == null) {
+            return null;
+        }
+        
+        // 1. Convert to lowercase.
+        String lowerCase = input.toLowerCase(); 
+        
+        // 2. Replace all spaces with underscores.
+        String snakeCase = lowerCase.replace(' ', '_'); 
+        
+        return snakeCase;
     }
 }

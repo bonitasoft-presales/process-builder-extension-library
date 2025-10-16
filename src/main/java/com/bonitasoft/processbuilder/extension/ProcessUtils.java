@@ -21,7 +21,7 @@ import org.bonitasoft.engine.identity.UserNotFoundException;
  * <p>
  * This class is non-instantiable and all methods are static.
  * </p>
- * @author [Your Name or Company Name]
+ * @author Bonitasoft
  * @since 1.0
  */
 public final class ProcessUtils {
@@ -34,7 +34,7 @@ public final class ProcessUtils {
     /**
      * Private constructor to prevent instantiation of this utility class.
      * All methods in this class are static and should be called directly on the class itself.
-     * * @throws UnsupportedOperationException always, to enforce the utility pattern.
+     * @throws UnsupportedOperationException always, to enforce the utility pattern.
      */
     private ProcessUtils() {
         throw new UnsupportedOperationException("This is a "+this.getClass().getSimpleName()+" class and cannot be instantiated.");
@@ -89,7 +89,7 @@ public final class ProcessUtils {
     /**
      * Searches for a BDM object by its persistence ID and validates its existence.
      * This method should be used internally after the persistence ID has been successfully converted to a Long.
-     * * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
+     * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
      * @param persistenceId The ID (Long) used to search for the object. Must not be null.
      * @param searchFunction The function (e.g., DAO method) to perform the search: (Long ID -> T Object).
      * @param objectType The name of the BDM object class (e.g., "PBProcess" or "PBCategory"). Used for error logging.
@@ -121,7 +121,7 @@ public final class ProcessUtils {
     /**
      * Validates that the BDM object exists before performing a DELETE action.
      * If the object is not found (i.e., is {@code null}), a {@code RuntimeException} is thrown.
-     * * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
+     * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
      * @param bdmObject The BDM object retrieved from the search (may be null).
      * @param persistenceId The ID used for logging.
      * @param objectType The name of the BDM object class.

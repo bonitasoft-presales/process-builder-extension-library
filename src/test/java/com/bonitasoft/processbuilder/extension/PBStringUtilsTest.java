@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier; // Import necesario si el constructor es privado
+import java.lang.reflect.Modifier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for the {@link PBStringUtils} utility class.
  * <p>
  * This class ensures that the utility class cannot be instantiated and
- * that all string manipulation methods, especially {@code normalizeTitleCase},
- * function correctly across various input scenarios.
+ * that all string manipulation methods, especially {@code normalizeTitleCase}
+ * and {@code convertToSnakeCase}, function correctly across various input scenarios.
  * </p>
  */
 class PBStringUtilsTest {
@@ -49,7 +49,7 @@ class PBStringUtilsTest {
         
         final String expectedMessage = "This is a PBStringUtils class and cannot be instantiated.";
         assertTrue(thrown.getCause().getMessage().contains(expectedMessage.substring(10, 29)), 
-                   "The exception message should contain 'PBStringUtils class and cannot be instantiated.'");
+                "The exception message should contain 'PBStringUtils class and cannot be instantiated.'");
     }
 
     // -------------------------------------------------------------------------
@@ -102,5 +102,56 @@ class PBStringUtilsTest {
     @DisplayName("normalizeTitleCase should handle multi-word inputs (only first letter capitalized)")
     void normalizeTitleCase_should_handle_multi_word_input() {
         assertEquals("Vacation request", PBStringUtils.normalizeTitleCase("VACATION REQUEST"));
+    }
+    
+    // -------------------------------------------------------------------------
+    // convertToSnakeCase Tests (New for full coverage)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Test case for {@code convertToSnakeCase} with a null input.
+     */
+    @Test
+    @DisplayName("convertToSnakeCase should return null for null input")
+    void convertToSnakeCase_should_return_null_for_null() {
+        assertNull(PBStringUtils.convertToSnakeCase(null));
+    }
+
+    /**
+     * Test case for {@code convertToSnakeCase} with standard mixed-case, multi-word input.
+     */
+    @Test
+    @DisplayName("convertToSnakeCase should convert mixed-case space-separated string to snake_case")
+    void convertToSnakeCase_should_handle_mixed_case_input() {
+        assertEquals("bonita_and_delete", PBStringUtils.convertToSnakeCase("Bonita and delete"));
+    }
+
+    /**
+     * Test case for {@code convertToSnakeCase} with all uppercase input.
+     */
+    @Test
+    @DisplayName("convertToSnakeCase should convert fully uppercase input to snake_case")
+    void convertToSnakeCase_should_handle_uppercase_input() {
+        // "PROCESS NAME" -> "process_name"
+        assertEquals("process_name", PBStringUtils.convertToSnakeCase("PROCESS NAME"));
+    }
+
+    /**
+     * Test case for {@code convertToSnakeCase} with single word input (should only lowercase).
+     */
+    @Test
+    @DisplayName("convertToSnakeCase should handle single word input by only lowercasing")
+    void convertToSnakeCase_should_handle_single_word() {
+        // "Category" -> "category"
+        assertEquals("category", PBStringUtils.convertToSnakeCase("Category"));
+    }
+    
+    /**
+     * Test case for {@code convertToSnakeCase} with empty string input.
+     */
+    @Test
+    @DisplayName("convertToSnakeCase should return empty string for empty input")
+    void convertToSnakeCase_should_return_empty_string() {
+        assertEquals("", PBStringUtils.convertToSnakeCase(""));
     }
 }

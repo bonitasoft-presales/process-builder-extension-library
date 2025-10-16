@@ -42,6 +42,7 @@ public class ExceptionUtils {
      * @param args A variable-length argument list of objects to be substituted into the format string.
      * These objects correspond to the `{}` placeholders in the {@code format} string.
      * @throws T The exception instance provided by the {@code exceptionSupplier}.
+     * @return The exception instance provided by the supplier.
      */
     public static <T extends Exception> T logAndThrow(
         Supplier<T> exceptionSupplier,

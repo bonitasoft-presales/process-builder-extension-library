@@ -8,7 +8,7 @@ package com.bonitasoft.processbuilder.constants;
  * This class is non-instantiable.
  * </p>
  *
- * @author [Your Name or Company Name]
+ * @author Bonitasoft
  * @since 1.0
  */
 public final class SchemaConstants {

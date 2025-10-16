@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * This class uses SLF4J for logging all validation results and errors and is non-instantiable.
  * </p>
- * @author [Your Name or Company Name]
+ * @author Bonitasoft
  * @since 1.0
  */
 public final class JsonSchemaValidator {
@@ -43,7 +43,7 @@ public final class JsonSchemaValidator {
      * Validates an input object against the schema corresponding to the given option type name.
      * This method handles input serialization, determines the final schema name (based on action type), 
      * and delegates the core validation logic.
-     * * @param actionType The action being performed (e.g., "DELETE", "INSERT", "UPDATE").
+     * @param actionType The action being performed (e.g., "DELETE", "INSERT", "UPDATE").
      * @param optionType The name of the schema to validate against (e.g., "Category", "Steps").
      * @param jsonInput The JSON content to validate (can be String, Map, or any serializable object).
      * @return {@code true} if validation is successful, {@code false} otherwise (due to null inputs, 

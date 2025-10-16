@@ -11,7 +11,7 @@ import com.bonitasoft.processbuilder.enums.ProcessOptionType;
  * This class primarily handles case-insensitive comparisons against the names
  * of various application enums to ensure clean conditional branching in the process logic.
  * </p>
- * @author [Your Name or Company Name]
+ * @author Bonitasoft
  * @since 1.0
  */
 public final class ProcessOptionValidator {

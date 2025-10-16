@@ -9,7 +9,7 @@ import com.bonitasoft.processbuilder.validation.JsonSchemaValidator;
  * restricting the object type to a predefined set of values, specifically
  * for system configuration objects managed by a process.
  * </p>
- * * @author [Your Name or Company Name]
+ * @author Bonitasoft
  * @since 1.0
  */
 public enum ObjectsManagementOptionType {
@@ -63,7 +63,7 @@ public enum ObjectsManagementOptionType {
      * <p>
      * This method delegates the validation call to the centralized {@link JsonSchemaValidator} utility.
      * </p>
-     * * @param actionType The action being performed (e.g., "DELETE", "INSERT", "UPDATE").
+     * @param actionType The action being performed (e.g., "DELETE", "INSERT", "UPDATE").
      * @param optionType The string instance of the object type (e.g., "CATEGORY", "SMTP").
      * @param jsonInput The JSON content to validate, expected as a Map/Object from the process context.
      * @return {@code true} if validation is successful and the schema check passes, {@code false} otherwise.

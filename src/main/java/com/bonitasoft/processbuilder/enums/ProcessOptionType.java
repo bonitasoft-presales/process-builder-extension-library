@@ -10,7 +10,7 @@ import com.bonitasoft.processbuilder.validation.JsonSchemaValidator;
  * and reduces the risk of errors from using hard-coded strings.
  * </p>
  *
- * @author [Your Name or Company Name]
+ * @author Bonitasoft
  * @since 1.0
  */
 public enum ProcessOptionType {

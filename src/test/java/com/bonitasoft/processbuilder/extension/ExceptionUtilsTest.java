@@ -43,7 +43,6 @@ class ExceptionUtilsTest {
 
         // WHEN the method is called
         Exception thrownException = assertThrows(IllegalArgumentException.class, () -> {
-            // The format string is logged, but the exception message comes from the supplier
             ExceptionUtils.logAndThrow(supplier, "Log format: {}", "arg");
         });
         

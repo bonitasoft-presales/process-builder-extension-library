@@ -40,7 +40,7 @@ import java.util.Map.Entry;
  * This class handles file parsing, recursive reference resolution, schema extraction,
  * and detailed logging of validation reports. It is non-instantiable.
  * </p>
- * @author [Your Name or Company Name]
+ * @author Bonitasoft
  * @since 1.0
  */
 public final class SchemaResolver {
@@ -191,7 +191,7 @@ public final class SchemaResolver {
 
     /**
      * Parses a JSON string into a Jackson JsonNode.
-     * * @param json The JSON string to parse.
+     * @param json The JSON string to parse.
      * @return The resulting {@link JsonNode}.
      * @throws RuntimeException if the JSON string is malformed.
      */
