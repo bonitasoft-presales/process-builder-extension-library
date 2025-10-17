@@ -47,9 +47,9 @@ components:
           maxLength: 10
           minLength: 1
         criticality:
-          type: string
-          maxLength: 12
-          minLength: 1
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/ObjectInputBaseSchema'
         token:
           type: string
           maxLength: 255
