@@ -68,6 +68,11 @@ components:
           type: object
           allOf:
             - $ref: '#/components/schemas/ObjectInputBaseSchema'
+        refStorage:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/ObjectInputBaseSchema'
+
       required:
         - fullName
         - fullDescription
@@ -78,6 +83,7 @@ components:
         - documentsFolder
         - cancellationDelay
         - category
+        - refStorage
 
     ActionSchema:
       title: Action Schema
