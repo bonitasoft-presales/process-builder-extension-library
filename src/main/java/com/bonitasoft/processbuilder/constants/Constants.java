@@ -1,5 +1,6 @@
 package com.bonitasoft.processbuilder.constants;
 
+
 /**
  * Utility class containing all application-wide constant values.
  * <p>
