@@ -31,7 +31,7 @@ public enum GenericEntryType {
     // Optional: Add a utility method to validate existence if needed
     /**
      * Checks if the given string value matches any defined enum constant name.
-     * * @param name The string name to check.
+     * @param name The string name to check.
      * @return true if the name matches a constant, false otherwise.
      */
     public static boolean isValid(String name) {

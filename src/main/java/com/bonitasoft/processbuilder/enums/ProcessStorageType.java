@@ -41,10 +41,18 @@ public enum ProcessStorageType {
         this.description = description;
     }
 
+    /**
+     * Returns the unique string key associated with this storage type.
+     * @return The storage type key (e.g., "Local").
+     */
     public String getKey() {
         return key;
     }
 
+    /**
+     * Returns the business description of this storage type.
+     * @return The description.
+     */
     public String getDescription() {
         return description;
     }
@@ -52,7 +60,7 @@ public enum ProcessStorageType {
     /**
      * Retrieves all storage types as a read-only Map where the key is the storage key 
      * (e.g., "Local") and the value is the description.
-     * * @return A map containing all storage type data.
+     * @return A map containing all storage type data.
      */
     public static Map<String, String> getAllStorageData() {
         Map<String, String> storageData = new LinkedHashMap<>();

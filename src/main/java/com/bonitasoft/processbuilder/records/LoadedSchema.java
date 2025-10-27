@@ -16,8 +16,7 @@ import com.github.fge.jsonschema.main.JsonSchema;
  * @param targetSchemaName The name of the schema component being validated (e.g., "Category").
  * @param jsonInput The raw JSON content string being validated.
  *
- * 
- */
+ * */
 public record LoadedSchema (
     JsonSchema validator,
     Map<String, String> titles,
@@ -30,6 +29,10 @@ public record LoadedSchema (
      * Implements defensive copying for the mutable {@code titles} map to ensure 
      * the record's immutability upon construction (corrects {@code EI_EXPOSE_REP2} in the constructor).
      * </p>
+     * @param validator The executable JSON Schema object used for validation.
+     * @param titles The map associating internal pointers (e.g., /allOf/0) to user-friendly component names.
+     * @param targetSchemaName The name of the schema component being validated (e.g., "Category").
+     * @param jsonInput The raw JSON content string being validated.
      */
     public LoadedSchema {
         // Defensive Copy: Creates an internal, immutable copy of the input map.

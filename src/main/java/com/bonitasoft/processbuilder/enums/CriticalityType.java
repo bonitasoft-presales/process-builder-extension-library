@@ -41,10 +41,18 @@ public enum CriticalityType {
         this.description = description;
     }
 
+    /**
+     * Returns the unique string key associated with this criticality type.
+     * @return The criticality key (e.g., "High").
+     */
     public String getKey() {
         return key;
     }
 
+    /**
+     * Returns the business description of this criticality type.
+     * @return The description.
+     */
     public String getDescription() {
         return description;
     }
@@ -52,7 +60,7 @@ public enum CriticalityType {
     /**
      * Retrieves all criticality types as a read-only Map where the key is the criticality key 
      * (e.g., "High") and the value is the description.
-     * * @return A map containing all criticality type data.
+     * @return A map containing all criticality type data.
      */
     public static Map<String, String> getAllCriticalityData() {
         Map<String, String> criticalyData = new LinkedHashMap<>();
