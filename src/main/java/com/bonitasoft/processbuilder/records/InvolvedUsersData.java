@@ -2,7 +2,7 @@ package com.bonitasoft.processbuilder.records;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collections; // Importación recomendada para unmodifiableList
+import java.util.Collections;
 
 /**
  * A record to hold the parsed configuration data for finding candidate users
@@ -19,15 +19,23 @@ import java.util.Collections; // Importación recomendada para unmodifiableList
  * assigned in the process definition.
  */
 public record InvolvedUsersData(
-        String stepManagerRef, 
-        String stepUserRef, 
-        List<String> memberships, 
-        List<UserList> userList
+    String stepManagerRef, 
+    String stepUserRef, 
+    List<String> memberships, 
+    List<UserList> userList
 ) {
     
     /**
      * The compact constructor for this record. 
      * It creates defensive copies of the mutable lists to ensure the record's immutability.
+     * @param stepManagerRef The reference (usually a String ID) pointing to a process step 
+     * from which the manager of the step's user will be retrieved.
+     * @param stepUserRef The reference (usually a String ID) pointing to a process step 
+     * from which the user directly assigned to that step will be retrieved.
+     * @param memberships A list of membership references (e.g., group or role names/IDs) 
+     * used to find candidate users.
+     * @param userList A list of pre-defined user and membership objects (UserList records) 
+     * assigned in the process definition.
      */
     public InvolvedUsersData {
         // Defensive Copying: Ensures internal lists are mutable only within the record.
