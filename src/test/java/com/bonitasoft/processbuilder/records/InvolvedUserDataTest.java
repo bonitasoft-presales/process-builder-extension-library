@@ -1,6 +1,7 @@
 package com.bonitasoft.processbuilder.records;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Robust test class for the InvolvedUsersData record, focusing on data integrity and immutability
- * of the membership list.
+ * of the membership list, and testing the {@code getRefStepsArray} method for correct filtering logic.
  */
 class InvolvedUsersDataTest {
 
@@ -26,6 +27,7 @@ class InvolvedUsersDataTest {
         // Initialize mutable list before each test
         mutableMemberships = new ArrayList<>(List.of("Role_HR", "Group_Dev"));
         
+        // This is the full valid data object used by the accessor tests
         involvedUsersData = new InvolvedUsersData(
                 MANAGER_REF, 
                 USER_REF, 
@@ -87,5 +89,79 @@ class InvolvedUsersDataTest {
         // Assert modification still fails on the returned empty list
         assertThatThrownBy(() -> emptyData.memberships().add("Test"))
             .isInstanceOf(UnsupportedOperationException.class);
+    }
+    
+    // ------------------- getRefStepsArray() Tests -------------------
+
+    @Test
+    @DisplayName("getRefStepsArray should return both references when both are valid strings")
+    void getRefStepsArray_BothValid() {
+        String[] result = involvedUsersData.getRefStepsArray();
+        
+        assertThat(result)
+            .containsExactlyInAnyOrder(MANAGER_REF, USER_REF)
+            .hasSize(2);
+    }
+    
+    @Test
+    @DisplayName("getRefStepsArray should filter out null references")
+    void getRefStepsArray_FiltersNull() {
+        InvolvedUsersData data = new InvolvedUsersData(
+            MANAGER_REF, 
+            null, // stepUserRef is null
+            Collections.emptyList()
+        );
+        
+        String[] result = data.getRefStepsArray();
+        
+        assertThat(result)
+            .containsExactly(MANAGER_REF)
+            .hasSize(1);
+    }
+    
+    @Test
+    @DisplayName("getRefStepsArray should filter out empty string references")
+    void getRefStepsArray_FiltersEmptyString() {
+        InvolvedUsersData data = new InvolvedUsersData(
+            "", // stepManagerRef is empty
+            USER_REF, 
+            Collections.emptyList()
+        );
+        
+        String[] result = data.getRefStepsArray();
+        
+        assertThat(result)
+            .containsExactly(USER_REF)
+            .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getRefStepsArray should filter out whitespace string references")
+    void getRefStepsArray_FiltersWhitespace() {
+        InvolvedUsersData data = new InvolvedUsersData(
+            MANAGER_REF, 
+            "  \t", // stepUserRef is whitespace
+            Collections.emptyList()
+        );
+        
+        String[] result = data.getRefStepsArray();
+        
+        assertThat(result)
+            .containsExactly(MANAGER_REF)
+            .hasSize(1);
+    }
+    
+    @Test
+    @DisplayName("getRefStepsArray should return empty array when both references are null or invalid")
+    void getRefStepsArray_BothInvalid() {
+        InvolvedUsersData data = new InvolvedUsersData(
+            null, 
+            " \n ", // Whitespace
+            Collections.emptyList()
+        );
+        
+        String[] result = data.getRefStepsArray();
+        
+        assertThat(result).isEmpty();
     }
 }
