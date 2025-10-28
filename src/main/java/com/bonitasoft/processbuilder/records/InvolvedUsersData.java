@@ -58,7 +58,7 @@ public record InvolvedUsersData(
     /**
      * Returns a read-only view (defensive copy) of the list of UserList records 
      * to preserve the record's immutability.
-     * * @return An unmodifiable List containing the UserList objects.
+     * @return An unmodifiable List containing the UserList objects.
      */
     public List<UserList> userList() {
         return Collections.unmodifiableList(this.userList);
