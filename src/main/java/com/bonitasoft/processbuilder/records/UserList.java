@@ -18,7 +18,6 @@ package com.bonitasoft.processbuilder.records;
  * @param roleId The persistence ID of the associated role, if applicable.
  * @param userId The persistence ID of the associated user, if applicable.
  * @param pBProcessPersistenceId The persistence ID of the process definition this list belongs to.
- * @param order The display or processing order of this entry.
  */
 public record UserList (
     Long persistenceId,
@@ -28,8 +27,7 @@ public record UserList (
     Long groupId,
     Long roleId,
     Long userId,
-    Long pBProcessPersistenceId,
-    Integer order
+    Long pBProcessPersistenceId
 ) {
     /**
      * Compact constructor to perform validation or canonicalization, if needed.
@@ -42,7 +40,6 @@ public record UserList (
      * @param roleId The persistence ID of the associated role, if applicable.
      * @param userId The persistence ID of the associated user, if applicable.
      * @param pBProcessPersistenceId The persistence ID of the process definition this list belongs to.
-     * @param order The display or processing order of this entry.
      */
     public UserList {
         // You can add validation logic here if required, e.g.:

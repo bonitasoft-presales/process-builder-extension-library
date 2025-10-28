@@ -20,7 +20,6 @@ class UserListTest {
     private static final Long ROLE_ID = 10L;
     private static final Long USER_ID = null; // Set to null for this specific entry
     private static final Long PB_PROCESS_ID = 2000L;
-    private static final Integer ORDER = 1;
 
     /**
      * Test case to verify the correct construction and accessor methods.
@@ -37,8 +36,7 @@ class UserListTest {
             GROUP_ID,
             ROLE_ID,
             USER_ID,
-            PB_PROCESS_ID,
-            ORDER
+            PB_PROCESS_ID
         );
 
         // Then
@@ -51,7 +49,6 @@ class UserListTest {
         assertThat(userList.roleId()).isEqualTo(ROLE_ID);
         assertThat(userList.userId()).isNull(); // Check for the expected null value
         assertThat(userList.pBProcessPersistenceId()).isEqualTo(PB_PROCESS_ID);
-        assertThat(userList.order()).isEqualTo(ORDER);
     }
 
     //-------------------------------------------------------------------------
@@ -65,15 +62,15 @@ class UserListTest {
     void should_ImplementEqualsAndHashCode_Correctly() {
         // Given
         UserList userList1 = new UserList(
-            PERSISTENCE_ID, CAN_LAUNCH, REF_MEMBERSHIP, MEMBERSHIP_KEY, GROUP_ID, ROLE_ID, USER_ID, PB_PROCESS_ID, ORDER
+            PERSISTENCE_ID, CAN_LAUNCH, REF_MEMBERSHIP, MEMBERSHIP_KEY, GROUP_ID, ROLE_ID, USER_ID, PB_PROCESS_ID
         );
         UserList userList2 = new UserList(
-            PERSISTENCE_ID, CAN_LAUNCH, REF_MEMBERSHIP, MEMBERSHIP_KEY, GROUP_ID, ROLE_ID, USER_ID, PB_PROCESS_ID, ORDER
+            PERSISTENCE_ID, CAN_LAUNCH, REF_MEMBERSHIP, MEMBERSHIP_KEY, GROUP_ID, ROLE_ID, USER_ID, PB_PROCESS_ID
         );
 
         // A different instance (only changing the ID)
         UserList differentUserList = new UserList(
-            999L, CAN_LAUNCH, REF_MEMBERSHIP, MEMBERSHIP_KEY, GROUP_ID, ROLE_ID, USER_ID, PB_PROCESS_ID, ORDER
+            999L, CAN_LAUNCH, REF_MEMBERSHIP, MEMBERSHIP_KEY, GROUP_ID, ROLE_ID, USER_ID, PB_PROCESS_ID
         );
 
         // Then
@@ -103,7 +100,7 @@ class UserListTest {
     void should_Generate_ToString() {
         // Given
         UserList userList = new UserList(
-            PERSISTENCE_ID, CAN_LAUNCH, REF_MEMBERSHIP, MEMBERSHIP_KEY, GROUP_ID, ROLE_ID, USER_ID, PB_PROCESS_ID, ORDER
+            PERSISTENCE_ID, CAN_LAUNCH, REF_MEMBERSHIP, MEMBERSHIP_KEY, GROUP_ID, ROLE_ID, USER_ID, PB_PROCESS_ID
         );
         
         // When
@@ -117,7 +114,6 @@ class UserListTest {
             .contains("refMemberShip=" + REF_MEMBERSHIP)
             .contains("groupId=" + GROUP_ID)
             .contains("userId=" + USER_ID) // Null should be included
-            .contains("order=" + ORDER)
             .endsWith("]");
     }
 }
