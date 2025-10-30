@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
  * @since 1.0
  */
 
-public enum ProcessName {
+public enum ProcessNameType {
 
     /**
      * Process definition for Form configuration.
@@ -32,7 +32,7 @@ public enum ProcessName {
     private final String key;
     private final String description;
 
-    ProcessName(String key, String description) {
+    ProcessNameType(String key, String description) {
         this.key = key;
         this.description = description;
     }
@@ -63,10 +63,10 @@ public enum ProcessName {
      */
     public static Map<String, String> getAllProcessData() {
         Map<String, String> actionData = 
-            java.util.Arrays.stream(ProcessName.values())
+            java.util.Arrays.stream(ProcessNameType.values())
             .collect(Collectors.toMap(
-                ProcessName::getKey,        
-                ProcessName::getDescription,  
+                ProcessNameType::getKey,        
+                ProcessNameType::getDescription,  
                 (oldValue, newValue) -> oldValue, 
                 LinkedHashMap::new 
             ));

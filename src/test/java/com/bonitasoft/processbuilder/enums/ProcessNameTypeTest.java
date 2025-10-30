@@ -7,36 +7,36 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for the {@link ProcessName} enumeration, verifying 
+ * Unit tests for the {@link ProcessNameType} enumeration, verifying 
  * constant names and the {@code getAllProcessData} utility method.
  */
-class ProcessNameTest {
+class ProcessNameTypeTest {
 
     private static final Map<String, String> EXPECTED_DATA;
 
     static {
-        EXPECTED_DATA = ProcessName.getAllProcessData();
+        EXPECTED_DATA = ProcessNameType.getAllProcessData();
     }
 
     @Test
     @DisplayName("Should contain exactly three process name constants")
     void should_contain_three_constants() {
-        assertEquals(3, ProcessName.values().length);
+        assertEquals(3, ProcessNameType.values().length);
         assertEquals(3, EXPECTED_DATA.size());
     }
 
     @Test
     @DisplayName("FORM constant should have the correct key and description")
     void form_should_have_correct_values() {
-        assertEquals("Form", ProcessName.FORM.getKey());
-        assertTrue(ProcessName.FORM.getDescription().startsWith("Process for form configuration"));
+        assertEquals("Form", ProcessNameType.FORM.getKey());
+        assertTrue(ProcessNameType.FORM.getDescription().startsWith("Process for form configuration"));
     }
 
     @Test
     @DisplayName("NOTIFICATIONS constant should have the correct key and description")
     void notifications_should_have_correct_values() {
-        assertEquals("Notifications", ProcessName.NOTIFICATIONS.getKey());
-        assertTrue(ProcessName.NOTIFICATIONS.getDescription().contains("notifications configuration settings."));
+        assertEquals("Notifications", ProcessNameType.NOTIFICATIONS.getKey());
+        assertTrue(ProcessNameType.NOTIFICATIONS.getDescription().contains("notifications configuration settings."));
     }
 
     @Test

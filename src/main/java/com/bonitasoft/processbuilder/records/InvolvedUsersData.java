@@ -26,6 +26,12 @@ public record InvolvedUsersData(
     /**
      * The compact constructor for this record. 
      * It creates a defensive copy of the mutable lists to ensure the record's immutability.
+     * @param stepManagerRef The reference (usually a String ID) pointing to a process step 
+     * from which the manager of the step's user will be retrieved.
+     * @param stepUserRef The reference (usually a String ID) pointing to a process step 
+     * from which the user directly assigned to that step will be retrieved.
+     * @param memberships A list of membership references (e.g., group or role names/IDs) 
+     * used to find candidate users.
      */
     public InvolvedUsersData {
         // Defensive Copying: Ensures internal list is mutable only within the record.
