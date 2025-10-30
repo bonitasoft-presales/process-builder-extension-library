@@ -2,6 +2,8 @@ package com.bonitasoft.processbuilder.enums;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,7 +17,7 @@ class FlowActionTypeTest {
     private static final Map<String, String> EXPECTED_DATA;
 
     static {
-        EXPECTED_DATA = FlowActionType.getAllActionData();
+        EXPECTED_DATA = FlowActionType.getAllData();
     }
 
     @Test
@@ -40,12 +42,28 @@ class FlowActionTypeTest {
     }
 
     @Test
-    @DisplayName("getAllActionData should return an unmodifiable map with all required keys")
-    void getAllActionData_should_return_correct_map() {
+    @DisplayName("getAllData should return an unmodifiable map with all required keys")
+    void getAllData_should_return_correct_map() {
         assertTrue(EXPECTED_DATA.containsKey("form"));
         assertTrue(EXPECTED_DATA.containsKey("notifications"));
         assertTrue(EXPECTED_DATA.containsKey("redirections"));
 
         assertThrows(UnsupportedOperationException.class, () -> EXPECTED_DATA.put("test", "Test"));
+    }
+
+    @Test
+    void getAllData_shouldReturnCorrectMap() {
+        Map<String, String> data = FlowActionType.getAllData();
+        assertEquals(3, data.size());
+        assertTrue(data.containsKey("notifications"));
+        assertThrows(UnsupportedOperationException.class, () -> data.clear());
+    }
+
+    @Test
+    void getAllKeysList_shouldReturnCorrectList() {
+        List<String> keys = FlowActionType.getAllKeysList();
+        assertEquals(3, keys.size());
+        assertTrue(keys.contains("redirections"));
+        assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }

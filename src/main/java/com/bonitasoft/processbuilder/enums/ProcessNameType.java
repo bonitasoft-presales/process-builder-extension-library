@@ -1,7 +1,9 @@
 package com.bonitasoft.processbuilder.enums;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,11 @@ public enum ProcessNameType {
     private final String key;
     private final String description;
 
+    /**
+     * Private constructor for the enumeration.
+     * @param key The technical key used for mapping.
+     * @param description A human-readable description of the type.
+     */
     ProcessNameType(String key, String description) {
         this.key = key;
         this.description = description;
@@ -56,22 +63,47 @@ public enum ProcessNameType {
     }
 
     /**
-     * Retrieves all process names as a read-only Map where the key is the process name
-     * (e.g., "Form") and the value is its description.
-     *
-     * @return A map containing all process name data.
+     * Checks if a given string corresponds to a valid enum constant, ignoring case and leading/trailing spaces.
+     * @param input The string to validate.
+     * @return {@code true} if the string is a valid enum constant, {@code false} otherwise.
      */
-    public static Map<String, String> getAllProcessData() {
-        Map<String, String> actionData = 
-            java.util.Arrays.stream(ProcessNameType.values())
+    public static boolean isValid(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            ProcessNameType.valueOf(input.trim().toUpperCase());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Retrieves all process instance states as a read-only Map where the key is the technical key 
+     * and the value is the description.
+     * @return A map containing all process state data (Key -> Description).
+     */
+    public static Map<String, String> getAllData() {
+        Map<String, String> stateData = 
+            Arrays.stream(ProcessNameType.values())
             .collect(Collectors.toMap(
-                ProcessNameType::getKey,        
-                ProcessNameType::getDescription,  
+                ProcessNameType::getKey, 
+                ProcessNameType::getDescription, 
                 (oldValue, newValue) -> oldValue, 
                 LinkedHashMap::new 
             ));
-            
-        // La inmutabilidad es clave, pero ya se hace el retorno inmutable.
-        return Collections.unmodifiableMap(actionData);
+        
+        return Collections.unmodifiableMap(stateData);
+    }
+    
+    /**
+     * Retrieves all technical keys as a read-only List of Strings.
+     * @return A list containing all technical keys.
+     */
+    public static List<String> getAllKeysList() {
+        return Arrays.stream(ProcessNameType.values())
+            .map(ProcessNameType::getKey)
+            .collect(Collectors.toUnmodifiableList());
     }
 }

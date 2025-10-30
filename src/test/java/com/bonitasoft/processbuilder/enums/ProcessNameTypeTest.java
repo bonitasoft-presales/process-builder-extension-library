@@ -2,20 +2,22 @@ package com.bonitasoft.processbuilder.enums;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the {@link ProcessNameType} enumeration, verifying 
- * constant names and the {@code getAllProcessData} utility method.
+ * constant names and the {@code getAllData} utility method.
  */
 class ProcessNameTypeTest {
 
     private static final Map<String, String> EXPECTED_DATA;
 
     static {
-        EXPECTED_DATA = ProcessNameType.getAllProcessData();
+        EXPECTED_DATA = ProcessNameType.getAllData();
     }
 
     @Test
@@ -47,5 +49,21 @@ class ProcessNameTypeTest {
         assertTrue(EXPECTED_DATA.containsKey("Redirections"));
 
         assertThrows(UnsupportedOperationException.class, () -> EXPECTED_DATA.put("TestProcess", "Test"));
+    }
+
+    @Test
+    void getAllData_shouldReturnCorrectMap() {
+        Map<String, String> data = ProcessNameType.getAllData();
+        assertEquals(3, data.size());
+        assertTrue(data.containsKey("Form"));
+        assertThrows(UnsupportedOperationException.class, () -> data.clear());
+    }
+
+    @Test
+    void getAllKeysList_shouldReturnCorrectList() {
+        List<String> keys = ProcessNameType.getAllKeysList();
+        assertEquals(3, keys.size());
+        assertTrue(keys.contains("Notifications"));
+        assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }

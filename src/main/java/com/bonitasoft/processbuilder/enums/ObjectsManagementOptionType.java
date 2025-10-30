@@ -1,5 +1,12 @@
 package com.bonitasoft.processbuilder.enums;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.bonitasoft.processbuilder.validation.JsonSchemaValidator;
 
 /**
@@ -16,18 +23,17 @@ public enum ObjectsManagementOptionType {
     /**
      * Represents a category object used for classification or grouping.
      */
-    CATEGORY, 
-
+    CATEGORY("Category", "Represents a classification or grouping category."),
     /**
      * Represents an SMTP (Simple Mail Transfer Protocol) configuration object.
      */
-    SMTP,
+    SMTP("SMTP", "Represents an SMTP configuration object for email services."),
 
     /**
      * Represents a **generic entry** or record, typically originating from a master data table.
      * This object holds the actual data values (e.g., records from a "lookup" table).
      */
-    GENERIC_ENTRY,
+    GENERIC_ENTRY("GenericEntry", "Represents a single master data record or lookup table entry."),
 
 
     /**
@@ -36,7 +42,38 @@ public enum ObjectsManagementOptionType {
      * of master data or lookup object the entry represents, allowing a single table
      * structure (GENERIC_ENTRY) to contain multiple logical object types.
      */
-    ENTITY_TYPE;
+    ENTITY_TYPE("EntityType", "Defines the classification ID for a master data record.");
+
+    private final String key;
+    private final String description;
+
+    /**
+     * Private constructor for the enumeration.
+     * @param key The technical key used for mapping.
+     * @param description A human-readable description of the type.
+     */
+    ObjectsManagementOptionType(String key, String description) {
+        this.key = key;
+        this.description = description;
+    }
+
+    /**
+     * Gets the technical key of the flow action type, typically used for internal logic and data mapping.
+     *
+     * @return The technical key (lowercase).
+     */
+    public String getKey() {
+        return key;
+    }
+
+    /**
+     * Gets a brief business description of the action type.
+     *
+     * @return The description for the user interface or documentation.
+     */
+    public String getDescription() {
+        return description;
+    }
 
     /**
      * Checks if a given string corresponds to a valid enum constant, ignoring case and leading/trailing spaces.
@@ -71,5 +108,33 @@ public enum ObjectsManagementOptionType {
     public static boolean isJsonValidForType(String actionType, String optionType, Object jsonInput) 
     {
         return JsonSchemaValidator.isJsonValidForType(actionType, optionType, jsonInput);
+    }
+    
+    /**
+     * Retrieves all process instance states as a read-only Map where the key is the technical key 
+     * and the value is the description.
+     * @return A map containing all process state data (Key -> Description).
+     */
+    public static Map<String, String> getAllData() {
+        Map<String, String> stateData = 
+            Arrays.stream(ObjectsManagementOptionType.values())
+            .collect(Collectors.toMap(
+                ObjectsManagementOptionType::getKey, 
+                ObjectsManagementOptionType::getDescription, 
+                (oldValue, newValue) -> oldValue, 
+                LinkedHashMap::new 
+            ));
+        
+        return Collections.unmodifiableMap(stateData);
+    }
+    
+    /**
+     * Retrieves all technical keys as a read-only List of Strings.
+     * @return A list containing all technical keys.
+     */
+    public static List<String> getAllKeysList() {
+        return Arrays.stream(ObjectsManagementOptionType.values())
+            .map(ObjectsManagementOptionType::getKey)
+            .collect(Collectors.toUnmodifiableList());
     }
 }

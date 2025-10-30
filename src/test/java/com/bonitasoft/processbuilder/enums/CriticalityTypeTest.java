@@ -2,6 +2,8 @@ package com.bonitasoft.processbuilder.enums;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,7 +17,7 @@ class CriticalityTypeTest {
     private static final Map<String, String> EXPECTED_DATA;
 
     static {
-        EXPECTED_DATA = CriticalityType.getAllCriticalityData();
+        EXPECTED_DATA = CriticalityType.getAllData();
     }
 
     @Test
@@ -48,5 +50,21 @@ class CriticalityTypeTest {
         assertTrue(EXPECTED_DATA.containsKey("None"));
 
         assertThrows(UnsupportedOperationException.class, () -> EXPECTED_DATA.put("Test", "Test"));
+    }
+
+    @Test
+    void getAllData_shouldReturnCorrectMap() {
+        Map<String, String> data = CriticalityType.getAllData();
+        assertEquals(4, data.size());
+        assertTrue(data.containsKey("High"));
+        assertThrows(UnsupportedOperationException.class, () -> data.clear());
+    }
+
+    @Test
+    void getAllKeysList_shouldReturnCorrectList() {
+        List<String> keys = CriticalityType.getAllKeysList();
+        assertEquals(4, keys.size());
+        assertTrue(keys.contains("Low"));
+        assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }

@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Unit tests for the {@link GenericEntryType} enumeration.
  * <p>
@@ -93,5 +96,21 @@ class GenericEntryTypeTest {
     @DisplayName("isValid should return false for an empty string input")
     void isValid_should_return_false_for_empty_string() {
         assertFalse(GenericEntryType.isValid(""));
+    }
+
+    @Test
+    void getAllData_shouldReturnCorrectMap() {
+        Map<String, String> data = GenericEntryType.getAllData();
+        assertEquals(2, data.size());
+        assertTrue(data.containsKey("ProcessStorage"));
+        assertThrows(UnsupportedOperationException.class, () -> data.clear());
+    }
+
+    @Test
+    void getAllKeysList_shouldReturnCorrectList() {
+        List<String> keys = GenericEntryType.getAllKeysList();
+        assertEquals(2, keys.size());
+        assertTrue(keys.contains("Criticality"));
+        assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }

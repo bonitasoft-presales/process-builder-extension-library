@@ -1,5 +1,12 @@
 package com.bonitasoft.processbuilder.enums;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.bonitasoft.processbuilder.validation.JsonSchemaValidator;
 
 /**
@@ -15,29 +22,60 @@ import com.bonitasoft.processbuilder.validation.JsonSchemaValidator;
  */
 public enum ProcessOptionType {
     /**
-     * Represents a process parameter.
+     * Represents a process parameter or configuration setting.
      */
-    PARAMETER,
+    PARAMETER("Parameter", "Represents a configurable parameter or setting within the process definition."),
     
     /**
-     * Represents a user within a process.
+     * Represents a user or a list of users involved in a process instance.
      */
-    USERS,
+    USERS("Users", "Represents a user or set of users associated with the process."),
     
     /**
-     * Represents the inputs of a process.
+     * Represents the initial data inputs required to start a process instance.
      */
-    INPUTS,
+    INPUTS("Inputs", "Represents the initial data inputs required for process instantiation."),
     
     /**
-     * Represents a step in the process workflow.
+     * Represents a step or stage in the process workflow, typically linked to a task or action.
      */
-    STEPS,
+    STEPS("Steps", "Represents a step or stage within the process workflow."),
     
     /**
-     * Represents the status of the process.
+     * Represents the status or state of the process execution lifecycle.
      */
-    STATUS;
+    STATUS("Status", "Represents the current status or state of the process instance.");
+
+    private final String key;
+    private final String description;
+
+    /**
+     * Private constructor for the enumeration.
+     * @param key The technical key used for mapping.
+     * @param description A human-readable description of the type.
+     */
+    ProcessOptionType(String key, String description) {
+        this.key = key;
+        this.description = description;
+    }
+
+    /**
+     * Gets the technical key of the flow action type, typically used for internal logic and data mapping.
+     *
+     * @return The technical key (lowercase).
+     */
+    public String getKey() {
+        return key;
+    }
+
+    /**
+     * Gets a brief business description of the action type.
+     *
+     * @return The description for the user interface or documentation.
+     */
+    public String getDescription() {
+        return description;
+    }
 
     /**
      * Checks if a given string corresponds to a valid enum constant, ignoring case and leading/trailing spaces.
@@ -73,5 +111,33 @@ public enum ProcessOptionType {
     public static boolean isJsonValidForType(String actionType, String optionType, Object jsonInput) 
     {
         return JsonSchemaValidator.isJsonValidForType(actionType, optionType, jsonInput);
+    }
+    
+    /**
+     * Retrieves all process instance states as a read-only Map where the key is the technical key 
+     * and the value is the description.
+     * @return A map containing all process state data (Key -> Description).
+     */
+    public static Map<String, String> getAllData() {
+        Map<String, String> stateData = 
+            Arrays.stream(ProcessOptionType.values())
+            .collect(Collectors.toMap(
+                ProcessOptionType::getKey, 
+                ProcessOptionType::getDescription, 
+                (oldValue, newValue) -> oldValue, 
+                LinkedHashMap::new 
+            ));
+        
+        return Collections.unmodifiableMap(stateData);
+    }
+    
+    /**
+     * Retrieves all technical keys as a read-only List of Strings.
+     * @return A list containing all technical keys.
+     */
+    public static List<String> getAllKeysList() {
+        return Arrays.stream(ProcessOptionType.values())
+            .map(ProcessOptionType::getKey)
+            .collect(Collectors.toUnmodifiableList());
     }
 }

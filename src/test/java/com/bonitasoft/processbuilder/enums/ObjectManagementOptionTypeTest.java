@@ -10,6 +10,9 @@ import org.mockito.MockedStatic;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Unit tests for the {@link ObjectsManagementOptionType} enumeration.
  * <p>
@@ -141,5 +144,21 @@ class ObjectsManagementOptionTypeTest {
 
         // Verify the static method was called exactly once with the correct parameters
         mockedJsonValidator.verify(() -> JsonSchemaValidator.isJsonValidForType(action, option, json), times(1));
+    }
+
+    @Test
+    void getAllData_shouldReturnCorrectMap() {
+        Map<String, String> data = ObjectsManagementOptionType.getAllData();
+        assertEquals(4, data.size());
+        assertTrue(data.containsKey("Category"));
+        assertThrows(UnsupportedOperationException.class, () -> data.clear());
+    }
+
+    @Test
+    void getAllKeysList_shouldReturnCorrectList() {
+        List<String> keys = ObjectsManagementOptionType.getAllKeysList();
+        assertEquals(4, keys.size());
+        assertTrue(keys.contains("SMTP"));
+        assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }

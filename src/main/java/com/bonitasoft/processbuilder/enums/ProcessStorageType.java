@@ -1,8 +1,11 @@
 package com.bonitasoft.processbuilder.enums;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Defines the valid storage types for process-related files, along with their business descriptions.
@@ -36,6 +39,11 @@ public enum ProcessStorageType {
     private final String key;
     private final String description;
 
+    /**
+     * Private constructor for the enumeration.
+     * @param key The technical key used for mapping.
+     * @param description A human-readable description of the type.
+     */
     ProcessStorageType(String key, String description) {
         this.key = key;
         this.description = description;
@@ -58,15 +66,47 @@ public enum ProcessStorageType {
     }
 
     /**
-     * Retrieves all storage types as a read-only Map where the key is the storage key 
-     * (e.g., "Local") and the value is the description.
-     * @return A map containing all storage type data.
+     * Checks if a given string corresponds to a valid enum constant, ignoring case and leading/trailing spaces.
+     * @param input The string to validate.
+     * @return {@code true} if the string is a valid enum constant, {@code false} otherwise.
      */
-    public static Map<String, String> getAllStorageData() {
-        Map<String, String> storageData = new LinkedHashMap<>();
-        for (ProcessStorageType type : values()) {
-            storageData.put(type.getKey(), type.getDescription());
+    public static boolean isValid(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return false;
         }
-        return Collections.unmodifiableMap(storageData);
+        try {
+            ProcessStorageType.valueOf(input.trim().toUpperCase());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Retrieves all process instance states as a read-only Map where the key is the technical key 
+     * and the value is the description.
+     * @return A map containing all process state data (Key -> Description).
+     */
+    public static Map<String, String> getAllData() {
+        Map<String, String> stateData = 
+            Arrays.stream(ProcessStorageType.values())
+            .collect(Collectors.toMap(
+                ProcessStorageType::getKey, 
+                ProcessStorageType::getDescription, 
+                (oldValue, newValue) -> oldValue, 
+                LinkedHashMap::new 
+            ));
+        
+        return Collections.unmodifiableMap(stateData);
+    }
+    
+    /**
+     * Retrieves all technical keys as a read-only List of Strings.
+     * @return A list containing all technical keys.
+     */
+    public static List<String> getAllKeysList() {
+        return Arrays.stream(ProcessStorageType.values())
+            .map(ProcessStorageType::getKey)
+            .collect(Collectors.toUnmodifiableList());
     }
 }

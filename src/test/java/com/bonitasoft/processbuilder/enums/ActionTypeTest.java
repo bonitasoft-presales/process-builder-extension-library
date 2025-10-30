@@ -3,6 +3,9 @@ package com.bonitasoft.processbuilder.enums;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Unit tests for the {@link ActionType} enumeration.
  * <p>
@@ -122,5 +125,21 @@ class ActionTypeTest {
         assertFalse(emptyIsValid);
         assertFalse(nonDigitIsValid);
         assertFalse(mixedIsValid);
+    }
+
+    @Test
+    void getAllData_shouldReturnCorrectMap() {
+        Map<String, String> data = ActionType.getAllData();
+        assertEquals(3, data.size());
+        assertTrue(data.containsKey("Insert"));
+        assertThrows(UnsupportedOperationException.class, () -> data.clear());
+    }
+
+    @Test
+    void getAllKeysList_shouldReturnCorrectList() {
+        List<String> keys = ActionType.getAllKeysList();
+        assertEquals(3, keys.size());
+        assertTrue(keys.contains("Update"));
+        assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }

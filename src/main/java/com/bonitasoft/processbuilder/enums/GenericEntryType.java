@@ -1,5 +1,11 @@
 package com.bonitasoft.processbuilder.enums;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Defines the valid types used to classify generic configuration entries 
@@ -19,30 +25,89 @@ public enum GenericEntryType {
      * This type is used to identify and retrieve master data records that 
      * define where process documents and files should be persisted (e.g., local server, BDM database, with retention or deletion).
      */
-    PROCESS_STORAGE, 
+    PROCESS_STORAGE("ProcessStorage", "Defines the storage location and retention policy for process documents."),
 
     /**
      * Represents the classification key for **Process Criticality** definitions.
      * This type is used to identify and retrieve master data records that 
      * define the business impact or priority level of a process (e.g., Low, Medium, High).
      */
-    CRITICALITY;
+    CRITICALITY("Criticality", "Defines the business priority level (e.g., High, Medium, Low) of the process.");
 
-    // Optional: Add a utility method to validate existence if needed
+    private final String key;
+    private final String description;
+
     /**
-     * Checks if the given string value matches any defined enum constant name.
-     * @param name The string name to check.
-     * @return true if the name matches a constant, false otherwise.
+     * Private constructor for the enumeration.
+     * @param key The technical key used for mapping.
+     * @param description A human-readable description of the type.
      */
-    public static boolean isValid(String name) {
-        if (name == null) {
+    GenericEntryType(String key, String description) {
+        this.key = key;
+        this.description = description;
+    }
+
+    /**
+     * Gets the technical key of the flow action type, typically used for internal logic and data mapping.
+     *
+     * @return The technical key (lowercase).
+     */
+    public String getKey() {
+        return key;
+    }
+
+    /**
+     * Gets a brief business description of the action type.
+     *
+     * @return The description for the user interface or documentation.
+     */
+    public String getDescription() {
+        return description;
+    }
+
+
+    /**
+     * Checks if a given string corresponds to a valid enum constant, ignoring case and leading/trailing spaces.
+     * @param input The string to validate.
+     * @return {@code true} if the string is a valid enum constant, {@code false} otherwise.
+     */
+    public static boolean isValid(String input) {
+        if (input == null || input.trim().isEmpty()) {
             return false;
         }
-        for (GenericEntryType type : GenericEntryType.values()) {
-            if (type.name().equalsIgnoreCase(name)) {
-                return true;
-            }
+        try {
+            GenericEntryType.valueOf(input.trim().toUpperCase());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
         }
-        return false;
+    }
+    
+    /**
+     * Retrieves all process instance states as a read-only Map where the key is the technical key 
+     * and the value is the description.
+     * @return A map containing all process state data (Key -> Description).
+     */
+    public static Map<String, String> getAllData() {
+        Map<String, String> stateData = 
+            Arrays.stream(GenericEntryType.values())
+            .collect(Collectors.toMap(
+                GenericEntryType::getKey, 
+                GenericEntryType::getDescription, 
+                (oldValue, newValue) -> oldValue, 
+                LinkedHashMap::new 
+            ));
+        
+        return Collections.unmodifiableMap(stateData);
+    }
+    
+    /**
+     * Retrieves all technical keys as a read-only List of Strings.
+     * @return A list containing all technical keys.
+     */
+    public static List<String> getAllKeysList() {
+        return Arrays.stream(GenericEntryType.values())
+            .map(GenericEntryType::getKey)
+            .collect(Collectors.toUnmodifiableList());
     }
 }

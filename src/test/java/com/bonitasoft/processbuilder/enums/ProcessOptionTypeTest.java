@@ -10,6 +10,9 @@ import org.mockito.MockedStatic;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Unit tests for the {@link ProcessOptionType} enumeration.
  * <p>
@@ -143,5 +146,21 @@ class ProcessOptionTypeTest {
 
         // Verify the static method was called exactly once with the correct parameters
         mockedJsonValidator.verify(() -> JsonSchemaValidator.isJsonValidForType(action, option, json), times(1));
+    }
+
+    @Test
+    void getAllData_shouldReturnCorrectMap() {
+        Map<String, String> data = ProcessOptionType.getAllData();
+        assertEquals(5, data.size());
+        assertTrue(data.containsKey("Users"));
+        assertThrows(UnsupportedOperationException.class, () -> data.clear());
+    }
+
+    @Test
+    void getAllKeysList_shouldReturnCorrectList() {
+        List<String> keys = ProcessOptionType.getAllKeysList();
+        assertEquals(5, keys.size());
+        assertTrue(keys.contains("Parameter"));
+        assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }

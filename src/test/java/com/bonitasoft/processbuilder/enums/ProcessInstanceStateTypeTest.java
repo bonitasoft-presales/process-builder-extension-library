@@ -34,7 +34,7 @@ class ProcessInstanceStateTypeTest {
 
     @Test
     void getAllStatesData_shouldReturnCorrectMap() {
-        Map<String, String> data = ProcessInstanceStateType.getAllStatesData();
+        Map<String, String> data = ProcessInstanceStateType.getAllData();
         assertEquals(6, data.size());
         assertTrue(data.containsKey("Canceled"));
         assertThrows(UnsupportedOperationException.class, () -> data.clear());

@@ -2,20 +2,22 @@ package com.bonitasoft.processbuilder.enums;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the {@link ProcessStorageType} enumeration, verifying 
- * constant values and the {@code getAllStorageData} utility method.
+ * constant values and the {@code getAllData} utility method.
  */
 class ProcessStorageTypeTest {
 
     private static final Map<String, String> EXPECTED_DATA;
 
     static {
-        EXPECTED_DATA = ProcessStorageType.getAllStorageData();
+        EXPECTED_DATA = ProcessStorageType.getAllData();
     }
 
     @Test
@@ -41,12 +43,28 @@ class ProcessStorageTypeTest {
 
     @Test
     @DisplayName("getAllStorageData should return an unmodifiable map with all required keys")
-    void getAllStorageData_should_return_correct_map() {
+    void getAllData_should_return_correct_map() {
         assertTrue(EXPECTED_DATA.containsKey("Local"));
         assertTrue(EXPECTED_DATA.containsKey("Local and delete"));
         assertTrue(EXPECTED_DATA.containsKey("Bonita"));
         assertTrue(EXPECTED_DATA.containsKey("Bonita and delete"));
 
         assertThrows(UnsupportedOperationException.class, () -> EXPECTED_DATA.put("Test", "Test"));
+    }
+
+    @Test
+    void getAllData_shouldReturnCorrectMap() {
+        Map<String, String> data = ProcessStorageType.getAllData();
+        assertEquals(4, data.size());
+        assertTrue(data.containsKey("Local"));
+        assertThrows(UnsupportedOperationException.class, () -> data.clear());
+    }
+
+    @Test
+    void getAllKeysList_shouldReturnCorrectList() {
+        List<String> keys = ProcessStorageType.getAllKeysList();
+        assertEquals(4, keys.size());
+        assertTrue(keys.contains("Bonita"));
+        assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }

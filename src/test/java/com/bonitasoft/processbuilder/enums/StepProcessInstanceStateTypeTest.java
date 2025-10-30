@@ -32,7 +32,7 @@ class StepProcessInstanceStateTypeTest {
 
     @Test
     void getAllStatesData_shouldReturnCorrectMap() {
-        Map<String, String> data = StepProcessInstanceStateType.getAllStatesData();
+        Map<String, String> data = StepProcessInstanceStateType.getAllData();
         assertEquals(5, data.size());
         assertTrue(data.containsKey("Running"));
         assertThrows(UnsupportedOperationException.class, () -> data.remove("Failed"));

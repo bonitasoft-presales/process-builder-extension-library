@@ -57,11 +57,10 @@ class ProcessStateTypeTest {
         assertFalse(ProcessStateType.isValid("  "));
     }
 
-    // --- getAllStatesData() Test ---
 
     @Test
-    void getAllStatesData_shouldReturnCorrectMap() {
-        Map<String, String> data = ProcessStateType.getAllStatesData();
+    void getAllData_shouldReturnCorrectMap() {
+        Map<String, String> data = ProcessStateType.getAllData();
         assertEquals(6, data.size());
         assertTrue(data.containsKey("Running"));
         assertTrue(data.get("Draft").contains("under construction"));
