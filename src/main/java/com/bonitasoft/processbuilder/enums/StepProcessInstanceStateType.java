@@ -78,7 +78,7 @@ public enum StepProcessInstanceStateType {
      * and the value is the description.
      * @return A map containing all process state data (Key -> Description).
      */
-    public static Map<String, String> getAllStatesData() {
+    public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
             Arrays.stream(StepProcessInstanceStateType.values())
             .collect(Collectors.toMap(

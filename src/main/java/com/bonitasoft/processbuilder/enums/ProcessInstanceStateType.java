@@ -83,7 +83,7 @@ public enum ProcessInstanceStateType {
      * and the value is the description.
      * @return A map containing all process state data (Key -> Description).
      */
-    public static Map<String, String> getAllStatesData() {
+    public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
             Arrays.stream(ProcessInstanceStateType.values())
             .collect(Collectors.toMap(
