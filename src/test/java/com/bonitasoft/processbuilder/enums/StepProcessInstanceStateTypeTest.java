@@ -33,7 +33,7 @@ class StepProcessInstanceStateTypeTest {
     @Test
     void getAllStatesData_shouldReturnCorrectMap() {
         Map<String, String> data = StepProcessInstanceStateType.getAllData();
-        assertEquals(5, data.size());
+        assertEquals(6, data.size());
         assertTrue(data.containsKey("Running"));
         assertThrows(UnsupportedOperationException.class, () -> data.remove("Failed"));
     }
@@ -41,7 +41,7 @@ class StepProcessInstanceStateTypeTest {
     @Test
     void getAllKeysList_shouldReturnCorrectList() {
         List<String> keys = StepProcessInstanceStateType.getAllKeysList();
-        assertEquals(5, keys.size());
+        assertEquals(6, keys.size());
         assertTrue(keys.contains("Canceled"));
         assertThrows(UnsupportedOperationException.class, () -> keys.set(0, "START"));
     }

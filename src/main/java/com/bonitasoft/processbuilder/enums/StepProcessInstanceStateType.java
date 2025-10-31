@@ -21,8 +21,15 @@ public enum StepProcessInstanceStateType {
     /** The step failed due to a system error (e.g., connector failure). */
     FAILED("Failed", "The step execution encountered an error."),
     
-    /** The step execution finished successfully. */
-    COMPLETED("Completed", "The step finished successfully."),
+    /** The human task has been successfully completed by the user (e.g., the form 
+     * was submitted). The step's subsequent actions are now being processed.
+     */
+    COMPLETED("Completed", "The human task (e.g., form submission) was successfully completed."),
+
+    /** The step execution finished successfully, meaning all associated actions 
+     * (connectors, notifications, redirections) have been successfully processed.
+     */
+    ENDED("Ended", "The step finished successfully after all associated actions were executed."),
     
     /** The step was bypassed or manually terminated. */
     CANCELED("Canceled", "The step was manually bypassed or terminated.");
