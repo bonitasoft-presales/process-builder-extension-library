@@ -3,10 +3,17 @@ package com.bonitasoft.processbuilder.extension;
 import org.bonitasoft.engine.api.APIAccessor;
 import org.bonitasoft.engine.api.IdentityAPI;
 import org.bonitasoft.engine.api.ProcessAPI;
+import org.bonitasoft.engine.bpm.flownode.ActivityInstanceNotFoundException;
+import org.bonitasoft.engine.bpm.flownode.HumanTaskInstance;
 import org.bonitasoft.engine.bpm.process.ProcessInstance;
 import org.bonitasoft.engine.bpm.process.ProcessInstanceNotFoundException;
+import org.bonitasoft.engine.exception.RetrieveException;
 import org.bonitasoft.engine.identity.User;
 import org.bonitasoft.engine.identity.UserNotFoundException;
+import org.bonitasoft.engine.session.InvalidSessionException;
+import org.bonitasoft.engine.identity.UserNotFoundException;
+import org.bonitasoft.engine.bpm.process.ProcessInstanceNotFoundException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,8 +24,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import com.bonitasoft.processbuilder.extension.ProcessUtils.ProcessInitiator;
+import com.bonitasoft.processbuilder.records.ProcessInitiator;
+import com.bonitasoft.processbuilder.records.TaskExecutor;
 import com.bonitasoft.processbuilder.enums.ActionType;
+
+
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -51,6 +61,10 @@ class ProcessUtilsTest {
     private ProcessInstance processInstance;
     @Mock
     private User user;
+
+    // --- Mock for HumanTaskInstance ---
+    @Mock
+    private HumanTaskInstance humanTaskInstance;
 
     // --- Mock for BDM Search Function ---
     @Mock
@@ -366,5 +380,237 @@ class ProcessUtilsTest {
         
         // Optional: Revert the accessibility change after the test
         constructor.setAccessible(false);
+    }
+
+    // =========================================================================
+    // SECTION 5: getTaskExecutor TESTS
+    // =========================================================================
+
+    @Test
+    @DisplayName("Should successfully retrieve the task executor details on success")
+    void getTaskExecutor_should_return_valid_executor_on_success() throws Exception {
+        // Given
+        long ACTIVITY_INSTANCE_ID = 200L;
+        when(processApi.getHumanTaskInstance(ACTIVITY_INSTANCE_ID)).thenReturn(humanTaskInstance);
+        when(humanTaskInstance.getExecutedBy()).thenReturn(USER_ID);
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+
+        // When
+        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(USER_ID, result.id());
+        assertEquals(USER_NAME, result.userName());
+        assertEquals(FIRST_NAME + " " + LAST_NAME, result.fullName());
+        verify(processApi, times(1)).getHumanTaskInstance(ACTIVITY_INSTANCE_ID);
+        verify(identityAPI, times(1)).getUser(USER_ID);
+    }
+
+    @Test
+    @DisplayName("Should return 'system_or_unassigned' when executedBy is 0")
+    void getTaskExecutor_should_return_system_on_unassigned_task() throws Exception {
+        // Given
+        long ACTIVITY_INSTANCE_ID = 200L;
+        when(processApi.getHumanTaskInstance(ACTIVITY_INSTANCE_ID)).thenReturn(humanTaskInstance);
+        when(humanTaskInstance.getExecutedBy()).thenReturn(0L);
+
+        // When
+        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(0L, result.id());
+        assertEquals("system_or_unassigned", result.userName());
+        assertEquals("System or Unassigned", result.fullName());
+        verify(identityAPI, never()).getUser(anyLong());
+    }
+
+    @Test
+    @DisplayName("Should return 'system_or_unassigned' when executedBy is negative")
+    void getTaskExecutor_should_return_system_on_negative_executed_by() throws Exception {
+        // Given
+        long ACTIVITY_INSTANCE_ID = 200L;
+        when(processApi.getHumanTaskInstance(ACTIVITY_INSTANCE_ID)).thenReturn(humanTaskInstance);
+        when(humanTaskInstance.getExecutedBy()).thenReturn(-1L);
+
+        // When
+        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(-1L, result.id());
+        assertEquals("system_or_unassigned", result.userName());
+        assertEquals("System or Unassigned", result.fullName());
+        verify(identityAPI, never()).getUser(anyLong());
+    }
+
+    @Test
+    @DisplayName("Should return 'unknown_user' on UserNotFoundException")
+    void getTaskExecutor_should_return_unknown_user_on_UserNotFoundException() throws Exception {
+        // Given
+        long ACTIVITY_INSTANCE_ID = 200L;
+        when(processApi.getHumanTaskInstance(ACTIVITY_INSTANCE_ID)).thenReturn(humanTaskInstance);
+        when(humanTaskInstance.getExecutedBy()).thenReturn(USER_ID);
+        when(identityAPI.getUser(USER_ID)).thenThrow(new UserNotFoundException("User not found"));
+
+        // When
+        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+
+        // Then
+        assertNotNull(result);
+        assertNull(result.id());
+        assertEquals("unknown_user", result.userName());
+        assertEquals("Unknown User", result.fullName());
+    }
+
+    @Test
+    @DisplayName("Should return 'api_error' on InvalidSessionException")
+    void getTaskExecutor_should_return_api_error_on_InvalidSessionException() throws Exception {
+        // Given
+        long ACTIVITY_INSTANCE_ID = 200L;
+        when(processApi.getHumanTaskInstance(ACTIVITY_INSTANCE_ID))
+            .thenThrow(new InvalidSessionException("Invalid session"));
+
+        // When
+        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+
+        // Then
+        assertNotNull(result);
+        assertNull(result.id());
+        assertEquals("api_error", result.userName());
+        assertEquals("API Error", result.fullName());
+    }
+
+    @Test
+    @DisplayName("Should return 'api_error' on ActivityInstanceNotFoundException")
+    void getTaskExecutor_should_return_api_error_on_ActivityInstanceNotFoundException() throws Exception {
+        // Given
+        long ACTIVITY_INSTANCE_ID = 200L;
+        when(processApi.getHumanTaskInstance(ACTIVITY_INSTANCE_ID))
+            .thenThrow(new ActivityInstanceNotFoundException(ACTIVITY_INSTANCE_ID));
+
+        // When
+        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+
+        // Then
+        assertNotNull(result);
+        assertNull(result.id());
+        assertEquals("api_error", result.userName());
+        assertEquals("API Error", result.fullName());
+    }
+
+    @Test
+    @DisplayName("Should return 'api_error' on RetrieveException")
+    void getTaskExecutor_should_return_api_error_on_RetrieveException() throws Exception {
+        // Given
+        long ACTIVITY_INSTANCE_ID = 200L;
+        when(processApi.getHumanTaskInstance(ACTIVITY_INSTANCE_ID))
+            .thenThrow(new RetrieveException("Retrieve error"));
+
+        // When
+        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+
+        // Then
+        assertNotNull(result);
+        assertNull(result.id());
+        assertEquals("api_error", result.userName());
+        assertEquals("API Error", result.fullName());
+    }
+
+    @Test
+    @DisplayName("Should return 'unexpected_error' on any other unexpected exception")
+    void getTaskExecutor_should_return_unexpected_error_on_generic_exception() throws Exception {
+        // Given
+        long ACTIVITY_INSTANCE_ID = 200L;
+        when(processApi.getHumanTaskInstance(ACTIVITY_INSTANCE_ID))
+            .thenThrow(new RuntimeException("Unexpected error"));
+
+        // When
+        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+
+        // Then
+        assertNotNull(result);
+        assertNull(result.id());
+        assertEquals("unexpected_error", result.userName());
+        assertEquals("Unexpected Error", result.fullName());
+    }
+
+    @Test
+    @DisplayName("Should handle exception when getExecutedBy throws exception")
+    void getTaskExecutor_should_handle_exception_on_getExecutedBy() throws Exception {
+        // Given
+        long ACTIVITY_INSTANCE_ID = 200L;
+        when(processApi.getHumanTaskInstance(ACTIVITY_INSTANCE_ID)).thenReturn(humanTaskInstance);
+        when(humanTaskInstance.getExecutedBy()).thenThrow(new RuntimeException("Error getting executed by"));
+
+        // When
+        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+
+        // Then
+        assertNotNull(result);
+        assertNull(result.id());
+        assertEquals("unexpected_error", result.userName());
+        assertEquals("Unexpected Error", result.fullName());
+    }
+
+    @Test
+    @DisplayName("Should verify correct method calls on successful retrieval")
+    void getTaskExecutor_should_verify_correct_method_calls_on_success() throws Exception {
+        // Given
+        long ACTIVITY_INSTANCE_ID = 200L;
+        when(processApi.getHumanTaskInstance(ACTIVITY_INSTANCE_ID)).thenReturn(humanTaskInstance);
+        when(humanTaskInstance.getExecutedBy()).thenReturn(USER_ID);
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+
+        // When
+        ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+
+        // Then: Verify all interactions occurred
+        verify(processApi, times(1)).getHumanTaskInstance(ACTIVITY_INSTANCE_ID);
+        verify(humanTaskInstance, times(1)).getExecutedBy();
+        verify(identityAPI, times(1)).getUser(USER_ID);
+        verify(user, times(1)).getFirstName();
+        verify(user, times(1)).getLastName();
+        verify(user, times(1)).getUserName();
+    }
+
+    @Test
+    @DisplayName("Should handle multiple consecutive calls with different task instances")
+    void getTaskExecutor_should_handle_multiple_calls() throws Exception {
+        // Given
+        long ACTIVITY_ID_1 = 201L;
+        long ACTIVITY_ID_2 = 202L;
+        long USER_ID_2 = 124L;
+        
+        User user2 = mock(User.class);
+        when(user2.getFirstName()).thenReturn("Jane");
+        when(user2.getLastName()).thenReturn("Smith");
+        when(user2.getUserName()).thenReturn("jsmith");
+
+        // Setup first call
+        HumanTaskInstance task1 = mock(HumanTaskInstance.class);
+        when(processApi.getHumanTaskInstance(ACTIVITY_ID_1)).thenReturn(task1);
+        when(task1.getExecutedBy()).thenReturn(USER_ID);
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+
+        // Setup second call
+        HumanTaskInstance task2 = mock(HumanTaskInstance.class);
+        when(processApi.getHumanTaskInstance(ACTIVITY_ID_2)).thenReturn(task2);
+        when(task2.getExecutedBy()).thenReturn(USER_ID_2);
+        when(identityAPI.getUser(USER_ID_2)).thenReturn(user2);
+
+        // When
+        TaskExecutor result1 = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_ID_1);
+        TaskExecutor result2 = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_ID_2);
+
+        // Then
+        assertNotNull(result1);
+        assertEquals(USER_ID, result1.id());
+        assertEquals(USER_NAME, result1.userName());
+
+        assertNotNull(result2);
+        assertEquals(USER_ID_2, result2.id());
+        assertEquals("jsmith", result2.userName());
     }
 }

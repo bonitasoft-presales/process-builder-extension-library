@@ -6,7 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.bonitasoft.processbuilder.constants.Constants;
-import com.bonitasoft.processbuilder.extension.ProcessUtils.ProcessInitiator;
+import com.bonitasoft.processbuilder.records.ProcessInitiator;
 
 import java.time.OffsetDateTime;
 import java.lang.reflect.Constructor;

@@ -7,7 +7,7 @@ import java.time.OffsetDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bonitasoft.processbuilder.extension.ProcessUtils.ProcessInitiator;
+import com.bonitasoft.processbuilder.records.ProcessInitiator;
 
 /**
  * Utility class providing methods to automatically set creation and modification

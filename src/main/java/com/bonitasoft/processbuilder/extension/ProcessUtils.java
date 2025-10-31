@@ -4,14 +4,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.bonitasoft.processbuilder.enums.ActionType;
+import com.bonitasoft.processbuilder.records.ProcessInitiator;
+import com.bonitasoft.processbuilder.records.TaskExecutor;
+
 import java.util.function.Function;
 
 import org.bonitasoft.engine.api.APIAccessor;
 import org.bonitasoft.engine.api.IdentityAPI;
 import org.bonitasoft.engine.api.ProcessAPI;
+import org.bonitasoft.engine.bpm.flownode.ActivityInstanceNotFoundException;
+import org.bonitasoft.engine.bpm.flownode.HumanTaskInstance;
 import org.bonitasoft.engine.bpm.process.ProcessInstance;
+import org.bonitasoft.engine.exception.RetrieveException;
 import org.bonitasoft.engine.identity.User;
 import org.bonitasoft.engine.identity.UserNotFoundException;
+import org.bonitasoft.engine.session.InvalidSessionException;
 
 
 /**
@@ -77,13 +84,53 @@ public final class ProcessUtils {
     }
 
     /**
-     * A record representing the process initiator details.
+     * Retrieves the user who executed a specific human task instance.
+     * This method accesses the Bonita Process and Identity APIs to find the executor's details.
+     * If the executor is not found, or an unexpected error occurs, a default 'unknown_user' is returned.
      *
-     * @param id The unique identifier of the user who initiated the process.
-     * @param userName The username of the process initiator.
-     * @param fullName The full name (first name + last name) of the process initiator.
+     * @param apiAccessor An instance of {@link APIAccessor} to get the Bonita APIs.
+     * @param activityInstanceId The unique identifier of the human task instance (activityId).
+     * @return A {@link TaskExecutor} record containing the executor's ID, username, and full name.
      */
-    public record ProcessInitiator(Long id, String userName, String fullName) {}
+    public static TaskExecutor getTaskExecutor(APIAccessor apiAccessor, long activityInstanceId) {
+        try {
+            LOGGER.info("Attempting to retrieve the user who executed the task instance ID: {}", activityInstanceId);
+            
+            HumanTaskInstance humanTaskInstance = apiAccessor.getProcessAPI().getHumanTaskInstance(activityInstanceId);
+            
+            long executedByUserId = humanTaskInstance.getExecutedBy();
+            
+            if (executedByUserId <= 0) {
+                LOGGER.debug("Task instance ID {} was not executed by a human user (executedBy ID: {}).", 
+                            activityInstanceId, executedByUserId);
+                return new TaskExecutor(executedByUserId, "system_or_unassigned", "System or Unassigned");
+            }
+
+            // 3. Obtener los detalles del usuario
+            IdentityAPI identityAPI = apiAccessor.getIdentityAPI();
+            User taskExecutor = identityAPI.getUser(executedByUserId);
+
+            String executorFullName = taskExecutor.getFirstName() + " " + taskExecutor.getLastName();
+            String executorUserName = taskExecutor.getUserName();
+
+            LOGGER.debug("Successfully retrieved executor user: {}", executorFullName);
+            return new TaskExecutor(executedByUserId, executorUserName, executorFullName);
+
+        } catch (UserNotFoundException e) {
+            LOGGER.warn("The user who executed task instance ID {} was not found. Using 'unknown_user'.", activityInstanceId, e);
+            return new TaskExecutor(null, "unknown_user", "Unknown User");
+            
+        } catch (InvalidSessionException | ActivityInstanceNotFoundException | RetrieveException e) {
+            LOGGER.error("An API error occurred while retrieving the task executor for activity ID {}: {}", 
+                        activityInstanceId, e.getMessage(), e);
+            return new TaskExecutor(null, "api_error", "API Error");
+
+        } catch (Exception e) {
+            LOGGER.error("An unexpected error occurred while retrieving the task executor for activity ID {}: {}", 
+                        activityInstanceId, e.getMessage(), e);
+            return new TaskExecutor(null, "unexpected_error", "Unexpected Error");
+        }
+    }
 
 
     /**
