@@ -11,8 +11,6 @@ import org.bonitasoft.engine.exception.RetrieveException;
 import org.bonitasoft.engine.identity.User;
 import org.bonitasoft.engine.identity.UserNotFoundException;
 import org.bonitasoft.engine.session.InvalidSessionException;
-import org.bonitasoft.engine.identity.UserNotFoundException;
-import org.bonitasoft.engine.bpm.process.ProcessInstanceNotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -347,7 +345,116 @@ class ProcessUtilsTest {
     }
 
     // =========================================================================
-    // SECTION 4: Private Constructor Coverage
+    // SECTION 4: searchById TESTS
+    // =========================================================================
+
+    @Test
+    @DisplayName("searchById should return object when search function succeeds")
+    void searchById_should_return_object_on_successful_search() {
+        // Given
+        MockBDM expectedObject = new MockBDM(PERSISTENCE_ID);
+        when(searchFunction.apply(PERSISTENCE_ID)).thenReturn(expectedObject);
+
+        // When
+        MockBDM result = ProcessUtils.searchById(PERSISTENCE_ID, searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertSame(expectedObject, result);
+        verify(searchFunction, times(1)).apply(PERSISTENCE_ID);
+    }
+
+    @Test
+    @DisplayName("searchById should return null when search function returns null")
+    void searchById_should_return_null_when_object_not_found() {
+        // Given
+        when(searchFunction.apply(PERSISTENCE_ID)).thenReturn(null);
+
+        // When
+        MockBDM result = ProcessUtils.searchById(PERSISTENCE_ID, searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, times(1)).apply(PERSISTENCE_ID);
+    }
+
+    @Test
+    @DisplayName("searchById should return null when persistenceId is null")
+    void searchById_should_return_null_on_null_persistence_id() {
+        // When
+        MockBDM result = ProcessUtils.searchById(null, searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, never()).apply(anyLong());
+    }
+
+    @Test
+    @DisplayName("searchById should return null when persistenceId is zero")
+    void searchById_should_return_null_on_zero_persistence_id() {
+        // When
+        MockBDM result = ProcessUtils.searchById(0L, searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, never()).apply(anyLong());
+    }
+
+    @Test
+    @DisplayName("searchById should return null when persistenceId is negative")
+    void searchById_should_return_null_on_negative_persistence_id() {
+        // When
+        MockBDM result = ProcessUtils.searchById(-1L, searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, never()).apply(anyLong());
+    }
+
+    @Test
+    @DisplayName("searchById should handle exceptions from search function gracefully")
+    void searchById_should_return_null_when_search_function_throws_exception() {
+        // Given
+        when(searchFunction.apply(PERSISTENCE_ID)).thenThrow(new RuntimeException("Search error"));
+
+        // When
+        MockBDM result = ProcessUtils.searchById(PERSISTENCE_ID, searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, times(1)).apply(PERSISTENCE_ID);
+    }
+
+    @Test
+    @DisplayName("searchById should work with different BDM types")
+    void searchById_should_work_with_different_bdm_types() {
+        // Given: Create a different search function
+        Function<Long, String> stringSearchFunction = id -> "Found String for ID: " + id;
+
+        // When
+        String result = ProcessUtils.searchById(123L, stringSearchFunction, "StringObject");
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Found String for ID: 123", result);
+    }
+
+    @Test
+    @DisplayName("searchById should call search function only once")
+    void searchById_should_call_search_function_only_once() {
+        // Given
+        MockBDM expectedObject = new MockBDM(PERSISTENCE_ID);
+        when(searchFunction.apply(PERSISTENCE_ID)).thenReturn(expectedObject);
+
+        // When
+        ProcessUtils.searchById(PERSISTENCE_ID, searchFunction, OBJECT_TYPE);
+
+        // Then
+        verify(searchFunction, times(1)).apply(PERSISTENCE_ID);
+    }
+
+    // =========================================================================
+    // SECTION 5: Private Constructor Coverage
     // =========================================================================
     
     @Test
@@ -374,7 +481,6 @@ class ProcessUtilsTest {
                 "The internal exception (cause) must be UnsupportedOperationException.");
                 
         final String expectedMessage = "This is a ProcessUtils class and cannot be instantiated.";
-        // Note: The original test used a complex String replace that is not necessary here.
         assertEquals(expectedMessage, actualCause.getMessage(),
                     "The constructor's message should match the expected text.");
         
@@ -383,7 +489,7 @@ class ProcessUtilsTest {
     }
 
     // =========================================================================
-    // SECTION 5: getTaskExecutor TESTS
+    // SECTION 6: getTaskExecutor TESTS
     // =========================================================================
 
     @Test

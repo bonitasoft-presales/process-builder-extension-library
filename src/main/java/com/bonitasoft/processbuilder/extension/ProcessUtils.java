@@ -106,7 +106,6 @@ public final class ProcessUtils {
                 return new TaskExecutor(executedByUserId, "system_or_unassigned", "System or Unassigned");
             }
 
-            // 3. Obtener los detalles del usuario
             IdentityAPI identityAPI = apiAccessor.getIdentityAPI();
             User taskExecutor = identityAPI.getUser(executedByUserId);
 
@@ -132,10 +131,10 @@ public final class ProcessUtils {
         }
     }
 
-
     /**
      * Searches for a BDM object by its persistence ID and validates its existence.
      * This method should be used internally after the persistence ID has been successfully converted to a Long.
+     * 
      * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
      * @param persistenceId The ID (Long) used to search for the object. Must not be null.
      * @param searchFunction The function (e.g., DAO method) to perform the search: (Long ID -> T Object).
@@ -168,6 +167,7 @@ public final class ProcessUtils {
     /**
      * Validates that the BDM object exists before performing a DELETE action.
      * If the object is not found (i.e., is {@code null}), a {@code RuntimeException} is thrown.
+     * 
      * @param <T> The generic type of the BDM object (e.g., PBProcess, PBCategory).
      * @param bdmObject The BDM object retrieved from the search (may be null).
      * @param persistenceId The ID used for logging.
@@ -260,5 +260,85 @@ public final class ProcessUtils {
         }
         // Return null if it's not a DELETE action (e.g., CREATE or UPDATE)
         return null;
+    }
+
+   /**
+     * Searches for a BDM object using a provided search function (closure/lambda).
+     * This method is a generic wrapper that accepts a search function and applies it to retrieve the object.
+     * It does not perform any validation; use {@code searchAndValidateId} for validated searches.
+     * <p>
+     * This method is useful when you want to defer the actual search logic to the caller,
+     * allowing the same retrieval method to work with different BDM types through their respective DAOs.
+     * </p>
+     *
+     * @param <T> The generic type of the BDM object to be retrieved.
+     * @param persistenceId The ID (Long) used to search for the object.
+     * @param searchFunction The function that performs the search. Must accept a Long ID and return the BDM object (or null if not found).
+     * @param objectType The name of the BDM object class (e.g., "PBProcess"). Used for logging purposes only.
+     * @return The BDM object found by the search function, or {@code null} if the search function returns null.
+     */
+    public static <T> T searchById(
+            Long persistenceId, 
+            Function<Long, T> searchFunction, 
+            String objectType) {
+        
+        if (persistenceId == null || persistenceId <= 0) {
+            LOGGER.warn("Skipping search for {} with invalid persistenceId: {}", objectType, persistenceId);
+            return null;
+        }
+
+        try {
+            LOGGER.debug("Searching for {} with persistenceId: {}", objectType, persistenceId);
+            T result = searchFunction.apply(persistenceId);
+            
+            if (result != null) {
+                LOGGER.debug("Successfully retrieved {} with persistenceId: {}", objectType, persistenceId);
+            } else {
+                LOGGER.debug("No {} found for persistenceId: {}", objectType, persistenceId);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while searching for {} with persistenceId: {}. Message: {}", 
+                        objectType, persistenceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Searches for a BDM object by its persistence ID string, handling conversion and validation.
+     * This is a convenience method that combines ID parsing and object search in a single call.
+     * <p>
+     * This method is particularly useful for Bonita scripts where the persistence ID comes as a String
+     * and you want to retrieve any BDM object type without writing multiple lines of boilerplate code.
+     * </p>
+     *
+     * @param <T> The generic type of the BDM object to be retrieved.
+     * @param persistenceIdInput The persistence ID as a String (can be null or empty).
+     * @param searchFunction The function that performs the search. Must accept a Long ID and return the BDM object (or null if not found).
+     * @param objectType The name of the BDM object class (e.g., "PBProcess" or "PBCategory"). Used for logging purposes.
+     * @return The BDM object if found, or {@code null} if the persistence ID is null/empty, invalid format, or object not found.
+     */
+    public static <T> T searchBDM(
+            String persistenceIdInput,
+            Function<Long, T> searchFunction,
+            String objectType) {
+
+        if (persistenceIdInput == null || persistenceIdInput.trim().isEmpty()) {
+            LOGGER.warn("Skipping search: persistenceId is null or empty for object type {}", objectType);
+            return null;
+        }
+
+        try {
+            Long persistenceId = Long.valueOf(persistenceIdInput.trim());
+            return searchById(persistenceId, searchFunction, objectType);
+        } catch (NumberFormatException e) {
+            LOGGER.error("Invalid persistenceId format '{}' for {}. Must be a valid number.", 
+                        persistenceIdInput, objectType, e);
+            return null;
+        } catch (Exception e) {
+            LOGGER.error("Error searching for {} with persistenceId: {}", objectType, persistenceIdInput, e);
+            return null;
+        }
     }
 }
