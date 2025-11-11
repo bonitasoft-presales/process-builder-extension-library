@@ -80,7 +80,6 @@ components:
         - criticality
         - token
         - displayName
-        - documentsFolder
         - cancellationDelay
         - category
         - refStorage

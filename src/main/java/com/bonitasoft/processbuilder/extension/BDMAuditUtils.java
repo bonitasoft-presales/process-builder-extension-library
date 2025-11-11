@@ -7,7 +7,7 @@ import java.time.OffsetDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bonitasoft.processbuilder.records.ProcessInitiator;
+import com.bonitasoft.processbuilder.records.UserRecord;
 
 /**
  * Utility class providing methods to automatically set creation and modification
@@ -57,7 +57,7 @@ public class BDMAuditUtils {
      * @throws IllegalArgumentException If both {@code bdmObject} and {@code newBdmObject} are {@code null}.
      * @throws RuntimeException If a reflection error occurs (e.g., missing setter methods).
      */
-    public static <T> T createOrUpdateAuditData(T bdmObject, T newBdmObject, Class<T> clazz, ProcessInitiator initiator, Long persistenceId) {
+    public static <T> T createOrUpdateAuditData(T bdmObject, T newBdmObject, Class<T> clazz, UserRecord initiator, Long persistenceId) {
         
         // Target object is initially the existing one
         T targetObject = bdmObject;

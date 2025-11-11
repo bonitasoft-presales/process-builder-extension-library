@@ -4,8 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.bonitasoft.processbuilder.enums.ActionType;
-import com.bonitasoft.processbuilder.records.ProcessInitiator;
-import com.bonitasoft.processbuilder.records.TaskExecutor;
+import com.bonitasoft.processbuilder.records.UserRecord;
 
 import java.util.function.Function;
 
@@ -16,6 +15,7 @@ import org.bonitasoft.engine.bpm.flownode.ActivityInstanceNotFoundException;
 import org.bonitasoft.engine.bpm.flownode.HumanTaskInstance;
 import org.bonitasoft.engine.bpm.process.ProcessInstance;
 import org.bonitasoft.engine.exception.RetrieveException;
+import org.bonitasoft.engine.identity.ContactData;
 import org.bonitasoft.engine.identity.User;
 import org.bonitasoft.engine.identity.UserNotFoundException;
 import org.bonitasoft.engine.session.InvalidSessionException;
@@ -54,9 +54,9 @@ public final class ProcessUtils {
      *
      * @param apiAccessor An instance of {@link APIAccessor} to get the Bonita APIs.
      * @param processInstanceId The unique identifier of the process instance.
-     * @return A {@link ProcessInitiator} record containing the initiator's ID, username, and full name.
+     * @return A {@link UserRecord} record containing the initiator's ID, username, and full name, etc.
      */
-    public static ProcessInitiator getProcessInitiator(APIAccessor apiAccessor, long processInstanceId) {
+    public static UserRecord getProcessInitiator(APIAccessor apiAccessor, long processInstanceId) {
         try {
             LOGGER.info("Attempting to retrieve the user who started the process instance ID: {}", processInstanceId);
             ProcessAPI processAPI = apiAccessor.getProcessAPI();
@@ -66,20 +66,32 @@ public final class ProcessUtils {
             long startedByUserId = processInstance.getStartedBy();
             User processInitiator = identityAPI.getUser(startedByUserId);
 
-            String creationFullName = processInitiator.getFirstName() + " " + processInitiator.getLastName();
+            String firstName = processInitiator.getFirstName();
+            String lastName = processInitiator.getLastName();
+            String creationFullName = firstName + " " + lastName;
             String creationUserName = processInitiator.getUserName();
 
+            String email = null;
+            try {
+                ContactData startedByUserContactData = identityAPI.getUserContactData(startedByUserId, false);
+                if (startedByUserContactData != null) {
+                    email = startedByUserContactData.getEmail();
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Could not retrieve contact data for user ID {}: {}", startedByUserId, e.getMessage());
+                email = null;
+            }
             LOGGER.debug("Successfully retrieved initiator user: {}", creationFullName);
-            return new ProcessInitiator(startedByUserId, creationUserName, creationFullName);
+            return new UserRecord(startedByUserId, creationUserName, creationFullName, firstName, lastName, email);
 
         } catch (UserNotFoundException e) {
             LOGGER.warn("The user who started process instance ID {} was not found. Using 'unknown_user'.", processInstanceId, e);
-            return new ProcessInitiator(null, "unknown_user", "unknown_user");
+            return new UserRecord(null, "unknown_user", "unknown_user", "unknown_user", "unknown_user", "unknown_user");
 
         } catch (Exception e) {
             LOGGER.error("An unexpected error occurred while retrieving the process initiator for process instance ID {}: {}"
                 , processInstanceId, e.getMessage(), e);
-            return new ProcessInitiator(null, "unknown_user", "unknown_user");
+            return new UserRecord(null, "unknown_user", "unknown_user", "unknown_user", "unknown_user", "unknown_user");
         }
     }
 
@@ -90,44 +102,57 @@ public final class ProcessUtils {
      *
      * @param apiAccessor An instance of {@link APIAccessor} to get the Bonita APIs.
      * @param activityInstanceId The unique identifier of the human task instance (activityId).
-     * @return A {@link TaskExecutor} record containing the executor's ID, username, and full name.
+     * @return A {@link UserRecord} record containing the executor's ID, username, and full name.
      */
-    public static TaskExecutor getTaskExecutor(APIAccessor apiAccessor, long activityInstanceId) {
+    public static UserRecord getTaskExecutor(APIAccessor apiAccessor, long activityInstanceId) {
         try {
             LOGGER.info("Attempting to retrieve the user who executed the task instance ID: {}", activityInstanceId);
-            
+
             HumanTaskInstance humanTaskInstance = apiAccessor.getProcessAPI().getHumanTaskInstance(activityInstanceId);
-            
+
             long executedByUserId = humanTaskInstance.getExecutedBy();
-            
+
             if (executedByUserId <= 0) {
-                LOGGER.debug("Task instance ID {} was not executed by a human user (executedBy ID: {}).", 
+                LOGGER.debug("Task instance ID {} was not executed by a human user (executedBy ID: {}).",
                             activityInstanceId, executedByUserId);
-                return new TaskExecutor(executedByUserId, "system_or_unassigned", "System or Unassigned");
+                return new UserRecord(executedByUserId, "system_or_unassigned", "System or Unassigned", "system_or_unassigned", "system_or_unassigned", "system_or_unassigned");
             }
 
             IdentityAPI identityAPI = apiAccessor.getIdentityAPI();
             User taskExecutor = identityAPI.getUser(executedByUserId);
 
-            String executorFullName = taskExecutor.getFirstName() + " " + taskExecutor.getLastName();
+            String firstName = taskExecutor.getFirstName();
+            String lastName = taskExecutor.getLastName();
+            String executorFullName = firstName + " " + lastName;
             String executorUserName = taskExecutor.getUserName();
 
+            String email = null;
+            try {
+                ContactData startedByUserContactData = identityAPI.getUserContactData(executedByUserId, false);
+                if (startedByUserContactData != null) {
+                    email = startedByUserContactData.getEmail();
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Could not retrieve contact data for user ID {}: {}", executedByUserId, e.getMessage());
+                email = null;
+            }
+
             LOGGER.debug("Successfully retrieved executor user: {}", executorFullName);
-            return new TaskExecutor(executedByUserId, executorUserName, executorFullName);
+            return new UserRecord(executedByUserId, executorUserName, executorFullName, firstName, lastName, email);
 
         } catch (UserNotFoundException e) {
             LOGGER.warn("The user who executed task instance ID {} was not found. Using 'unknown_user'.", activityInstanceId, e);
-            return new TaskExecutor(null, "unknown_user", "Unknown User");
-            
+            return new UserRecord(null, "unknown_user", "Unknown User", "unknown_user", "unknown_user", "unknown_user");
+
         } catch (InvalidSessionException | ActivityInstanceNotFoundException | RetrieveException e) {
-            LOGGER.error("An API error occurred while retrieving the task executor for activity ID {}: {}", 
+            LOGGER.error("An API error occurred while retrieving the task executor for activity ID {}: {}",
                         activityInstanceId, e.getMessage(), e);
-            return new TaskExecutor(null, "api_error", "API Error");
+            return new UserRecord(null, "api_error", "API Error", "api_error", "api_error", "api_error");
 
         } catch (Exception e) {
-            LOGGER.error("An unexpected error occurred while retrieving the task executor for activity ID {}: {}", 
+            LOGGER.error("An unexpected error occurred while retrieving the task executor for activity ID {}: {}",
                         activityInstanceId, e.getMessage(), e);
-            return new TaskExecutor(null, "unexpected_error", "Unexpected Error");
+            return new UserRecord(null, "unexpected_error", "Unexpected Error", "unexpected_error", "unexpected_error", "unexpected_error");
         }
     }
 

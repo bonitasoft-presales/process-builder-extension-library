@@ -22,11 +22,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import com.bonitasoft.processbuilder.records.ProcessInitiator;
-import com.bonitasoft.processbuilder.records.TaskExecutor;
 import com.bonitasoft.processbuilder.enums.ActionType;
-
-
+import com.bonitasoft.processbuilder.records.UserRecord;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -114,7 +111,7 @@ class ProcessUtilsTest {
     @DisplayName("Should successfully retrieve the process initiator details")
     void getProcessInitiator_should_return_valid_initiator_on_success() {
         // When
-        ProcessInitiator result = ProcessUtils.getProcessInitiator(apiAccessor, PROCESS_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getProcessInitiator(apiAccessor, PROCESS_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -130,7 +127,7 @@ class ProcessUtilsTest {
         when(identityAPI.getUser(anyLong())).thenThrow(new UserNotFoundException("User not found"));
 
         // When
-        ProcessInitiator result = ProcessUtils.getProcessInitiator(apiAccessor, PROCESS_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getProcessInitiator(apiAccessor, PROCESS_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -145,7 +142,7 @@ class ProcessUtilsTest {
         when(processApi.getProcessInstance(anyLong())).thenThrow(new ProcessInstanceNotFoundException("Process instance not found"));
 
         // When
-        ProcessInitiator result = ProcessUtils.getProcessInitiator(apiAccessor, PROCESS_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getProcessInitiator(apiAccessor, PROCESS_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -160,7 +157,7 @@ class ProcessUtilsTest {
         when(processInstance.getStartedBy()).thenThrow(new RuntimeException("Unexpected API error"));
 
         // When
-        ProcessInitiator result = ProcessUtils.getProcessInitiator(apiAccessor, PROCESS_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getProcessInitiator(apiAccessor, PROCESS_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -502,7 +499,7 @@ class ProcessUtilsTest {
         when(identityAPI.getUser(USER_ID)).thenReturn(user);
 
         // When
-        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -522,7 +519,7 @@ class ProcessUtilsTest {
         when(humanTaskInstance.getExecutedBy()).thenReturn(0L);
 
         // When
-        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -541,7 +538,7 @@ class ProcessUtilsTest {
         when(humanTaskInstance.getExecutedBy()).thenReturn(-1L);
 
         // When
-        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -561,7 +558,7 @@ class ProcessUtilsTest {
         when(identityAPI.getUser(USER_ID)).thenThrow(new UserNotFoundException("User not found"));
 
         // When
-        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -579,7 +576,7 @@ class ProcessUtilsTest {
             .thenThrow(new InvalidSessionException("Invalid session"));
 
         // When
-        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -597,7 +594,7 @@ class ProcessUtilsTest {
             .thenThrow(new ActivityInstanceNotFoundException(ACTIVITY_INSTANCE_ID));
 
         // When
-        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -615,7 +612,7 @@ class ProcessUtilsTest {
             .thenThrow(new RetrieveException("Retrieve error"));
 
         // When
-        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -633,7 +630,7 @@ class ProcessUtilsTest {
             .thenThrow(new RuntimeException("Unexpected error"));
 
         // When
-        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -651,7 +648,7 @@ class ProcessUtilsTest {
         when(humanTaskInstance.getExecutedBy()).thenThrow(new RuntimeException("Error getting executed by"));
 
         // When
-        TaskExecutor result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
+        UserRecord result = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_INSTANCE_ID);
 
         // Then
         assertNotNull(result);
@@ -707,8 +704,8 @@ class ProcessUtilsTest {
         when(identityAPI.getUser(USER_ID_2)).thenReturn(user2);
 
         // When
-        TaskExecutor result1 = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_ID_1);
-        TaskExecutor result2 = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_ID_2);
+        UserRecord result1 = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_ID_1);
+        UserRecord result2 = ProcessUtils.getTaskExecutor(apiAccessor, ACTIVITY_ID_2);
 
         // Then
         assertNotNull(result1);

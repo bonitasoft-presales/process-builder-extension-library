@@ -6,7 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.bonitasoft.processbuilder.constants.Constants;
-import com.bonitasoft.processbuilder.records.ProcessInitiator;
+import com.bonitasoft.processbuilder.records.UserRecord;
 
 import java.time.OffsetDateTime;
 import java.lang.reflect.Constructor;
@@ -84,8 +84,7 @@ class BDMAuditUtilsTest {
     }
     
     // --- SETUP ---
-    
-    private final ProcessInitiator initiator = new ProcessInitiator(10L, "testUser", "Test User");
+    private final UserRecord initiator = new UserRecord(10L, "testUser", "Test User", null, null, null);
     private final Long persistenceId = 100L;
     
     // =========================================================================
