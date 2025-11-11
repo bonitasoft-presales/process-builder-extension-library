@@ -1,0 +1,12 @@
+# 02-datamodel.mdc: Business Data Model (BDM) & Database Rules
+
+## 1. Naming and Integrity
+* **BDM Entity Naming:** All BDM entities must adhere to the standard Bonita naming convention (e.g., `MyEntity`, `MyEntityImpl`).
+* **JPA/Hibernate Integrity:** **Mandatory** definition of `@UniqueConstraint` and `@NotNull` at the JPA level to ensure data integrity, even if the UI/API performs front-end validation.
+
+## 2. Indexing
+* **Indexing Rule:** All fields used for filtering, ordering, or lookup operations (especially in REST API queries) MUST be explicitly indexed (`@Index` annotation).
+
+## 3. Query Requirements (JPQL)
+* **Pagination:** All JPQL queries designed for REST API pagination MUST have a corresponding `countFor` query generated to determine the total number of records efficiently.
+* **Performance:** JPQL queries must be optimized for minimal database load. Avoid N+1 issues and prefer eager fetching only when explicitly necessary. **Never fetch entire collections unless unavoidable.**

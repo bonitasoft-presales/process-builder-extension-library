@@ -12,6 +12,15 @@ import java.util.stream.StreamSupport;
 public class JsonValidationUtils {
 
     /**
+     * Private constructor to prevent instantiation of this utility class.
+     *
+     * @throws UnsupportedOperationException always, to enforce the utility pattern.
+     */
+    private JsonValidationUtils() {
+        throw new UnsupportedOperationException("This is a " + this.getClass().getSimpleName() + " class and cannot be instantiated.");
+    }
+
+    /**
      * A utility method to validate the existence and type of a specific field in a JSON node.
      * @param parentNode The parent JSON node to search in.
      * @param fieldName The name of the field to validate.

@@ -1,0 +1,11 @@
+# 05-bonita-integration.mdc: Bonita API & Integration Rules
+
+## 1. REST API Rules
+* **Naming:** All REST endpoints must be plural (e.g., `/processes`, `/tasks`).
+* **Filtering/Pagination:** MUST accept standard `p` (page index) and `c` (count) parameters for pagination.
+* **Validation:** Input validation MUST be performed immediately upon receiving a REST request before passing control to the service layer.
+
+## 2. Bonita Core API Access
+* **Engine Access:** Access to engine APIs (e.g., `ProcessAPI`, `IdentityAPI`) MUST be done via the **`TenantAccessor`** pattern to ensure thread safety and context management.
+* **Business Logic in Commands:** Any service logic that requires its own transaction and can be called from multiple contexts (UI, other services, schedulers) MUST be encapsulated in a **Bonita Command** extending `org.bonitasoft.engine.command.Command`.
+* **External Utility:** Where possible, use built-in Bonita utility libraries (e.g., `BonitaStringUtil`, `BonitaIOUtil`) instead of externalizing simple utility methods.

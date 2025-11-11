@@ -1,0 +1,31 @@
+# 00-overview.mdc: PROCESS-BUILDER-EXTERNAL-LIBRARY Project Context
+
+## 1. Purpose: The Central Tooling Hub
+The **PROCESS-BUILDER-EXTERNAL-LIBRARY** is the foundational artifact designed to **unify, standardize, and optimize** all Java-based extensions across the Bonita ecosystem (Process, UI, API). It serves as the single source of truth for critical data structures and utility logic.
+
+### 1.1. Core Mandates: (Why this library exists)
+1.  **Extreme Performance & Immutability:** Define core data contracts (DTOs/Records) to ensure strict immutability, thread-safety, and maximum efficiency. This is non-negotiable for achieving **near-zero GC overhead** and maintaining required performance benchmarks.
+2.  **Code Standardization & Quality:** Enforce a single standard for API interaction, utility externalization, and domain logic consolidation, preventing code duplication across REST APIs, Connectors, Actor Filters, and Event Listeners.
+3.  **Secure Bonita Integration:** Provide high-level, consistent patterns for accessing Bonita Engine APIs (e.g., `TenantAccessor`, Command API), abstracting low-level complexities while ensuring strict adherence to security best practices.
+
+## 2. Development Context & Environment
+
+| Area | Detail | Quality Standard |
+| :--- | :--- | :--- |
+| **Technology Stack** | **Java 17+** (Mandatory for all new code) | Strict adherence to modern language features (Records, Sealed Types, etc.) for performance. |
+| **Core Expertise** | Expert Java Development | Code must reflect best-in-class design patterns and clean code principles. |
+| **DevOps** | **Docker, GitHub, and GitHub Actions** | All changes must integrate smoothly with the CI/CD pipeline. No build breaks allowed. |
+| **Quality Gate** | **100% Test Coverage** (Mandatory for this project) | Must pass all static analysis checks (PMD, CheckStyle) as defined in the POM. |
+
+---
+
+## 3. 📚 Bonita Documentation & API References (MANDATORY)
+
+The AI agent **MUST** consult these official, up-to-date references when generating implementation strategies, code, or documentation.
+
+| Reference | Link | Context |
+| :--- | :--- | :--- |
+| **Bonita Platform Documentation** | `https://documentation.bonitasoft.com/bonita/latest/` | General architecture and extension capabilities. |
+| **Java API Javadoc (10.3)** | `https://javadoc.bonitasoft.com/api/10.3/index.html` | Definitive source for Engine interface signatures (Command API, Identity API, etc.). |
+| **REST API Documentation** | `https://api-documentation.bonitasoft.com/latest/` | Essential for designing accurate request/response DTOs. |
+| **Custom Library Development** | `https://documentation.bonitasoft.com/bonita/latest/software-extensibility/custom-library-development` | Official guide for deployment and packaging rules. |

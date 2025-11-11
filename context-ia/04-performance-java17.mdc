@@ -1,0 +1,14 @@
+# 03-performance-java17.mdc: Performance & Modern Java 17 Practices
+
+## 1. Performance and Memory
+* **Immutability First:** All DTOs, parameter objects, and value objects MUST be **Java Records**. This guarantees immutability, correct equals/hashCode, and reduces memory footprint.
+* **Garbage Collection Optimization:** Avoid creating unnecessary objects. Use **`String.format()`** or **`StringBuilder`** for runtime string construction. **NEVER** use the `+` operator for three or more strings in a loop.
+* **Stream Usage:** Prefer Java Streams for collection processing (`map`, `filter`) over traditional loops, especially when the logic is complex or can be parallelized, promoting functional purity.
+
+## 2. Modern Java 17 Language Features
+* **Switch Expressions:** Use **switch expressions** (`yield` or arrow syntax `->`) instead of traditional `switch` statements to eliminate fall-through errors and improve clarity.
+* **Pattern Matching:** Use **Pattern Matching for `instanceof`** to simplify conditional logic and casting.
+* **Sealed Types:** When defining an inheritance hierarchy, use **`sealed interface`** or **`sealed class`** to restrict direct subclassing, enabling the compiler to check for exhaustive handling (e.g., in switch expressions).
+
+## 3. Security
+* **Defensive Copies:** Always return copies of internal mutable collections (e.g., `new ArrayList<>(internalList)`) to prevent external manipulation of internal state.

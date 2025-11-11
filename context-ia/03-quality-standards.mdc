@@ -1,0 +1,13 @@
+# 03-quality-standards.mdc: Code Quality & Static Analysis Standards
+
+## 1. Testing and Coverage
+* **Coverage Goal:** **MANDATORY 100% test coverage** for all new Java classes and modifications to existing logic. No exceptions.
+* **Test Isolation:** Unit tests must be independent of the database and the Bonita Engine (`@Test` only). Integration tests (`@BonitaTest`, if used) must be clearly separated and minimized.
+* **Assertion Library:** Use **AssertJ** for all assertions for enhanced readability and fluid syntax.
+
+## 2. Static Analysis Tools
+* **Mandatory Adherence:** All code MUST pass the configured checks defined by **PMD** and **CheckStyle** in the project's parent POM. The AI must prioritize fixing issues flagged by these tools (e.g., Cyclomatic Complexity, unused imports, line length) over stylistic preference.
+* **Readability:** Keep methods **short** (ideally < 15 lines of business logic). Complex logic must be broken down into well-named, private helper methods.
+
+## 3. Documentation
+* **Javadoc:** All public and protected classes, interfaces, enums, records, and methods MUST include complete Javadoc written in the **imperative voice** (e.g., "Calculates X," "Returns Y").

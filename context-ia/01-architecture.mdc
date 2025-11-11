@@ -1,0 +1,14 @@
+# 01-architecture.mdc: Architectural Principles & Technology Stack
+
+## 1. Technology Stack
+* **Language:** Java 17+ (Mandatory)
+* **Build Tool:** Maven (Defined in parent POM)
+* **Core Framework:** Bonita Process Engine (Mandatory dependency management)
+
+## 2. General Architecture
+* **Separation of Concerns:** Code must be strictly divided into:
+    1.  **REST API Extensions:** (Handling JSON mapping, authentication, DTOs).
+    2.  **Service Layer:** (Business logic, transactions, BDM manipulation).
+    3.  **Utility Layer:** (Stateless, isolated helper methods).
+* **Dependency Rule:** Services MUST NOT directly call other Services outside of their immediate domain, favoring the use of **Bonita Commands** for cross-domain operations where transactions are involved.
+* **API Consistency:** All external APIs (REST) must be consumed via dedicated, internal, immutable DTOs, never exposing Bonita's internal model classes directly.

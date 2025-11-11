@@ -5,11 +5,21 @@ import org.bonitasoft.engine.connector.ConnectorValidationException;
 /**
  * Utility class for common input parameter validation checks (e.g., positive numbers, non-null values)
  * typically used within Bonita connectors.
- * * NOTE: This utility assumes the calling class has an accessible 'getInputParameter(String name)' method.
+ * <p>
+ * NOTE: This utility assumes the calling class has an accessible 'getInputParameter(String name)' method.
+ * </p>
  */
 public class InputValidationUtils {
-    
-   
+
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     *
+     * @throws UnsupportedOperationException always, to enforce the utility pattern.
+     */
+    private InputValidationUtils() {
+        throw new UnsupportedOperationException("This is a " + this.getClass().getSimpleName() + " class and cannot be instantiated.");
+    }
+
     /**
     * Helper method to check if a numeric input parameter is a positive value (greater than zero).
     * <p>
