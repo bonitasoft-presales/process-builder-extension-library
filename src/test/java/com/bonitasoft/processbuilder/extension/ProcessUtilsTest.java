@@ -28,7 +28,10 @@ import com.bonitasoft.processbuilder.records.UserRecord;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -685,7 +688,7 @@ class ProcessUtilsTest {
         long ACTIVITY_ID_1 = 201L;
         long ACTIVITY_ID_2 = 202L;
         long USER_ID_2 = 124L;
-        
+
         User user2 = mock(User.class);
         when(user2.getFirstName()).thenReturn("Jane");
         when(user2.getLastName()).thenReturn("Smith");
@@ -715,5 +718,276 @@ class ProcessUtilsTest {
         assertNotNull(result2);
         assertEquals(USER_ID_2, result2.id());
         assertEquals("jsmith", result2.userName());
+    }
+
+    // =========================================================================
+    // SECTION 7: searchBDM TESTS
+    // =========================================================================
+
+    @Test
+    @DisplayName("searchBDM should return object when persistenceId is valid")
+    void searchBDM_should_return_object_on_valid_persistence_id() {
+        // Given
+        MockBDM expectedObject = new MockBDM(PERSISTENCE_ID);
+        when(searchFunction.apply(PERSISTENCE_ID)).thenReturn(expectedObject);
+
+        // When
+        MockBDM result = ProcessUtils.searchBDM(String.valueOf(PERSISTENCE_ID), searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertSame(expectedObject, result);
+        verify(searchFunction, times(1)).apply(PERSISTENCE_ID);
+    }
+
+    @Test
+    @DisplayName("searchBDM should return null when persistenceId is null")
+    void searchBDM_should_return_null_on_null_persistence_id() {
+        // When
+        MockBDM result = ProcessUtils.searchBDM(null, searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, never()).apply(anyLong());
+    }
+
+    @Test
+    @DisplayName("searchBDM should return null when persistenceId is empty string")
+    void searchBDM_should_return_null_on_empty_persistence_id() {
+        // When
+        MockBDM result = ProcessUtils.searchBDM("", searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, never()).apply(anyLong());
+    }
+
+    @Test
+    @DisplayName("searchBDM should return null when persistenceId is blank string")
+    void searchBDM_should_return_null_on_blank_persistence_id() {
+        // When
+        MockBDM result = ProcessUtils.searchBDM("   ", searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, never()).apply(anyLong());
+    }
+
+    @Test
+    @DisplayName("searchBDM should return null when persistenceId format is invalid")
+    void searchBDM_should_return_null_on_invalid_persistence_id_format() {
+        // When
+        MockBDM result = ProcessUtils.searchBDM("abc123", searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, never()).apply(anyLong());
+    }
+
+    @Test
+    @DisplayName("searchBDM should return null when search function returns null")
+    void searchBDM_should_return_null_when_search_function_returns_null() {
+        // Given
+        when(searchFunction.apply(PERSISTENCE_ID)).thenReturn(null);
+
+        // When
+        MockBDM result = ProcessUtils.searchBDM(String.valueOf(PERSISTENCE_ID), searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, times(1)).apply(PERSISTENCE_ID);
+    }
+
+    @Test
+    @DisplayName("searchBDM should handle persistenceId with leading/trailing spaces")
+    void searchBDM_should_trim_persistence_id() {
+        // Given
+        MockBDM expectedObject = new MockBDM(PERSISTENCE_ID);
+        when(searchFunction.apply(PERSISTENCE_ID)).thenReturn(expectedObject);
+
+        // When
+        MockBDM result = ProcessUtils.searchBDM("  " + PERSISTENCE_ID + "  ", searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertSame(expectedObject, result);
+        verify(searchFunction, times(1)).apply(PERSISTENCE_ID);
+    }
+
+    @Test
+    @DisplayName("searchBDM should return null when search function throws exception")
+    void searchBDM_should_return_null_when_search_function_throws_exception() {
+        // Given
+        when(searchFunction.apply(PERSISTENCE_ID)).thenThrow(new RuntimeException("Search error"));
+
+        // When
+        MockBDM result = ProcessUtils.searchBDM(String.valueOf(PERSISTENCE_ID), searchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+        verify(searchFunction, times(1)).apply(PERSISTENCE_ID);
+    }
+
+    // =========================================================================
+    // SECTION 8: findMostRecentStepInstance TESTS
+    // =========================================================================
+
+    @Test
+    @DisplayName("findMostRecentStepInstance should return first element when list has one element")
+    void findMostRecentStepInstance_should_return_first_element_from_single_element_list() {
+        // Given
+        MockBDM expectedInstance = new MockBDM(100L);
+        Supplier<List<MockBDM>> searchSupplier = () -> Collections.singletonList(expectedInstance);
+
+        // When
+        MockBDM result = ProcessUtils.findMostRecentStepInstance(searchSupplier, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertSame(expectedInstance, result);
+    }
+
+    @Test
+    @DisplayName("findMostRecentStepInstance should return first element when list has multiple elements")
+    void findMostRecentStepInstance_should_return_first_element_from_multiple_element_list() {
+        // Given
+        MockBDM mostRecent = new MockBDM(100L);
+        MockBDM secondMostRecent = new MockBDM(99L);
+        MockBDM thirdMostRecent = new MockBDM(98L);
+        Supplier<List<MockBDM>> searchSupplier = () -> List.of(mostRecent, secondMostRecent, thirdMostRecent);
+
+        // When
+        MockBDM result = ProcessUtils.findMostRecentStepInstance(searchSupplier, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertSame(mostRecent, result);
+        assertEquals(100L, result.getId());
+    }
+
+    @Test
+    @DisplayName("findMostRecentStepInstance should return null when list is null")
+    void findMostRecentStepInstance_should_return_null_when_list_is_null() {
+        // Given
+        Supplier<List<MockBDM>> searchSupplier = () -> null;
+
+        // When
+        MockBDM result = ProcessUtils.findMostRecentStepInstance(searchSupplier, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("findMostRecentStepInstance should return null when list is empty")
+    void findMostRecentStepInstance_should_return_null_when_list_is_empty() {
+        // Given
+        Supplier<List<MockBDM>> searchSupplier = Collections::emptyList;
+
+        // When
+        MockBDM result = ProcessUtils.findMostRecentStepInstance(searchSupplier, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("findMostRecentStepInstance should return null when supplier throws exception")
+    void findMostRecentStepInstance_should_return_null_when_supplier_throws_exception() {
+        // Given
+        Supplier<List<MockBDM>> searchSupplier = () -> {
+            throw new RuntimeException("Database error");
+        };
+
+        // When
+        MockBDM result = ProcessUtils.findMostRecentStepInstance(searchSupplier, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("findMostRecentStepInstance should work with different generic types")
+    void findMostRecentStepInstance_should_work_with_different_generic_types() {
+        // Given: Use String type instead of MockBDM
+        Supplier<List<String>> searchSupplier = () -> List.of("Most Recent", "Second", "Third");
+
+        // When
+        String result = ProcessUtils.findMostRecentStepInstance(searchSupplier, "StepInstance");
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Most Recent", result);
+    }
+
+    @Test
+    @DisplayName("findMostRecentStepInstance should handle supplier that returns null elements in list")
+    void findMostRecentStepInstance_should_handle_list_with_null_element() {
+        // Given: List with null as first element
+        Supplier<List<MockBDM>> searchSupplier = () -> Collections.singletonList(null);
+
+        // When
+        MockBDM result = ProcessUtils.findMostRecentStepInstance(searchSupplier, OBJECT_TYPE);
+
+        // Then: Should return the null element (not throw exception)
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("findMostRecentStepInstance should call supplier only once")
+    void findMostRecentStepInstance_should_call_supplier_only_once() {
+        // Given
+        @SuppressWarnings("unchecked")
+        Supplier<List<MockBDM>> mockSupplier = mock(Supplier.class);
+        MockBDM expectedInstance = new MockBDM(100L);
+        when(mockSupplier.get()).thenReturn(Collections.singletonList(expectedInstance));
+
+        // When
+        ProcessUtils.findMostRecentStepInstance(mockSupplier, OBJECT_TYPE);
+
+        // Then
+        verify(mockSupplier, times(1)).get();
+    }
+
+    @Test
+    @DisplayName("findMostRecentStepInstance should handle large lists efficiently")
+    void findMostRecentStepInstance_should_handle_large_lists() {
+        // Given: Create a large list
+        List<MockBDM> largeList = new java.util.ArrayList<>();
+        MockBDM firstElement = new MockBDM(1000L);
+        largeList.add(firstElement);
+        for (int i = 1; i < 1000; i++) {
+            largeList.add(new MockBDM((long) i));
+        }
+        Supplier<List<MockBDM>> searchSupplier = () -> largeList;
+
+        // When
+        MockBDM result = ProcessUtils.findMostRecentStepInstance(searchSupplier, OBJECT_TYPE);
+
+        // Then: Should return first element without processing entire list
+        assertNotNull(result);
+        assertSame(firstElement, result);
+        assertEquals(1000L, result.getId());
+    }
+
+    @Test
+    @DisplayName("findMostRecentStepInstance should handle consecutive calls independently")
+    void findMostRecentStepInstance_should_handle_multiple_consecutive_calls() {
+        // Given: Two different suppliers
+        MockBDM instance1 = new MockBDM(100L);
+        MockBDM instance2 = new MockBDM(200L);
+        Supplier<List<MockBDM>> supplier1 = () -> Collections.singletonList(instance1);
+        Supplier<List<MockBDM>> supplier2 = () -> Collections.singletonList(instance2);
+
+        // When
+        MockBDM result1 = ProcessUtils.findMostRecentStepInstance(supplier1, OBJECT_TYPE);
+        MockBDM result2 = ProcessUtils.findMostRecentStepInstance(supplier2, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result1);
+        assertNotNull(result2);
+        assertSame(instance1, result1);
+        assertSame(instance2, result2);
+        assertNotEquals(result1.getId(), result2.getId());
     }
 }

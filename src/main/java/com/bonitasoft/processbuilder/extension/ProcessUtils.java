@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 import com.bonitasoft.processbuilder.enums.ActionType;
 import com.bonitasoft.processbuilder.records.UserRecord;
 
+import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.bonitasoft.engine.api.APIAccessor;
 import org.bonitasoft.engine.api.IdentityAPI;
@@ -358,11 +360,69 @@ public final class ProcessUtils {
             Long persistenceId = Long.valueOf(persistenceIdInput.trim());
             return searchById(persistenceId, searchFunction, objectType);
         } catch (NumberFormatException e) {
-            LOGGER.error("Invalid persistenceId format '{}' for {}. Must be a valid number.", 
+            LOGGER.error("Invalid persistenceId format '{}' for {}. Must be a valid number.",
                         persistenceIdInput, objectType, e);
             return null;
         } catch (Exception e) {
             LOGGER.error("Error searching for {} with persistenceId: {}", objectType, persistenceIdInput, e);
+            return null;
+        }
+    }
+
+    /**
+     * Finds the most recent step process instance using a search function.
+     * <p>
+     * This method accepts a search function that returns a list of step instances
+     * ordered by recency (most recent first). It returns the first element from the list,
+     * which represents the most recent instance.
+     * </p>
+     * <p>
+     * The search function should be provided by the caller as a lambda or method reference
+     * that encapsulates the specific DAO call and its parameters, maintaining independence
+     * from BDM classes.
+     * </p>
+     * Example usage:
+     * <pre>{@code
+     * PBStepProcessInstance mostRecent = ProcessUtils.findMostRecentStepInstance(
+     *     () -> pBStepProcessInstanceDAO.findMostRecentByProcessInstanceAndRefStepAndStatus(
+     *         processInstancePersistenceId,
+     *         refStep,
+     *         StepProcessInstanceStateType.ENDED.getKey(),
+     *         0,
+     *         1
+     *     ),
+     *     "PBStepProcessInstance"
+     * );
+     * }</pre>
+     *
+     * @param <T> The generic type of the step process instance object
+     * @param searchFunction A supplier that performs the search and returns a list of instances
+     * @param objectType The name of the object type for logging purposes (e.g., "PBStepProcessInstance")
+     * @return The most recent step instance (first element in the list), or {@code null} if no instances found or on error
+     */
+    public static <T> T findMostRecentStepInstance(
+            Supplier<List<T>> searchFunction,
+            String objectType) {
+
+        try {
+            LOGGER.debug("Searching for most recent {} instance", objectType);
+
+            List<T> stepInstances = searchFunction.get();
+
+            if (stepInstances == null || stepInstances.isEmpty()) {
+                LOGGER.warn("No {} instances found", objectType);
+                return null;
+            }
+
+            // Query orders by persistenceId DESC, so take the first one (most recent)
+            T mostRecent = stepInstances.get(0);
+            LOGGER.debug("Successfully retrieved most recent {} instance", objectType);
+
+            return mostRecent;
+
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while searching for most recent {} instance: {}",
+                        objectType, e.getMessage(), e);
             return null;
         }
     }
