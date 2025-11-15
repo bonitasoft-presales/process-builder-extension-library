@@ -6,6 +6,7 @@ import org.bonitasoft.engine.identity.UserSearchDescriptor;
 import org.bonitasoft.engine.search.SearchOptionsBuilder;
 import org.bonitasoft.engine.search.SearchResult;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
@@ -26,6 +27,11 @@ import java.util.stream.Collectors;
 public final class IdentityUtils {
 
     /**
+     * A logger for this class, used to record log messages and provide debugging information.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdentityUtils.class);
+
+    /**
      * Private constructor to prevent instantiation of this utility class.
      *
      * @throws UnsupportedOperationException always, to enforce the utility pattern.
@@ -44,32 +50,31 @@ public final class IdentityUtils {
      *
      * @param userId The ID of the user whose manager is to be retrieved
      * @param identityAPI The Bonita Identity API instance
-     * @param logger The logger instance for logging operations
      * @return The manager's user ID, or {@code null} if not found or on error
      */
-    public static Long getUserManager(Long userId, IdentityAPI identityAPI, Logger logger) {
+    public static Long getUserManager(Long userId, IdentityAPI identityAPI) {
         try {
-            logger.debug("Searching for manager of user ID: {}", userId);
+            LOGGER.debug("Searching for manager of user ID: {}", userId);
 
             User user = identityAPI.getUser(userId);
 
             if (user == null) {
-                logger.warn("User not found for ID: {}", userId);
+                LOGGER.warn("User not found for ID: {}", userId);
                 return null;
             }
 
             Long managerId = user.getManagerUserId();
 
             if (managerId == null || managerId <= 0) {
-                logger.debug("User ID {} has no manager assigned", userId);
+                LOGGER.debug("User ID {} has no manager assigned", userId);
                 return null;
             }
 
-            logger.debug("Found manager ID {} for user ID {}", managerId, userId);
+            LOGGER.debug("Found manager ID {} for user ID {}", managerId, userId);
             return managerId;
 
         } catch (Exception e) {
-            logger.error("Error getting manager for user ID {}: {}", userId, e.getMessage(), e);
+            LOGGER.error("Error getting manager for user ID {}: {}", userId, e.getMessage(), e);
             return null;
         }
     }
@@ -89,14 +94,13 @@ public final class IdentityUtils {
      *
      * @param membershipList List of objects containing group and role IDs (must have getGroupId() and getRoleId() methods)
      * @param identityAPI The Bonita Identity API instance
-     * @param logger The logger instance for logging operations
      * @return Set of user IDs matching the memberships, empty set if no users found or on error
      */
-    public static Set<Long> getUsersByMemberships(List<?> membershipList, IdentityAPI identityAPI, Logger logger) {
+    public static Set<Long> getUsersByMemberships(List<?> membershipList, IdentityAPI identityAPI) {
         Set<Long> userIds = new HashSet<>();
 
         if (membershipList == null || membershipList.isEmpty()) {
-            logger.debug("Empty membership list provided, returning empty user set");
+            LOGGER.debug("Empty membership list provided, returning empty user set");
             return userIds;
         }
 
@@ -164,12 +168,12 @@ public final class IdentityUtils {
             // searchBuilder.rightParenthesis();
 
             for (final Object membershipObj : membershipList) {
-                final Long groupId = extractLongValue(membershipObj, "getGroupId", logger);
-                final Long roleId = extractLongValue(membershipObj, "getRoleId", logger);
+                final Long groupId = extractLongValue(membershipObj, "getGroupId");
+                final Long roleId = extractLongValue(membershipObj, "getRoleId");
 
                 // Skip if both groupId and roleId are null
                 if (groupId == null && roleId == null) {
-                    logger.warn("Skipping membership object with both null groupId and roleId");
+                    LOGGER.warn("Skipping membership object with both null groupId and roleId");
                     continue;
                 }
                 if (!isFirst) {
@@ -195,10 +199,10 @@ public final class IdentityUtils {
                 .map(User::getId)
                 .collect(Collectors.toSet());
 
-            logger.debug("Found {} users from {} memberships", userIds.size(), membershipList.size());
+            LOGGER.debug("Found {} users from {} memberships", userIds.size(), membershipList.size());
 
         } catch (final Exception e) {
-            logger.error("An error occurred during user search by membership: {}", e.getMessage(), e);
+            LOGGER.error("An error occurred during user search by membership: {}", e.getMessage(), e);
         }
 
         return userIds;
@@ -213,10 +217,9 @@ public final class IdentityUtils {
      *
      * @param obj The object from which to extract the value
      * @param methodName The name of the getter method to invoke (e.g., "getGroupId")
-     * @param logger The logger instance for logging warnings
      * @return The Long value returned by the method, or {@code null} if not found or on error
      */
-    private static Long extractLongValue(Object obj, String methodName, Logger logger) {
+    private static Long extractLongValue(Object obj, String methodName) {
         if (obj == null) {
             return null;
         }
@@ -230,14 +233,14 @@ public final class IdentityUtils {
             } else if (result == null) {
                 return null;
             } else {
-                logger.warn("Method {} returned non-Long value: {}", methodName, result.getClass().getName());
+                LOGGER.warn("Method {} returned non-Long value: {}", methodName, result.getClass().getName());
                 return null;
             }
         } catch (NoSuchMethodException e) {
-            logger.warn("Method {} not found on object of type {}", methodName, obj.getClass().getName());
+            LOGGER.warn("Method {} not found on object of type {}", methodName, obj.getClass().getName());
             return null;
         } catch (Exception e) {
-            logger.warn("Error invoking method {} on object: {}", methodName, e.getMessage());
+            LOGGER.warn("Error invoking method {} on object: {}", methodName, e.getMessage());
             return null;
         }
     }

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -21,8 +20,6 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -37,9 +34,6 @@ class IdentityUtilsTest {
 
     @Mock
     private IdentityAPI identityAPI;
-
-    @Mock
-    private Logger logger;
 
     @Mock
     private User user;
@@ -96,14 +90,10 @@ class IdentityUtilsTest {
         when(user.getManagerUserId()).thenReturn(MANAGER_ID);
 
         // When getting the user manager
-        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI, logger);
+        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI);
 
         // Then the manager ID should be returned
         assertThat(result).isEqualTo(MANAGER_ID);
-
-        // Verify logging
-        verify(logger).debug("Searching for manager of user ID: {}", USER_ID);
-        verify(logger).debug("Found manager ID {} for user ID {}", MANAGER_ID, USER_ID);
     }
 
     /**
@@ -117,13 +107,10 @@ class IdentityUtilsTest {
         when(user.getManagerUserId()).thenReturn(0L);
 
         // When getting the user manager
-        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI, logger);
+        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI);
 
         // Then null should be returned
         assertThat(result).isNull();
-
-        // Verify logging
-        verify(logger).debug("User ID {} has no manager assigned", USER_ID);
     }
 
     /**
@@ -137,13 +124,10 @@ class IdentityUtilsTest {
         when(user.getManagerUserId()).thenReturn(0L);
 
         // When getting the user manager
-        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI, logger);
+        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI);
 
         // Then null should be returned
         assertThat(result).isNull();
-
-        // Verify logging
-        verify(logger).debug("User ID {} has no manager assigned", USER_ID);
     }
 
     /**
@@ -157,13 +141,10 @@ class IdentityUtilsTest {
         when(user.getManagerUserId()).thenReturn(-1L);
 
         // When getting the user manager
-        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI, logger);
+        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI);
 
         // Then null should be returned
         assertThat(result).isNull();
-
-        // Verify logging
-        verify(logger).debug("User ID {} has no manager assigned", USER_ID);
     }
 
     /**
@@ -176,13 +157,10 @@ class IdentityUtilsTest {
         when(identityAPI.getUser(USER_ID)).thenReturn(null);
 
         // When getting the user manager
-        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI, logger);
+        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI);
 
         // Then null should be returned
         assertThat(result).isNull();
-
-        // Verify logging
-        verify(logger).warn("User not found for ID: {}", USER_ID);
     }
 
     /**
@@ -196,13 +174,10 @@ class IdentityUtilsTest {
         when(identityAPI.getUser(USER_ID)).thenThrow(exception);
 
         // When getting the user manager
-        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI, logger);
+        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI);
 
         // Then null should be returned
         assertThat(result).isNull();
-
-        // Verify error logging
-        verify(logger).error(eq("Error getting manager for user ID {}: {}"), eq(USER_ID), eq("Database error"), eq(exception));
     }
 
     // -------------------------------------------------------------------------
@@ -230,13 +205,10 @@ class IdentityUtilsTest {
         when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
 
         // When getting users by memberships
-        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI, logger);
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then user IDs should be returned
         assertThat(result).containsExactlyInAnyOrder(100L, 200L);
-
-        // Verify logging
-        verify(logger).debug("Found {} users from {} memberships", 2, 2);
     }
 
     /**
@@ -256,7 +228,7 @@ class IdentityUtilsTest {
         when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
 
         // When getting users by memberships
-        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI, logger);
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then user IDs should be returned
         assertThat(result).containsExactly(100L);
@@ -279,7 +251,7 @@ class IdentityUtilsTest {
         when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
 
         // When getting users by memberships
-        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI, logger);
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then user IDs should be returned
         assertThat(result).containsExactly(100L);
@@ -299,13 +271,10 @@ class IdentityUtilsTest {
         when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
 
         // When getting users by memberships
-        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI, logger);
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then empty set should be returned
         assertThat(result).isEmpty();
-
-        // Verify warning logged
-        verify(logger).warn("Skipping membership object with both null groupId and roleId");
     }
 
     /**
@@ -316,13 +285,10 @@ class IdentityUtilsTest {
     void getUsersByMemberships_should_return_empty_set_for_null_list() {
         // Given a null membership list
         // When getting users by memberships
-        Set<Long> result = IdentityUtils.getUsersByMemberships(null, identityAPI, logger);
+        Set<Long> result = IdentityUtils.getUsersByMemberships(null, identityAPI);
 
         // Then empty set should be returned
         assertThat(result).isEmpty();
-
-        // Verify logging
-        verify(logger).debug("Empty membership list provided, returning empty user set");
     }
 
     /**
@@ -335,13 +301,10 @@ class IdentityUtilsTest {
         List<MockMembership> memberships = Collections.emptyList();
 
         // When getting users by memberships
-        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI, logger);
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then empty set should be returned
         assertThat(result).isEmpty();
-
-        // Verify logging
-        verify(logger).debug("Empty membership list provided, returning empty user set");
     }
 
     /**
@@ -358,13 +321,10 @@ class IdentityUtilsTest {
         when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
 
         // When getting users by memberships
-        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI, logger);
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then empty set should be returned
         assertThat(result).isEmpty();
-
-        // Verify warnings logged
-        verify(logger, atLeastOnce()).warn(anyString(), anyString(), anyString());
     }
 
     /**
@@ -381,13 +341,10 @@ class IdentityUtilsTest {
         when(identityAPI.searchUsers(any(SearchOptions.class))).thenThrow(exception);
 
         // When getting users by memberships
-        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI, logger);
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then empty set should be returned
         assertThat(result).isEmpty();
-
-        // Verify error logging
-        verify(logger).error(eq("An error occurred during user search by membership: {}"), eq("Search error"), eq(exception));
     }
 
     /**
@@ -408,7 +365,7 @@ class IdentityUtilsTest {
         when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
 
         // When getting users by memberships
-        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI, logger);
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then only valid users should be returned
         assertThat(result).containsExactly(100L);
@@ -435,7 +392,7 @@ class IdentityUtilsTest {
         when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
 
         // When getting users by memberships
-        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI, logger);
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then unique user IDs should be returned
         assertThat(result).containsExactlyInAnyOrder(100L, 200L);
