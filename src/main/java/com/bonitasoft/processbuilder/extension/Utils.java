@@ -47,16 +47,80 @@ public final class Utils {
 	 * @see System#currentTimeMillis()
 	 */
 	public static void logElapsedTime(long startTime, String name) {
-		long endTime = System.currentTimeMillis();
-		long elapsedTime = endTime - startTime;
-		
-		// Convert milliseconds to minutes, seconds, and milliseconds
+		long elapsedTime = calculateElapsedTime(startTime);
+		logElapsedTimeByElapsedTime(elapsedTime, name);
+	}
+
+	/**
+	 * Calculates the elapsed time from a given start point up to the current moment.
+	 * <p>
+	 * This method provides a simple way to measure execution duration by comparing
+	 * the provided start time with the current system time.
+	 *
+	 * @param startTime The initial time in milliseconds (typically obtained using 
+	 *                  {@code System.currentTimeMillis()}) from which the duration is calculated.
+	 * @return The elapsed time in milliseconds.
+	 * @see System#currentTimeMillis()
+	 */
+	public static long calculateElapsedTime(long startTime) {
+		return calculateElapsedTime(startTime, System.currentTimeMillis());
+	}
+
+	/**
+	 * Calculates the elapsed time between two given time points.
+	 * <p>
+	 * This method computes the difference between the end time and start time,
+	 * returning the result in milliseconds.
+	 *
+	 * @param startTime The initial time in milliseconds (typically obtained using 
+	 *                  {@code System.currentTimeMillis()}).
+	 * @param endTime   The final time in milliseconds (typically obtained using 
+	 *                  {@code System.currentTimeMillis()}).
+	 * @return The elapsed time in milliseconds (endTime - startTime).
+	 * @see System#currentTimeMillis()
+	 */
+	public static long calculateElapsedTime(long startTime, long endTime) {
+		return endTime - startTime;
+	}
+
+	/**
+	 * Logs the given elapsed time, formatted as minutes, seconds, and milliseconds.
+	 * <p>
+	 * This method is useful when the elapsed time has already been calculated
+	 * and only needs to be logged with a descriptive name.
+	 *
+	 * @param elapsedTime The pre-calculated elapsed time in milliseconds.
+	 * @param name        A descriptive identifier or name of the operation/task 
+	 *                    for which the time was measured (used within the log message).
+	 */
+	public static void logElapsedTimeByElapsedTime(long elapsedTime, String name) {
 		long minutes = TimeUnit.MILLISECONDS.toMinutes(elapsedTime);
 		long seconds = TimeUnit.MILLISECONDS.toSeconds(elapsedTime) % 60;
-
 		long milliseconds = elapsedTime % 1000;
 		
-		// Assuming 'LOGGER' is defined and available in this context
 		LOGGER.info("Elapsed time - {}: {}m {}s {}ms", name, minutes, seconds, milliseconds);
+	}
+
+	/**
+	 * Calculates and logs the elapsed time from a given start point up to the current moment.
+	 * <p>
+	 * This is a convenience method that combines {@link #calculateElapsedTime(long)} 
+	 * and {@link #logElapsedTime(long, String)} into a single call. The total execution 
+	 * time is broken down and displayed in minutes, seconds, and milliseconds via the 
+	 * log at the {@code INFO} level.
+	 *
+	 * @param startTime The initial time in milliseconds (typically obtained using 
+	 *                  {@code System.currentTimeMillis()}) from which the duration is calculated.
+	 * @param name      A descriptive identifier or name of the operation/task for which
+	 *                  the time is being measured (used within the log message).
+	 * @return The elapsed time in milliseconds.
+	 * @see #calculateElapsedTime(long)
+	 * @see #logElapsedTime(long, String)
+	 * @see System#currentTimeMillis()
+	 */
+	public static long logAndGetElapsedTime(long startTime, String name) {
+		long elapsedTime = calculateElapsedTime(startTime);
+		logElapsedTimeByElapsedTime(elapsedTime, name);
+		return elapsedTime;
 	}
 }

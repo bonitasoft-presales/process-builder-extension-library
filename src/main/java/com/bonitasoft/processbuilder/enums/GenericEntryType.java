@@ -32,7 +32,23 @@ public enum GenericEntryType {
      * This type is used to identify and retrieve master data records that 
      * define the business impact or priority level of a process (e.g., Low, Medium, High).
      */
-    CRITICALITY("Criticality", "Defines the business priority level (e.g., High, Medium, Low) of the process.");
+    CRITICALITY("Criticality", "Defines the business priority level (e.g., High, Medium, Low) of the process."),
+
+    /**
+     * Represents the classification key for **SMTP Configuration** definitions.
+     * This type is used to identify and retrieve master data records that 
+     * define the email server settings required for sending notifications 
+     * (e.g., host, port, SSL/TLS, authentication credentials).
+     */
+    SMTP("Smtp", "Defines the SMTP server configuration settings for email notifications, including host address, port number, SSL/TLS encryption, and authentication parameters."),
+
+    /**
+     * Represents the classification key for **Theme Configuration** definitions.
+     * This type is used to identify and retrieve master data records that 
+     * define the visual appearance and branding of the application 
+     * (e.g., colors, logos, fonts, styles).
+     */
+    THEME("Theme", "Defines the visual theme configuration for the application, including primary and secondary colors, logo, typography, and other branding elements.");
 
     private final String key;
     private final String description;
