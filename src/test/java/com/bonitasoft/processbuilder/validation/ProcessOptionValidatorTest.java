@@ -87,7 +87,7 @@ class ProcessOptionValidatorTest {
     void isMatchingActionAndOption_Obj_should_return_false_on_option_mismatch() {
         assertFalse(ProcessOptionValidator.isMatchingActionAndOption(
                 EXPECTED_ACTION.name(),
-                ObjectsManagementOptionType.SMTP.name(), // Mismatch
+                ObjectsManagementOptionType.CONFIGURATION.name(), // Mismatch
                 EXPECTED_ACTION,
                 EXPECTED_OBJ_OPTION
         ));

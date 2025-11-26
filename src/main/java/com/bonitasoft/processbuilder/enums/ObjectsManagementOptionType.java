@@ -24,10 +24,11 @@ public enum ObjectsManagementOptionType {
      * Represents a category object used for classification or grouping.
      */
     CATEGORY("Category", "Represents a classification or grouping category."),
+    
     /**
-     * Represents an SMTP (Simple Mail Transfer Protocol) configuration object.
+     * Represents a system configuration object containing key-value settings.
      */
-    SMTP("SMTP", "Represents an SMTP configuration object for email services."),
+    CONFIGURATION("Configuration", "Represents a system configuration object containing application settings and parameters."),
 
     /**
      * Represents a **generic entry** or record, typically originating from a master data table.

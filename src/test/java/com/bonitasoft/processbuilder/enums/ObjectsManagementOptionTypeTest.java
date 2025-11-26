@@ -47,15 +47,15 @@ class ObjectsManagementOptionTypeTest {
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("Should contain exactly two constants (CATEGORY, SMTP, ...)")
-    void enum_should_have_only_two_constant() {
+    @DisplayName("Should contain exactly four constants (CATEGORY, CONFIGURATION, GENERIC_ENTRY, ENTITY_TYPE)")
+    void enum_should_have_four_constants() {
         // Given & When: Get array of enum values
         ObjectsManagementOptionType[] types = ObjectsManagementOptionType.values();
 
-        // Then the enum should have only two constant and their names must be correct
-        assertEquals(4, types.length, "The enum should contain exactly 2 constants.");
+        // Then the enum should have exactly four constants and their names must be correct
+        assertEquals(4, types.length, "The enum should contain exactly 4 constants.");
         assertEquals("CATEGORY", ObjectsManagementOptionType.CATEGORY.name());
-        assertEquals("SMTP", ObjectsManagementOptionType.SMTP.name());
+        assertEquals("CONFIGURATION", ObjectsManagementOptionType.CONFIGURATION.name());
         assertEquals("GENERIC_ENTRY", ObjectsManagementOptionType.GENERIC_ENTRY.name());
         assertEquals("ENTITY_TYPE", ObjectsManagementOptionType.ENTITY_TYPE.name());
     }
@@ -86,10 +86,10 @@ class ObjectsManagementOptionTypeTest {
     void isValid_should_correctly_validate_input() {
         // Success cases (valid, case-insensitive, trimmed)
         assertTrue(ObjectsManagementOptionType.isValid("CATEGORY"));
-        assertTrue(ObjectsManagementOptionType.isValid("smtp"));
+        assertTrue(ObjectsManagementOptionType.isValid("configuration"));
         assertTrue(ObjectsManagementOptionType.isValid("  CATEGORY  "));
         assertTrue(ObjectsManagementOptionType.isValid("CaTeGoRy"));
-        assertTrue(ObjectsManagementOptionType.isValid("sMtP"));
+        assertTrue(ObjectsManagementOptionType.isValid("CoNfIgUrAtIoN"));
         assertTrue(ObjectsManagementOptionType.isValid("GENERIC_eNtRY"));
         assertTrue(ObjectsManagementOptionType.isValid("ENTiTY_TYPE  "));
         assertTrue(ObjectsManagementOptionType.isValid(" ENTITy_TYPE "));
@@ -158,7 +158,7 @@ class ObjectsManagementOptionTypeTest {
     void getAllKeysList_shouldReturnCorrectList() {
         List<String> keys = ObjectsManagementOptionType.getAllKeysList();
         assertEquals(4, keys.size());
-        assertTrue(keys.contains("SMTP"));
+        assertTrue(keys.contains("Configuration"));
         assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 
@@ -171,7 +171,7 @@ class ObjectsManagementOptionTypeTest {
         // When getting the keys
         // Then they should match the expected values
         assertEquals("Category", ObjectsManagementOptionType.CATEGORY.getKey());
-        assertEquals("SMTP", ObjectsManagementOptionType.SMTP.getKey());
+        assertEquals("Configuration", ObjectsManagementOptionType.CONFIGURATION.getKey());
         assertEquals("GenericEntry", ObjectsManagementOptionType.GENERIC_ENTRY.getKey());
         assertEquals("EntityType", ObjectsManagementOptionType.ENTITY_TYPE.getKey());
     }
@@ -186,8 +186,8 @@ class ObjectsManagementOptionTypeTest {
         // Then they should match the expected values
         assertEquals("Represents a classification or grouping category.",
             ObjectsManagementOptionType.CATEGORY.getDescription());
-        assertEquals("Represents an SMTP configuration object for email services.",
-            ObjectsManagementOptionType.SMTP.getDescription());
+        assertEquals("Represents a system configuration object containing application settings and parameters.",
+            ObjectsManagementOptionType.CONFIGURATION.getDescription());
         assertEquals("Represents a single master data record or lookup table entry.",
             ObjectsManagementOptionType.GENERIC_ENTRY.getDescription());
         assertEquals("Defines the classification ID for a master data record.",
@@ -203,7 +203,7 @@ class ObjectsManagementOptionTypeTest {
         String categoryUpper = "CATEGORY";
         String categoryLower = "category";
         String categoryMixed = "Category";
-        String smtpWithSpaces = "  SMTP  ";
+        String smtpWithSpaces = "  CONFIGURATION  ";
         String genericEntry = "GENERIC_ENTRY";
         String entityType = "ENTITY_TYPE";
 
@@ -251,12 +251,12 @@ class ObjectsManagementOptionTypeTest {
 
         // Verify all keys and descriptions are present
         assertTrue(data.containsKey("Category"));
-        assertTrue(data.containsKey("SMTP"));
+        assertTrue(data.containsKey("Configuration"));
         assertTrue(data.containsKey("GenericEntry"));
         assertTrue(data.containsKey("EntityType"));
 
         assertEquals("Represents a classification or grouping category.", data.get("Category"));
-        assertEquals("Represents an SMTP configuration object for email services.", data.get("SMTP"));
+        assertEquals("Represents a system configuration object containing application settings and parameters.", data.get("Configuration"));
         assertEquals("Represents a single master data record or lookup table entry.", data.get("GenericEntry"));
         assertEquals("Defines the classification ID for a master data record.", data.get("EntityType"));
 
@@ -280,7 +280,7 @@ class ObjectsManagementOptionTypeTest {
 
         // Verify all keys are present
         assertTrue(keys.contains("Category"));
-        assertTrue(keys.contains("SMTP"));
+        assertTrue(keys.contains("Configuration"));
         assertTrue(keys.contains("GenericEntry"));
         assertTrue(keys.contains("EntityType"));
 
@@ -304,7 +304,7 @@ class ObjectsManagementOptionTypeTest {
 
         // Verify the order and presence of all constants
         assertEquals(ObjectsManagementOptionType.CATEGORY, values[0]);
-        assertEquals(ObjectsManagementOptionType.SMTP, values[1]);
+        assertEquals(ObjectsManagementOptionType.CONFIGURATION, values[1]);
         assertEquals(ObjectsManagementOptionType.GENERIC_ENTRY, values[2]);
         assertEquals(ObjectsManagementOptionType.ENTITY_TYPE, values[3]);
     }
@@ -319,8 +319,8 @@ class ObjectsManagementOptionTypeTest {
         // Then it should return the correct enum constant
         assertEquals(ObjectsManagementOptionType.CATEGORY,
             ObjectsManagementOptionType.valueOf("CATEGORY"));
-        assertEquals(ObjectsManagementOptionType.SMTP,
-            ObjectsManagementOptionType.valueOf("SMTP"));
+        assertEquals(ObjectsManagementOptionType.CONFIGURATION,
+            ObjectsManagementOptionType.valueOf("CONFIGURATION"));
         assertEquals(ObjectsManagementOptionType.GENERIC_ENTRY,
             ObjectsManagementOptionType.valueOf("GENERIC_ENTRY"));
         assertEquals(ObjectsManagementOptionType.ENTITY_TYPE,
