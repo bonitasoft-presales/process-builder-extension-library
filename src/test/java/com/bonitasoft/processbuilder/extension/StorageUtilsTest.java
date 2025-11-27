@@ -3,7 +3,12 @@ package com.bonitasoft.processbuilder.extension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -11,6 +16,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * This test uses the actual keys defined in the ProcessStorageType enum.
  */
 class StorageUtilsTest {
+
+    // --- Tests for private constructor ---
+
+    @Test
+    @DisplayName("Private constructor should throw UnsupportedOperationException")
+    void constructor_should_prevent_instantiation() throws Exception {
+        Constructor<StorageUtils> constructor = StorageUtils.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
+
+        InvocationTargetException exception = assertThrows(
+            InvocationTargetException.class,
+            constructor::newInstance
+        );
+
+        assertThat(exception.getCause())
+            .isInstanceOf(UnsupportedOperationException.class)
+            .hasMessageContaining("cannot be instantiated");
+    }
 
     // --- Tests for isBonitaStorage ---
 

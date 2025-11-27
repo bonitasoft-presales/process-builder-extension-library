@@ -1,13 +1,237 @@
 # 03-quality-standards.mdc: Code Quality & Static Analysis Standards
 
-## 1. Testing and Coverage
+## 1. Testing and Coverage (JaCoCo)
+
+### 1.1. Coverage Requirements
 * **Coverage Goal:** **MANDATORY 100% test coverage** for all new Java classes and modifications to existing logic. No exceptions.
-* **Test Isolation:** Unit tests must be independent of the database and the Bonita Engine (`@Test` only). Integration tests (`@BonitaTest`, if used) must be clearly separated and minimized.
+* **Metrics to Track:**
+    - **Line Coverage:** 100% - Every line of code must be executed by tests.
+    - **Branch Coverage:** 100% - Every conditional branch (if/else, switch cases, ternary) must be tested.
+    - **Method Coverage:** 100% - Every method must have at least one test.
+
+### 1.2. Test Structure for Maximum Coverage
+```java
+// PATTERN: Test class structure for 100% coverage
+class MyClassTest {
+    // 1. Happy path tests
+    @Test void method_should_return_expected_result_when_valid_input() { }
+
+    // 2. Edge case tests
+    @Test void method_should_handle_null_input() { }
+    @Test void method_should_handle_empty_string() { }
+    @Test void method_should_handle_whitespace_only() { }
+
+    // 3. Exception/error path tests
+    @Test void method_should_throw_exception_when_invalid() { }
+
+    // 4. Boundary tests
+    @Test void method_should_handle_max_value() { }
+    @Test void method_should_handle_min_value() { }
+
+    // 5. Private constructor test (for utility classes)
+    @Test void constructor_should_throw_unsupported_operation_exception() {
+        var constructor = MyUtilClass.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        assertThrows(InvocationTargetException.class, constructor::newInstance);
+    }
+}
+```
+
+### 1.3. Try-Catch Coverage Rules
+* **Every catch block must be tested.** Use Mockito to simulate exceptions:
+```java
+// PATTERN: Testing catch blocks
+@Test
+void method_should_handle_exception_gracefully() {
+    // Use @Mock or mockStatic to force exception
+    when(dependency.method()).thenThrow(new RuntimeException("Test"));
+
+    // Verify catch block behavior
+    assertDoesNotThrow(() -> classUnderTest.method());
+    // OR verify specific error handling
+    assertThat(result).isEqualTo(expectedFallbackValue);
+}
+```
+
+### 1.4. Enum Coverage
+* **Every enum constant must be tested:**
+    - Test `name()` and `values()`
+    - Test custom getters (`getKey()`, `getDescription()`)
+    - Test `isValid()` with valid, invalid, null, empty, whitespace inputs
+    - Test `getAllData()` and `getAllKeysList()` including immutability
+
+### 1.5. Test Isolation
+* Unit tests must be independent of the database and the Bonita Engine (`@Test` only).
+* Integration tests (`@BonitaTest`, if used) must be clearly separated and minimized.
 * **Assertion Library:** Use **AssertJ** for all assertions for enhanced readability and fluid syntax.
 
+---
+
 ## 2. Static Analysis Tools
-* **Mandatory Adherence:** All code MUST pass the configured checks defined by **PMD** and **CheckStyle** in the project's parent POM. The AI must prioritize fixing issues flagged by these tools (e.g., Cyclomatic Complexity, unused imports, line length) over stylistic preference.
-* **Readability:** Keep methods **short** (ideally < 15 lines of business logic). Complex logic must be broken down into well-named, private helper methods.
+
+### 2.1. PMD Rules
+**Mandatory Adherence:** All code MUST pass PMD checks.
+* **Cyclomatic Complexity:** Keep below 10. Break complex methods into smaller, private helpers.
+* **Avoid duplicated code:** Extract common patterns into utility methods.
+* **Unused imports:** Remove all unused imports immediately.
+* **Empty catch blocks:** NEVER leave catch blocks empty. Log or rethrow with context.
+
+```java
+// BAD: Empty catch block
+try {
+    riskyOperation();
+} catch (Exception e) { }
+
+// GOOD: Proper exception handling
+try {
+    riskyOperation();
+} catch (Exception e) {
+    LOGGER.error("Operation failed: {}", e.getMessage(), e);
+    throw new CustomException("Operation failed", e);
+}
+```
+
+### 2.2. CPD (Copy-Paste Detector) Rules
+* **No duplicated code blocks:** If you copy code, extract it to a shared method.
+* **Minimum tokens:** Default threshold is 100 tokens (~5-7 lines of code).
+* **Action on violation:** Refactor immediately to eliminate duplication.
+
+### 2.3. CheckStyle Rules
+* **Line length:** Maximum 120 characters.
+* **Indentation:** 4 spaces (no tabs).
+* **Braces:** Always use braces for if/else/for/while, even for single statements.
+* **Naming conventions:**
+    - Classes: `PascalCase`
+    - Methods/variables: `camelCase`
+    - Constants: `UPPER_SNAKE_CASE`
+    - Packages: `lowercase`
+
+### 2.4. SpotBugs Rules
+* **Null pointer dereference:** Always check for null before use.
+* **Resource leaks:** Use try-with-resources for all `Closeable` resources.
+* **Mutable static fields:** Avoid or ensure thread-safety.
+* **Serialization issues:** Implement `serialVersionUID` for `Serializable` classes.
+
+```java
+// GOOD: Defensive null checks
+public String process(String input) {
+    if (input == null || input.isBlank()) {
+        return "";
+    }
+    return input.trim().toUpperCase();
+}
+
+// GOOD: Try-with-resources
+try (var reader = new BufferedReader(new FileReader(file))) {
+    return reader.readLine();
+}
+```
+
+---
 
 ## 3. Documentation
-* **Javadoc:** All public and protected classes, interfaces, enums, records, and methods MUST include complete Javadoc written in the **imperative voice** (e.g., "Calculates X," "Returns Y").
+
+### 3.1. Javadoc Standards
+* **Scope:** All public and protected classes, interfaces, enums, records, and methods MUST include complete Javadoc.
+* **Voice:** Written in the **imperative voice** (e.g., "Calculates X," "Returns Y").
+* **Language:** English only.
+
+```java
+/**
+ * Encrypts the given plain text using AES-GCM encryption.
+ * <p>
+ * This method generates a random IV for each encryption operation,
+ * ensuring that the same plaintext produces different ciphertext.
+ * </p>
+ *
+ * @param plainText the text to encrypt (must not be null or empty)
+ * @param secretKey the 256-bit secret key for encryption
+ * @return the Base64-encoded encrypted text with IV prepended
+ * @throws IllegalArgumentException if plainText is null or empty
+ * @throws EncryptionException if encryption fails
+ * @see #decrypt(String, SecretKey)
+ */
+public static String encrypt(String plainText, SecretKey secretKey) {
+```
+
+### 3.2. Test Documentation
+* Each test method should have a descriptive `@DisplayName` annotation.
+* Use the pattern: `should_[expected_behavior]_when_[condition]`
+
+```java
+@Test
+@DisplayName("encrypt should return Base64 encoded ciphertext when given valid input")
+void encrypt_should_return_base64_when_valid_input() { }
+
+@Test
+@DisplayName("encrypt should throw IllegalArgumentException when input is null")
+void encrypt_should_throw_exception_when_null_input() { }
+```
+
+---
+
+## 4. Test Patterns for Specific Scenarios
+
+### 4.1. Testing Utility Classes with Private Constructors
+```java
+@Test
+@DisplayName("Private constructor should throw UnsupportedOperationException")
+void constructor_should_prevent_instantiation() throws Exception {
+    Constructor<MyUtilClass> constructor = MyUtilClass.class.getDeclaredConstructor();
+    constructor.setAccessible(true);
+
+    InvocationTargetException exception = assertThrows(
+        InvocationTargetException.class,
+        constructor::newInstance
+    );
+
+    assertThat(exception.getCause())
+        .isInstanceOf(UnsupportedOperationException.class)
+        .hasMessageContaining("cannot be instantiated");
+}
+```
+
+### 4.2. Testing Static Methods with Exceptions
+```java
+@Test
+@DisplayName("Method should handle checked exception gracefully")
+void method_should_catch_and_handle_exception() {
+    try (MockedStatic<ExternalDependency> mocked = mockStatic(ExternalDependency.class)) {
+        mocked.when(() -> ExternalDependency.riskyMethod(any()))
+              .thenThrow(new IOException("Simulated failure"));
+
+        // Test that the method handles the exception appropriately
+        String result = ClassUnderTest.method("input");
+        assertThat(result).isEqualTo(expectedFallbackValue);
+    }
+}
+```
+
+### 4.3. Testing Logging Output
+```java
+// When you need to verify log messages are generated
+@Test
+void method_should_log_error_when_exception_occurs() {
+    // Capture logs using a test appender or verify behavior
+    assertDoesNotThrow(() -> classUnderTest.methodThatLogs());
+}
+```
+
+---
+
+## 5. Coverage Checklist Before Commit
+
+Before committing any code, verify:
+
+- [ ] All new code has corresponding test classes
+- [ ] Line coverage is 100%
+- [ ] Branch coverage is 100% (all if/else paths tested)
+- [ ] All catch blocks are tested via mocked exceptions
+- [ ] Private constructors of utility classes are tested
+- [ ] All enum constants are individually tested
+- [ ] PMD reports no violations
+- [ ] CPD reports no duplications
+- [ ] CheckStyle reports no violations
+- [ ] SpotBugs reports no bugs
+- [ ] All Javadoc is complete and in English
+- [ ] `mvn clean install site` passes without errors

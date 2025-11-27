@@ -11,12 +11,14 @@ import java.util.Map;
 /**
  * Unit tests for the {@link GenericEntryType} enumeration.
  * <p>
- * This class ensures that all defined constants are present and that 
- * utility methods, such as {@code isValid}, function correctly across 
+ * This class ensures that all defined constants are present and that
+ * utility methods, such as {@code isValid}, function correctly across
  * various inputs including case sensitivity and null values.
  * </p>
  */
 class GenericEntryTypeTest {
+
+    private static final int EXPECTED_CONSTANT_COUNT = 2;
 
     // -------------------------------------------------------------------------
     // Constant Existence Tests
@@ -38,24 +40,6 @@ class GenericEntryTypeTest {
     @DisplayName("CRITICALITY constant should be defined")
     void should_define_CRITICALITY_constant() {
         assertEquals("CRITICALITY", GenericEntryType.CRITICALITY.name());
-    }
-
-    /**
-     * Tests the existence and name of the SMTP constant.
-     */
-    @Test
-    @DisplayName("SMTP constant should be defined")
-    void should_define_SMTP_constant() {
-        assertEquals("SMTP", GenericEntryType.SMTP.name());
-    }
-
-    /**
-     * Tests the existence and name of the THEME constant.
-     */
-    @Test
-    @DisplayName("THEME constant should be defined")
-    void should_define_THEME_constant() {
-        assertEquals("THEME", GenericEntryType.THEME.name());
     }
 
     // -------------------------------------------------------------------------
@@ -82,28 +66,8 @@ class GenericEntryTypeTest {
         assertTrue(GenericEntryType.CRITICALITY.getDescription().contains("priority level"));
     }
 
-    /**
-     * Tests the key and description of the SMTP constant.
-     */
-    @Test
-    @DisplayName("SMTP should have correct key and description")
-    void smtp_should_have_correct_key_and_description() {
-        assertEquals("Smtp", GenericEntryType.SMTP.getKey());
-        assertTrue(GenericEntryType.SMTP.getDescription().contains("SMTP server"));
-    }
-
-    /**
-     * Tests the key and description of the THEME constant.
-     */
-    @Test
-    @DisplayName("THEME should have correct key and description")
-    void theme_should_have_correct_key_and_description() {
-        assertEquals("Theme", GenericEntryType.THEME.getKey());
-        assertTrue(GenericEntryType.THEME.getDescription().contains("visual theme"));
-    }
-
     // -------------------------------------------------------------------------
-    // Utility Method Tests (Assuming the isValid method is included)
+    // Utility Method Tests
     // -------------------------------------------------------------------------
 
     /**
@@ -113,14 +77,16 @@ class GenericEntryTypeTest {
     @DisplayName("isValid should return true for a valid uppercase name")
     void isValid_should_return_true_for_valid_uppercase() {
         assertTrue(GenericEntryType.isValid("PROCESS_STORAGE"));
+        assertTrue(GenericEntryType.isValid("CRITICALITY"));
     }
 
     /**
-     * Tests the {@code isValid} method with a valid constant name (lowercase, checking case insensitivity).
+     * Tests the {@code isValid} method with a valid constant name (lowercase).
      */
     @Test
     @DisplayName("isValid should return true for a valid lowercase name")
     void isValid_should_return_true_for_valid_lowercase() {
+        assertTrue(GenericEntryType.isValid("process_storage"));
         assertTrue(GenericEntryType.isValid("criticality"));
     }
 
@@ -131,6 +97,7 @@ class GenericEntryTypeTest {
     @DisplayName("isValid should return true for a mixed-case name")
     void isValid_should_return_true_for_mixed_case() {
         assertTrue(GenericEntryType.isValid("Process_Storage"));
+        assertTrue(GenericEntryType.isValid("Criticality"));
     }
 
     /**
@@ -140,6 +107,7 @@ class GenericEntryTypeTest {
     @DisplayName("isValid should return false for an invalid name")
     void isValid_should_return_false_for_invalid_name() {
         assertFalse(GenericEntryType.isValid("NON_EXISTENT_TYPE"));
+        assertFalse(GenericEntryType.isValid("INVALID"));
     }
 
     /**
@@ -161,42 +129,38 @@ class GenericEntryTypeTest {
     }
 
     /**
-     * Tests that getAllData returns a map with all four constants.
+     * Tests that getAllData returns a map with all constants.
      */
     @Test
-    @DisplayName("getAllData should return map with all four constants")
+    @DisplayName("getAllData should return map with all constants")
     void getAllData_shouldReturnCorrectMap() {
         Map<String, String> data = GenericEntryType.getAllData();
-        assertEquals(4, data.size());
+        assertEquals(EXPECTED_CONSTANT_COUNT, data.size());
         assertTrue(data.containsKey("ProcessStorage"));
         assertTrue(data.containsKey("Criticality"));
-        assertTrue(data.containsKey("Smtp"));
-        assertTrue(data.containsKey("Theme"));
         assertThrows(UnsupportedOperationException.class, () -> data.clear());
     }
 
     /**
-     * Tests that getAllKeysList returns a list with all four keys.
+     * Tests that getAllKeysList returns a list with all keys.
      */
     @Test
-    @DisplayName("getAllKeysList should return list with all four keys")
+    @DisplayName("getAllKeysList should return list with all keys")
     void getAllKeysList_shouldReturnCorrectList() {
         List<String> keys = GenericEntryType.getAllKeysList();
-        assertEquals(4, keys.size());
+        assertEquals(EXPECTED_CONSTANT_COUNT, keys.size());
         assertTrue(keys.contains("ProcessStorage"));
         assertTrue(keys.contains("Criticality"));
-        assertTrue(keys.contains("Smtp"));
-        assertTrue(keys.contains("Theme"));
         assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 
     /**
-     * Tests that the enum contains exactly four constants.
+     * Tests that the enum contains exactly two constants.
      */
     @Test
-    @DisplayName("Should contain exactly four constants")
-    void should_contain_four_constants() {
-        assertEquals(4, GenericEntryType.values().length);
+    @DisplayName("Should contain exactly two constants")
+    void should_contain_expected_constants() {
+        assertEquals(EXPECTED_CONSTANT_COUNT, GenericEntryType.values().length);
     }
 
     /**
@@ -205,8 +169,8 @@ class GenericEntryTypeTest {
     @Test
     @DisplayName("isValid should return true for whitespace-padded valid name")
     void isValid_should_return_true_for_whitespace_padded_name() {
-        assertTrue(GenericEntryType.isValid("  SMTP  "));
-        assertTrue(GenericEntryType.isValid("\tTHEME\t"));
+        assertTrue(GenericEntryType.isValid("  PROCESS_STORAGE  "));
+        assertTrue(GenericEntryType.isValid("\tCRITICALITY\t"));
     }
 
     /**

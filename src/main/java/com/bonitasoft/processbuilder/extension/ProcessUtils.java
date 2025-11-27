@@ -4,8 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.bonitasoft.processbuilder.enums.ActionType;
+import com.bonitasoft.processbuilder.mapper.UserMapper;
 import com.bonitasoft.processbuilder.records.UserRecord;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -13,13 +15,23 @@ import java.util.function.Supplier;
 import org.bonitasoft.engine.api.APIAccessor;
 import org.bonitasoft.engine.api.IdentityAPI;
 import org.bonitasoft.engine.api.ProcessAPI;
+import org.bonitasoft.engine.api.ProfileAPI;
 import org.bonitasoft.engine.bpm.flownode.ActivityInstanceNotFoundException;
 import org.bonitasoft.engine.bpm.flownode.HumanTaskInstance;
 import org.bonitasoft.engine.bpm.process.ProcessInstance;
 import org.bonitasoft.engine.exception.RetrieveException;
 import org.bonitasoft.engine.identity.ContactData;
+import org.bonitasoft.engine.identity.MemberType;
 import org.bonitasoft.engine.identity.User;
+import org.bonitasoft.engine.identity.UserCriterion;
 import org.bonitasoft.engine.identity.UserNotFoundException;
+import org.bonitasoft.engine.identity.UserSearchDescriptor;
+import org.bonitasoft.engine.profile.Profile;
+import org.bonitasoft.engine.profile.ProfileMember;
+import org.bonitasoft.engine.profile.ProfileMemberSearchDescriptor;
+import org.bonitasoft.engine.profile.ProfileSearchDescriptor;
+import org.bonitasoft.engine.search.SearchOptionsBuilder;
+import org.bonitasoft.engine.search.SearchResult;
 import org.bonitasoft.engine.session.InvalidSessionException;
 
 
@@ -424,6 +436,96 @@ public final class ProcessUtils {
             LOGGER.error("Error occurred while searching for most recent {} instance: {}",
                         objectType, e.getMessage(), e);
             return null;
+        }
+    }
+
+    public List<Long> getUserIdsInProfile(APIAccessor apiAccessor, String profileName) {
+        try {
+            List<Long> userIds = new ArrayList<>();
+            List<ProfileMember> profileMemberList = new ArrayList<>();
+
+            ProfileAPI profileAPI = apiAccessor.getProfileAPI();
+            IdentityAPI identityAPI = apiAccessor.getIdentityAPI();
+
+            SearchOptionsBuilder searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
+            searchBuilder.filter(ProfileSearchDescriptor.NAME, "PBAdministrator");
+
+            SearchResult<Profile> searchResultProfile = profileAPI.searchProfiles(searchBuilder.done());
+
+            List<Profile> profileList = searchResultProfile.getResult();
+
+            Profile administratorProfile = profileList.get(0);
+
+            searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
+            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID,administratorProfile.getId());
+            SearchResult<ProfileMember> searchResultProfileMember = profileAPI.searchProfileMembers(MemberType.USER.name(), searchBuilder.done());
+
+            if (!searchResultProfileMember.getResult().isEmpty()) {
+                profileMemberList.addAll(searchResultProfileMember.getResult());
+            }
+
+            for (ProfileMember profileMember : searchResultProfileMember.getResult()) {
+                if (profileMember.getUserId() > 0) {
+                    userIds.add(profileMember.getUserId());
+                }
+            }
+
+            searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
+            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID,administratorProfile.getId());
+            searchResultProfileMember = profileAPI.searchProfileMembers(MemberType.ROLE.name(), searchBuilder.done());
+
+            if (!searchResultProfileMember.getResult().isEmpty()) {
+                profileMemberList.addAll(searchResultProfileMember.getResult());
+            }
+
+            for (ProfileMember profileMember : searchResultProfileMember.getResult()) {
+                if (profileMember.getRoleId() > 0) {
+                    List<User> roleUsers = identityAPI.getActiveUsersInRole(profileMember.getRoleId(), 0,Integer.MAX_VALUE, UserCriterion.USER_NAME_ASC);
+                    userIds.addAll(UserMapper.toLongIds(roleUsers));
+
+                }
+            }
+
+            searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
+            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID,administratorProfile.getId());
+            searchResultProfileMember = profileAPI.searchProfileMembers(MemberType.GROUP.name(), searchBuilder.done());
+
+            if (!searchResultProfileMember.getResult().isEmpty()) {
+                profileMemberList.addAll(searchResultProfileMember.getResult());
+            }
+
+            for (ProfileMember profileMember : searchResultProfileMember.getResult()) {
+                if (profileMember.getGroupId() > 0) {
+                    List<User> groupUsers = identityAPI.getActiveUsersInGroup(profileMember.getGroupId(), 0, Integer.MAX_VALUE, UserCriterion.USER_NAME_ASC);
+                    userIds.addAll(UserMapper.toLongIds(groupUsers));
+                }
+            }
+
+            searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
+            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID,administratorProfile.getId());
+            searchResultProfileMember = profileAPI.searchProfileMembers(MemberType.MEMBERSHIP.name(), searchBuilder.done());
+
+            if (!searchResultProfileMember.getResult().isEmpty()) {
+                profileMemberList.addAll(searchResultProfileMember.getResult());
+            }
+
+            for (ProfileMember profileMember : searchResultProfileMember.getResult()) {
+                if (profileMember.getGroupId() > 0 && profileMember.getRoleId() > 0) {
+                    searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
+                    searchBuilder.filter(UserSearchDescriptor.GROUP_ID,profileMember.getGroupId());
+                    searchBuilder.filter(UserSearchDescriptor.ROLE_ID,profileMember.getRoleId());
+                    
+                    SearchResult<User> searchResultUser = identityAPI.searchUsers(searchBuilder.done());
+                    List<User> userList = searchResultUser.getResult();
+                            
+                    userIds.addAll(UserMapper.toLongIds(userList));
+                }
+            }
+
+            return userIds;
+        } catch (Exception e) {
+            LOGGER.error("Error retrieving user IDs for profile '{}': {}", profileName, e.getMessage(), e);
+            return List.of();
         }
     }
 }

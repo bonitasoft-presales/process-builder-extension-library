@@ -19,20 +19,25 @@ import java.util.stream.Collectors;
  * @author Bonitasoft
  * @since 1.0
  */
-public enum GenericEntryType {
+public enum ConfigurationType {
+    
     /**
-     * Represents the classification key for **Process Storage** definitions.
+     * Represents the classification key for **SMTP Configuration** definitions.
      * This type is used to identify and retrieve master data records that 
-     * define where process documents and files should be persisted (e.g., local server, BDM database, with retention or deletion).
+     * define the email server settings required for sending notifications 
+     * (e.g., host, port, SSL/TLS, authentication credentials).
      */
-    PROCESS_STORAGE("ProcessStorage", "Defines the storage location and retention policy for process documents."),
+    SMTP("Smtp", "Defines the SMTP server configuration settings for email notifications, including host address, port number, SSL/TLS encryption, and authentication parameters."),
+
+    PROC_EXECUTION_CONNECTOR("ProcExecutionConnector", "Info of process execution connector configuration."),
 
     /**
-     * Represents the classification key for **Process Criticality** definitions.
+     * Represents the classification key for **Theme Configuration** definitions.
      * This type is used to identify and retrieve master data records that 
-     * define the business impact or priority level of a process (e.g., Low, Medium, High).
+     * define the visual appearance and branding of the application 
+     * (e.g., colors, logos, fonts, styles).
      */
-    CRITICALITY("Criticality", "Defines the business priority level (e.g., High, Medium, Low) of the process.");
+    THEME("Theme", "Defines the visual theme configuration for the application, including primary and secondary colors, logo, typography, and other branding elements.");
 
     private final String key;
     private final String description;
@@ -42,7 +47,7 @@ public enum GenericEntryType {
      * @param key The technical key used for mapping.
      * @param description A human-readable description of the type.
      */
-    GenericEntryType(String key, String description) {
+    ConfigurationType(String key, String description) {
         this.key = key;
         this.description = description;
     }
@@ -76,7 +81,7 @@ public enum GenericEntryType {
             return false;
         }
         try {
-            GenericEntryType.valueOf(input.trim().toUpperCase());
+            ConfigurationType.valueOf(input.trim().toUpperCase());
             return true;
         } catch (IllegalArgumentException e) {
             return false;
@@ -90,10 +95,10 @@ public enum GenericEntryType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(GenericEntryType.values())
+            Arrays.stream(ConfigurationType.values())
             .collect(Collectors.toMap(
-                GenericEntryType::getKey, 
-                GenericEntryType::getDescription, 
+                ConfigurationType::getKey, 
+                ConfigurationType::getDescription, 
                 (oldValue, newValue) -> oldValue, 
                 LinkedHashMap::new 
             ));
@@ -106,8 +111,8 @@ public enum GenericEntryType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(GenericEntryType.values())
-            .map(GenericEntryType::getKey)
+        return Arrays.stream(ConfigurationType.values())
+            .map(ConfigurationType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }
 }

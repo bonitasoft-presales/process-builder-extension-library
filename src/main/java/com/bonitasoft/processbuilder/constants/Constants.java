@@ -35,5 +35,9 @@ public final class Constants { // Marked as final to prevent inheritance
      */
     public static final String EMPTY = "";
 
+    public static final String PB_USER_PROFILE = "PB User";
+    public static final String PB_ADMINISTRATOR_PROFILE = "PB Administrator";
+    public static final String PB_PROCESS_MANAGER_PROFILE = "PB Process Manager";
+
 }
 
