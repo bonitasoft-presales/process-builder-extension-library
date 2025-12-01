@@ -1,11 +1,18 @@
 package com.bonitasoft.processbuilder.enums;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -18,434 +25,462 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class ThemeTypeTest {
 
-    private static final int EXPECTED_CONSTANT_COUNT = 20;
-
-    // -------------------------------------------------------------------------
-    // Constant Count Test
-    // -------------------------------------------------------------------------
-
     /**
-     * Tests that the enum contains the expected number of constants.
+     * Expected number of constants in the ThemeType enum.
      */
-    @Test
-    @DisplayName("Should contain exactly 20 theme constants")
-    void should_contain_expected_number_of_constants() {
-        assertEquals(EXPECTED_CONSTANT_COUNT, ThemeType.values().length);
+    private static final int EXPECTED_CONSTANT_COUNT = 19;
+
+    // -------------------------------------------------------------------------
+    // Constant Count and General Tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("General Enum Tests")
+    class GeneralEnumTests {
+
+        @Test
+        @DisplayName("Should contain exactly 19 theme constants")
+        void should_contain_expected_number_of_constants() {
+            assertEquals(EXPECTED_CONSTANT_COUNT, ThemeType.values().length);
+        }
+
+        @ParameterizedTest
+        @EnumSource(ThemeType.class)
+        @DisplayName("All constants should have non-null and non-empty key and description")
+        void all_constants_should_have_valid_key_and_description(ThemeType type) {
+            assertThat(type.getKey()).isNotNull().isNotBlank();
+            assertThat(type.getDescription()).isNotNull().isNotBlank();
+            assertThat(type.name()).isNotNull().isNotBlank();
+        }
     }
 
     // -------------------------------------------------------------------------
     // Brand Identity Constants Tests
     // -------------------------------------------------------------------------
 
-    /**
-     * Tests the PRIMARY_COLOR constant existence and values.
-     */
-    @Test
-    @DisplayName("PRIMARY_COLOR constant should be defined with correct key and description")
-    void primaryColor_should_have_correct_values() {
-        assertEquals("PRIMARY_COLOR", ThemeType.PRIMARY_COLOR.name());
-        assertEquals("PrimaryColor", ThemeType.PRIMARY_COLOR.getKey());
-        assertTrue(ThemeType.PRIMARY_COLOR.getDescription().contains("brand color"));
-    }
+    @Nested
+    @DisplayName("Brand Identity Constants Tests")
+    class BrandIdentityTests {
 
-    /**
-     * Tests the SECONDARY_COLOR constant existence and values.
-     */
-    @Test
-    @DisplayName("SECONDARY_COLOR constant should be defined with correct key and description")
-    void secondaryColor_should_have_correct_values() {
-        assertEquals("SECONDARY_COLOR", ThemeType.SECONDARY_COLOR.name());
-        assertEquals("SecondaryColor", ThemeType.SECONDARY_COLOR.getKey());
-        assertTrue(ThemeType.SECONDARY_COLOR.getDescription().contains("secondary"));
-    }
+        @Test
+        @DisplayName("PRIMARY_COLOR constant should be defined with correct key and description")
+        void primaryColor_should_have_correct_values() {
+            assertEquals("PRIMARY_COLOR", ThemeType.PRIMARY_COLOR.name());
+            assertEquals("PrimaryColor", ThemeType.PRIMARY_COLOR.getKey());
+            assertThat(ThemeType.PRIMARY_COLOR.getDescription()).containsIgnoringCase("brand color");
+        }
 
-    /**
-     * Tests the LOGO_URL constant existence and values.
-     */
-    @Test
-    @DisplayName("LOGO_URL constant should be defined with correct key and description")
-    void logoUrl_should_have_correct_values() {
-        assertEquals("LOGO_URL", ThemeType.LOGO_URL.name());
-        assertEquals("LogoUrl", ThemeType.LOGO_URL.getKey());
-        assertTrue(ThemeType.LOGO_URL.getDescription().contains("logo"));
-    }
+        @Test
+        @DisplayName("SAVE_COLOR constant should be defined with correct key and description")
+        void saveColor_should_have_correct_values() {
+            assertEquals("SAVE_COLOR", ThemeType.SAVE_COLOR.name());
+            assertEquals("SaveColor", ThemeType.SAVE_COLOR.getKey());
+            assertThat(ThemeType.SAVE_COLOR.getDescription()).containsIgnoringCase("save");
+        }
 
-    /**
-     * Tests the FAVICON_URL constant existence and values.
-     */
-    @Test
-    @DisplayName("FAVICON_URL constant should be defined with correct key and description")
-    void faviconUrl_should_have_correct_values() {
-        assertEquals("FAVICON_URL", ThemeType.FAVICON_URL.name());
-        assertEquals("FaviconUrl", ThemeType.FAVICON_URL.getKey());
-        assertTrue(ThemeType.FAVICON_URL.getDescription().contains("favicon"));
-    }
+        @Test
+        @DisplayName("LOGO_URL constant should be defined with correct key and description")
+        void logoUrl_should_have_correct_values() {
+            assertEquals("LOGO_URL", ThemeType.LOGO_URL.name());
+            assertEquals("LogoUrl", ThemeType.LOGO_URL.getKey());
+            assertThat(ThemeType.LOGO_URL.getDescription()).containsIgnoringCase("logo");
+        }
 
-    /**
-     * Tests the APP_NAME constant existence and values.
-     */
-    @Test
-    @DisplayName("APP_NAME constant should be defined with correct key and description")
-    void appName_should_have_correct_values() {
-        assertEquals("APP_NAME", ThemeType.APP_NAME.name());
-        assertEquals("AppName", ThemeType.APP_NAME.getKey());
-        assertTrue(ThemeType.APP_NAME.getDescription().contains("application name"));
+        @Test
+        @DisplayName("FAVICON_URL constant should be defined with correct key and description")
+        void faviconUrl_should_have_correct_values() {
+            assertEquals("FAVICON_URL", ThemeType.FAVICON_URL.name());
+            assertEquals("FaviconUrl", ThemeType.FAVICON_URL.getKey());
+            assertThat(ThemeType.FAVICON_URL.getDescription()).containsIgnoringCase("favicon");
+        }
+
+        @Test
+        @DisplayName("APP_NAME constant should be defined with correct key and description")
+        void appName_should_have_correct_values() {
+            assertEquals("APP_NAME", ThemeType.APP_NAME.name());
+            assertEquals("AppName", ThemeType.APP_NAME.getKey());
+            assertThat(ThemeType.APP_NAME.getDescription()).containsIgnoringCase("application name");
+        }
     }
 
     // -------------------------------------------------------------------------
     // Typography Constants Tests
     // -------------------------------------------------------------------------
 
-    /**
-     * Tests the FONT_FAMILY constant existence and values.
-     */
-    @Test
-    @DisplayName("FONT_FAMILY constant should be defined with correct key and description")
-    void fontFamily_should_have_correct_values() {
-        assertEquals("FONT_FAMILY", ThemeType.FONT_FAMILY.name());
-        assertEquals("FontFamily", ThemeType.FONT_FAMILY.getKey());
-        assertTrue(ThemeType.FONT_FAMILY.getDescription().contains("font family"));
-    }
+    @Nested
+    @DisplayName("Typography Constants Tests")
+    class TypographyTests {
 
-    /**
-     * Tests the HEADING_FONT_FAMILY constant existence and values.
-     */
-    @Test
-    @DisplayName("HEADING_FONT_FAMILY constant should be defined with correct key and description")
-    void headingFontFamily_should_have_correct_values() {
-        assertEquals("HEADING_FONT_FAMILY", ThemeType.HEADING_FONT_FAMILY.name());
-        assertEquals("HeadingFontFamily", ThemeType.HEADING_FONT_FAMILY.getKey());
-        assertTrue(ThemeType.HEADING_FONT_FAMILY.getDescription().contains("headings"));
-    }
+        @Test
+        @DisplayName("FONT_FAMILY constant should be defined with correct key and description")
+        void fontFamily_should_have_correct_values() {
+            assertEquals("FONT_FAMILY", ThemeType.FONT_FAMILY.name());
+            assertEquals("FontFamily", ThemeType.FONT_FAMILY.getKey());
+            assertThat(ThemeType.FONT_FAMILY.getDescription()).containsIgnoringCase("font family");
+        }
 
-    /**
-     * Tests the BASE_FONT_SIZE constant existence and values.
-     */
-    @Test
-    @DisplayName("BASE_FONT_SIZE constant should be defined with correct key and description")
-    void baseFontSize_should_have_correct_values() {
-        assertEquals("BASE_FONT_SIZE", ThemeType.BASE_FONT_SIZE.name());
-        assertEquals("BaseFontSize", ThemeType.BASE_FONT_SIZE.getKey());
-        assertTrue(ThemeType.BASE_FONT_SIZE.getDescription().contains("font size"));
+        @Test
+        @DisplayName("HEADING_FONT_FAMILY constant should be defined with correct key and description")
+        void headingFontFamily_should_have_correct_values() {
+            assertEquals("HEADING_FONT_FAMILY", ThemeType.HEADING_FONT_FAMILY.name());
+            assertEquals("HeadingFontFamily", ThemeType.HEADING_FONT_FAMILY.getKey());
+            assertThat(ThemeType.HEADING_FONT_FAMILY.getDescription()).containsIgnoringCase("headings");
+        }
+
+        @Test
+        @DisplayName("BASE_FONT_SIZE constant should be defined with correct key and description")
+        void baseFontSize_should_have_correct_values() {
+            assertEquals("BASE_FONT_SIZE", ThemeType.BASE_FONT_SIZE.name());
+            assertEquals("BaseFontSize", ThemeType.BASE_FONT_SIZE.getKey());
+            assertThat(ThemeType.BASE_FONT_SIZE.getDescription()).containsIgnoringCase("font size");
+        }
     }
 
     // -------------------------------------------------------------------------
     // Background Colors Constants Tests
     // -------------------------------------------------------------------------
 
-    /**
-     * Tests the BACKGROUND_COLOR constant existence and values.
-     */
-    @Test
-    @DisplayName("BACKGROUND_COLOR constant should be defined with correct key and description")
-    void backgroundColor_should_have_correct_values() {
-        assertEquals("BACKGROUND_COLOR", ThemeType.BACKGROUND_COLOR.name());
-        assertEquals("BackgroundColor", ThemeType.BACKGROUND_COLOR.getKey());
-        assertTrue(ThemeType.BACKGROUND_COLOR.getDescription().contains("background color"));
+    @Nested
+    @DisplayName("Background Colors Constants Tests")
+    class BackgroundColorsTests {
+
+        @Test
+        @DisplayName("BACKGROUND_COLOR constant should be defined with correct key and description")
+        void backgroundColor_should_have_correct_values() {
+            assertEquals("BACKGROUND_COLOR", ThemeType.BACKGROUND_COLOR.name());
+            assertEquals("BackgroundColor", ThemeType.BACKGROUND_COLOR.getKey());
+            assertThat(ThemeType.BACKGROUND_COLOR.getDescription()).containsIgnoringCase("background");
+        }
+
+        @Test
+        @DisplayName("CONTAINER_BACKGROUND constant should be defined with correct key and description")
+        void containerBackground_should_have_correct_values() {
+            assertEquals("CONTAINER_BACKGROUND", ThemeType.CONTAINER_BACKGROUND.name());
+            assertEquals("ContainerBackground", ThemeType.CONTAINER_BACKGROUND.getKey());
+            assertThat(ThemeType.CONTAINER_BACKGROUND.getDescription()).containsIgnoringCase("container");
+        }
+
+        @Test
+        @DisplayName("SECTION_BACKGROUND constant should be defined with correct key and description")
+        void sectionBackground_should_have_correct_values() {
+            assertEquals("SECTION_BACKGROUND", ThemeType.SECTION_BACKGROUND.name());
+            assertEquals("SectionBackground", ThemeType.SECTION_BACKGROUND.getKey());
+            assertThat(ThemeType.SECTION_BACKGROUND.getDescription()).containsIgnoringCase("section");
+        }
     }
 
-    /**
-     * Tests the HEADER_BACKGROUND constant existence and values.
-     */
-    @Test
-    @DisplayName("HEADER_BACKGROUND constant should be defined with correct key and description")
-    void headerBackground_should_have_correct_values() {
-        assertEquals("HEADER_BACKGROUND", ThemeType.HEADER_BACKGROUND.name());
-        assertEquals("HeaderBackground", ThemeType.HEADER_BACKGROUND.getKey());
-        assertTrue(ThemeType.HEADER_BACKGROUND.getDescription().contains("header"));
-    }
+    // -------------------------------------------------------------------------
+    // Border & Divider Colors Constants Tests
+    // -------------------------------------------------------------------------
 
-    /**
-     * Tests the SIDEBAR_BACKGROUND constant existence and values.
-     */
-    @Test
-    @DisplayName("SIDEBAR_BACKGROUND constant should be defined with correct key and description")
-    void sidebarBackground_should_have_correct_values() {
-        assertEquals("SIDEBAR_BACKGROUND", ThemeType.SIDEBAR_BACKGROUND.name());
-        assertEquals("SidebarBackground", ThemeType.SIDEBAR_BACKGROUND.getKey());
-        assertTrue(ThemeType.SIDEBAR_BACKGROUND.getDescription().contains("sidebar"));
-    }
+    @Nested
+    @DisplayName("Border & Divider Colors Constants Tests")
+    class BorderDividerColorsTests {
 
-    /**
-     * Tests the FOOTER_BACKGROUND constant existence and values.
-     */
-    @Test
-    @DisplayName("FOOTER_BACKGROUND constant should be defined with correct key and description")
-    void footerBackground_should_have_correct_values() {
-        assertEquals("FOOTER_BACKGROUND", ThemeType.FOOTER_BACKGROUND.name());
-        assertEquals("FooterBackground", ThemeType.FOOTER_BACKGROUND.getKey());
-        assertTrue(ThemeType.FOOTER_BACKGROUND.getDescription().contains("footer"));
+        @Test
+        @DisplayName("BORDER_COLOR constant should be defined with correct key and description")
+        void borderColor_should_have_correct_values() {
+            assertEquals("BORDER_COLOR", ThemeType.BORDER_COLOR.name());
+            assertEquals("BorderColor", ThemeType.BORDER_COLOR.getKey());
+            assertThat(ThemeType.BORDER_COLOR.getDescription()).containsIgnoringCase("border");
+        }
+
+        @Test
+        @DisplayName("DIVIDER_COLOR constant should be defined with correct key and description")
+        void dividerColor_should_have_correct_values() {
+            assertEquals("DIVIDER_COLOR", ThemeType.DIVIDER_COLOR.name());
+            assertEquals("DividerColor", ThemeType.DIVIDER_COLOR.getKey());
+            assertThat(ThemeType.DIVIDER_COLOR.getDescription()).containsIgnoringCase("divider");
+        }
     }
 
     // -------------------------------------------------------------------------
     // Text Colors Constants Tests
     // -------------------------------------------------------------------------
 
-    /**
-     * Tests the TEXT_COLOR constant existence and values.
-     */
-    @Test
-    @DisplayName("TEXT_COLOR constant should be defined with correct key and description")
-    void textColor_should_have_correct_values() {
-        assertEquals("TEXT_COLOR", ThemeType.TEXT_COLOR.name());
-        assertEquals("TextColor", ThemeType.TEXT_COLOR.getKey());
-        assertTrue(ThemeType.TEXT_COLOR.getDescription().contains("text color"));
-    }
+    @Nested
+    @DisplayName("Text Colors Constants Tests")
+    class TextColorsTests {
 
-    /**
-     * Tests the TEXT_ON_PRIMARY constant existence and values.
-     */
-    @Test
-    @DisplayName("TEXT_ON_PRIMARY constant should be defined with correct key and description")
-    void textOnPrimary_should_have_correct_values() {
-        assertEquals("TEXT_ON_PRIMARY", ThemeType.TEXT_ON_PRIMARY.name());
-        assertEquals("TextOnPrimary", ThemeType.TEXT_ON_PRIMARY.getKey());
-        assertTrue(ThemeType.TEXT_ON_PRIMARY.getDescription().contains("primary color"));
-    }
-
-    /**
-     * Tests the LINK_COLOR constant existence and values.
-     */
-    @Test
-    @DisplayName("LINK_COLOR constant should be defined with correct key and description")
-    void linkColor_should_have_correct_values() {
-        assertEquals("LINK_COLOR", ThemeType.LINK_COLOR.name());
-        assertEquals("LinkColor", ThemeType.LINK_COLOR.getKey());
-        assertTrue(ThemeType.LINK_COLOR.getDescription().contains("hyperlinks"));
+        @Test
+        @DisplayName("TEXT_COLOR constant should be defined with correct key and description")
+        void textColor_should_have_correct_values() {
+            assertEquals("TEXT_COLOR", ThemeType.TEXT_COLOR.name());
+            assertEquals("TextColor", ThemeType.TEXT_COLOR.getKey());
+            assertThat(ThemeType.TEXT_COLOR.getDescription()).containsIgnoringCase("text color");
+        }
     }
 
     // -------------------------------------------------------------------------
     // Status Colors Constants Tests
     // -------------------------------------------------------------------------
 
-    /**
-     * Tests the SUCCESS_COLOR constant existence and values.
-     */
-    @Test
-    @DisplayName("SUCCESS_COLOR constant should be defined with correct key and description")
-    void successColor_should_have_correct_values() {
-        assertEquals("SUCCESS_COLOR", ThemeType.SUCCESS_COLOR.name());
-        assertEquals("SuccessColor", ThemeType.SUCCESS_COLOR.getKey());
-        assertTrue(ThemeType.SUCCESS_COLOR.getDescription().contains("success"));
-    }
+    @Nested
+    @DisplayName("Status Colors Constants Tests")
+    class StatusColorsTests {
 
-    /**
-     * Tests the WARNING_COLOR constant existence and values.
-     */
-    @Test
-    @DisplayName("WARNING_COLOR constant should be defined with correct key and description")
-    void warningColor_should_have_correct_values() {
-        assertEquals("WARNING_COLOR", ThemeType.WARNING_COLOR.name());
-        assertEquals("WarningColor", ThemeType.WARNING_COLOR.getKey());
-        assertTrue(ThemeType.WARNING_COLOR.getDescription().contains("warning"));
-    }
+        @Test
+        @DisplayName("SUCCESS_COLOR constant should be defined with correct key and description")
+        void successColor_should_have_correct_values() {
+            assertEquals("SUCCESS_COLOR", ThemeType.SUCCESS_COLOR.name());
+            assertEquals("SuccessColor", ThemeType.SUCCESS_COLOR.getKey());
+            assertThat(ThemeType.SUCCESS_COLOR.getDescription()).containsIgnoringCase("success");
+        }
 
-    /**
-     * Tests the ERROR_COLOR constant existence and values.
-     */
-    @Test
-    @DisplayName("ERROR_COLOR constant should be defined with correct key and description")
-    void errorColor_should_have_correct_values() {
-        assertEquals("ERROR_COLOR", ThemeType.ERROR_COLOR.name());
-        assertEquals("ErrorColor", ThemeType.ERROR_COLOR.getKey());
-        assertTrue(ThemeType.ERROR_COLOR.getDescription().contains("error"));
-    }
+        @Test
+        @DisplayName("WARNING_COLOR constant should be defined with correct key and description")
+        void warningColor_should_have_correct_values() {
+            assertEquals("WARNING_COLOR", ThemeType.WARNING_COLOR.name());
+            assertEquals("WarningColor", ThemeType.WARNING_COLOR.getKey());
+            assertThat(ThemeType.WARNING_COLOR.getDescription()).containsIgnoringCase("warning");
+        }
 
-    /**
-     * Tests the INFO_COLOR constant existence and values.
-     */
-    @Test
-    @DisplayName("INFO_COLOR constant should be defined with correct key and description")
-    void infoColor_should_have_correct_values() {
-        assertEquals("INFO_COLOR", ThemeType.INFO_COLOR.name());
-        assertEquals("InfoColor", ThemeType.INFO_COLOR.getKey());
-        assertTrue(ThemeType.INFO_COLOR.getDescription().contains("informational"));
+        @Test
+        @DisplayName("ERROR_COLOR constant should be defined with correct key and description")
+        void errorColor_should_have_correct_values() {
+            assertEquals("ERROR_COLOR", ThemeType.ERROR_COLOR.name());
+            assertEquals("ErrorColor", ThemeType.ERROR_COLOR.getKey());
+            assertThat(ThemeType.ERROR_COLOR.getDescription()).containsIgnoringCase("error");
+        }
+
+        @Test
+        @DisplayName("NEUTRAL_COLOR constant should be defined with correct key and description")
+        void neutralColor_should_have_correct_values() {
+            assertEquals("NEUTRAL_COLOR", ThemeType.NEUTRAL_COLOR.name());
+            assertEquals("NeutralColor", ThemeType.NEUTRAL_COLOR.getKey());
+            assertThat(ThemeType.NEUTRAL_COLOR.getDescription()).containsIgnoringCase("neutral");
+        }
     }
 
     // -------------------------------------------------------------------------
     // UI Elements Constants Tests
     // -------------------------------------------------------------------------
 
-    /**
-     * Tests the BORDER_RADIUS constant existence and values.
-     */
-    @Test
-    @DisplayName("BORDER_RADIUS constant should be defined with correct key and description")
-    void borderRadius_should_have_correct_values() {
-        assertEquals("BORDER_RADIUS", ThemeType.BORDER_RADIUS.name());
-        assertEquals("BorderRadius", ThemeType.BORDER_RADIUS.getKey());
-        assertTrue(ThemeType.BORDER_RADIUS.getDescription().contains("border radius"));
+    @Nested
+    @DisplayName("UI Elements Constants Tests")
+    class UIElementsTests {
+
+        @Test
+        @DisplayName("BORDER_RADIUS constant should be defined with correct key and description")
+        void borderRadius_should_have_correct_values() {
+            assertEquals("BORDER_RADIUS", ThemeType.BORDER_RADIUS.name());
+            assertEquals("BorderRadius", ThemeType.BORDER_RADIUS.getKey());
+            assertThat(ThemeType.BORDER_RADIUS.getDescription()).containsIgnoringCase("border radius");
+        }
     }
 
     // -------------------------------------------------------------------------
     // isValid Method Tests
     // -------------------------------------------------------------------------
 
-    /**
-     * Tests the {@code isValid} method with a valid constant name (uppercase).
-     */
-    @Test
-    @DisplayName("isValid should return true for a valid uppercase name")
-    void isValid_should_return_true_for_valid_uppercase() {
-        assertTrue(ThemeType.isValid("PRIMARY_COLOR"));
-        assertTrue(ThemeType.isValid("BORDER_RADIUS"));
-    }
+    @Nested
+    @DisplayName("isValid Method Tests")
+    class IsValidMethodTests {
 
-    /**
-     * Tests the {@code isValid} method with a valid constant name (lowercase).
-     */
-    @Test
-    @DisplayName("isValid should return true for a valid lowercase name")
-    void isValid_should_return_true_for_valid_lowercase() {
-        assertTrue(ThemeType.isValid("secondary_color"));
-        assertTrue(ThemeType.isValid("error_color"));
-    }
+        @Test
+        @DisplayName("isValid should return true for valid uppercase names")
+        void isValid_should_return_true_for_valid_uppercase() {
+            assertTrue(ThemeType.isValid("PRIMARY_COLOR"));
+            assertTrue(ThemeType.isValid("SAVE_COLOR"));
+            assertTrue(ThemeType.isValid("BORDER_RADIUS"));
+            assertTrue(ThemeType.isValid("NEUTRAL_COLOR"));
+        }
 
-    /**
-     * Tests the {@code isValid} method with a mixed-case constant name.
-     */
-    @Test
-    @DisplayName("isValid should return true for a mixed-case name")
-    void isValid_should_return_true_for_mixed_case() {
-        assertTrue(ThemeType.isValid("Font_Family"));
-        assertTrue(ThemeType.isValid("Header_Background"));
-    }
+        @Test
+        @DisplayName("isValid should return true for valid lowercase names")
+        void isValid_should_return_true_for_valid_lowercase() {
+            assertTrue(ThemeType.isValid("primary_color"));
+            assertTrue(ThemeType.isValid("error_color"));
+            assertTrue(ThemeType.isValid("container_background"));
+        }
 
-    /**
-     * Tests the {@code isValid} method with a non-existent name.
-     */
-    @Test
-    @DisplayName("isValid should return false for an invalid name")
-    void isValid_should_return_false_for_invalid_name() {
-        assertFalse(ThemeType.isValid("NON_EXISTENT_TYPE"));
-        assertFalse(ThemeType.isValid("INVALID_COLOR"));
-    }
+        @Test
+        @DisplayName("isValid should return true for mixed-case names")
+        void isValid_should_return_true_for_mixed_case() {
+            assertTrue(ThemeType.isValid("Font_Family"));
+            assertTrue(ThemeType.isValid("Background_Color"));
+            assertTrue(ThemeType.isValid("Section_Background"));
+        }
 
-    /**
-     * Tests the {@code isValid} method with a null input.
-     */
-    @Test
-    @DisplayName("isValid should return false for null input")
-    void isValid_should_return_false_for_null() {
-        assertFalse(ThemeType.isValid(null));
-    }
+        @ParameterizedTest
+        @ValueSource(strings = {"NON_EXISTENT_TYPE", "INVALID_COLOR", "SECONDARY_COLOR", "INFO_COLOR"})
+        @DisplayName("isValid should return false for invalid names")
+        void isValid_should_return_false_for_invalid_names(String invalidName) {
+            assertFalse(ThemeType.isValid(invalidName));
+        }
 
-    /**
-     * Tests the {@code isValid} method with an empty string input.
-     */
-    @Test
-    @DisplayName("isValid should return false for an empty string input")
-    void isValid_should_return_false_for_empty_string() {
-        assertFalse(ThemeType.isValid(""));
-    }
+        @Test
+        @DisplayName("isValid should return false for null input")
+        void isValid_should_return_false_for_null() {
+            assertFalse(ThemeType.isValid(null));
+        }
 
-    /**
-     * Tests the {@code isValid} method with whitespace-padded input.
-     */
-    @Test
-    @DisplayName("isValid should return true for whitespace-padded valid name")
-    void isValid_should_return_true_for_whitespace_padded_name() {
-        assertTrue(ThemeType.isValid("  PRIMARY_COLOR  "));
-        assertTrue(ThemeType.isValid("\tSUCCESS_COLOR\t"));
-    }
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"   ", "\t", "\n"})
+        @DisplayName("isValid should return false for null, empty, and whitespace-only input")
+        void isValid_should_return_false_for_blank_inputs(String input) {
+            assertFalse(ThemeType.isValid(input));
+        }
 
-    /**
-     * Tests the {@code isValid} method with whitespace-only input.
-     */
-    @Test
-    @DisplayName("isValid should return false for whitespace-only input")
-    void isValid_should_return_false_for_whitespace_only() {
-        assertFalse(ThemeType.isValid("   "));
-        assertFalse(ThemeType.isValid("\t"));
+        @Test
+        @DisplayName("isValid should return true for whitespace-padded valid names")
+        void isValid_should_return_true_for_whitespace_padded_name() {
+            assertTrue(ThemeType.isValid("  PRIMARY_COLOR  "));
+            assertTrue(ThemeType.isValid("\tSUCCESS_COLOR\t"));
+            assertTrue(ThemeType.isValid("  border_radius  "));
+        }
     }
 
     // -------------------------------------------------------------------------
     // getAllData Method Tests
     // -------------------------------------------------------------------------
 
-    /**
-     * Tests that getAllData returns a map with all constants.
-     */
-    @Test
-    @DisplayName("getAllData should return map with all theme constants")
-    void getAllData_shouldReturnCorrectMap() {
-        Map<String, String> data = ThemeType.getAllData();
-        assertEquals(EXPECTED_CONSTANT_COUNT, data.size());
+    @Nested
+    @DisplayName("getAllData Method Tests")
+    class GetAllDataMethodTests {
 
-        // Verify brand identity keys
-        assertTrue(data.containsKey("PrimaryColor"));
-        assertTrue(data.containsKey("SecondaryColor"));
-        assertTrue(data.containsKey("LogoUrl"));
-        assertTrue(data.containsKey("FaviconUrl"));
-        assertTrue(data.containsKey("AppName"));
+        @Test
+        @DisplayName("getAllData should return map with all theme constants")
+        void getAllData_should_return_correct_map() {
+            Map<String, String> data = ThemeType.getAllData();
+            assertEquals(EXPECTED_CONSTANT_COUNT, data.size());
 
-        // Verify typography keys
-        assertTrue(data.containsKey("FontFamily"));
-        assertTrue(data.containsKey("HeadingFontFamily"));
-        assertTrue(data.containsKey("BaseFontSize"));
+            // Verify brand identity keys
+            assertThat(data).containsKey("PrimaryColor");
+            assertThat(data).containsKey("SaveColor");
+            assertThat(data).containsKey("LogoUrl");
+            assertThat(data).containsKey("FaviconUrl");
+            assertThat(data).containsKey("AppName");
 
-        // Verify background keys
-        assertTrue(data.containsKey("BackgroundColor"));
-        assertTrue(data.containsKey("HeaderBackground"));
-        assertTrue(data.containsKey("SidebarBackground"));
-        assertTrue(data.containsKey("FooterBackground"));
+            // Verify typography keys
+            assertThat(data).containsKey("FontFamily");
+            assertThat(data).containsKey("HeadingFontFamily");
+            assertThat(data).containsKey("BaseFontSize");
 
-        // Verify text color keys
-        assertTrue(data.containsKey("TextColor"));
-        assertTrue(data.containsKey("TextOnPrimary"));
-        assertTrue(data.containsKey("LinkColor"));
+            // Verify background keys
+            assertThat(data).containsKey("BackgroundColor");
+            assertThat(data).containsKey("ContainerBackground");
+            assertThat(data).containsKey("SectionBackground");
 
-        // Verify status color keys
-        assertTrue(data.containsKey("SuccessColor"));
-        assertTrue(data.containsKey("WarningColor"));
-        assertTrue(data.containsKey("ErrorColor"));
-        assertTrue(data.containsKey("InfoColor"));
+            // Verify border & divider keys
+            assertThat(data).containsKey("BorderColor");
+            assertThat(data).containsKey("DividerColor");
 
-        // Verify UI element keys
-        assertTrue(data.containsKey("BorderRadius"));
-    }
+            // Verify text color keys
+            assertThat(data).containsKey("TextColor");
 
-    /**
-     * Tests that getAllData returns an unmodifiable map.
-     */
-    @Test
-    @DisplayName("getAllData should return an unmodifiable map")
-    void getAllData_shouldReturnUnmodifiableMap() {
-        Map<String, String> data = ThemeType.getAllData();
-        assertThrows(UnsupportedOperationException.class, () -> data.clear());
-        assertThrows(UnsupportedOperationException.class, () -> data.put("Test", "Value"));
+            // Verify status color keys
+            assertThat(data).containsKey("SuccessColor");
+            assertThat(data).containsKey("WarningColor");
+            assertThat(data).containsKey("ErrorColor");
+            assertThat(data).containsKey("NeutralColor");
+
+            // Verify UI element keys
+            assertThat(data).containsKey("BorderRadius");
+        }
+
+        @Test
+        @DisplayName("getAllData should return correct descriptions for each key")
+        void getAllData_should_return_correct_descriptions() {
+            Map<String, String> data = ThemeType.getAllData();
+
+            assertThat(data.get("PrimaryColor")).containsIgnoringCase("brand color");
+            assertThat(data.get("SaveColor")).containsIgnoringCase("save");
+            assertThat(data.get("BorderRadius")).containsIgnoringCase("border radius");
+        }
+
+        @Test
+        @DisplayName("getAllData should return an unmodifiable map")
+        void getAllData_should_return_unmodifiable_map() {
+            Map<String, String> data = ThemeType.getAllData();
+            assertThatThrownBy(data::clear)
+                .isInstanceOf(UnsupportedOperationException.class);
+            assertThatThrownBy(() -> data.put("Test", "Value"))
+                .isInstanceOf(UnsupportedOperationException.class);
+            assertThatThrownBy(() -> data.remove("PrimaryColor"))
+                .isInstanceOf(UnsupportedOperationException.class);
+        }
     }
 
     // -------------------------------------------------------------------------
     // getAllKeysList Method Tests
     // -------------------------------------------------------------------------
 
-    /**
-     * Tests that getAllKeysList returns a list with all keys.
-     */
-    @Test
-    @DisplayName("getAllKeysList should return list with all theme keys")
-    void getAllKeysList_shouldReturnCorrectList() {
-        List<String> keys = ThemeType.getAllKeysList();
-        assertEquals(EXPECTED_CONSTANT_COUNT, keys.size());
+    @Nested
+    @DisplayName("getAllKeysList Method Tests")
+    class GetAllKeysListMethodTests {
 
-        // Verify some representative keys from each category
-        assertTrue(keys.contains("PrimaryColor"));
-        assertTrue(keys.contains("FontFamily"));
-        assertTrue(keys.contains("BackgroundColor"));
-        assertTrue(keys.contains("TextColor"));
-        assertTrue(keys.contains("SuccessColor"));
-        assertTrue(keys.contains("BorderRadius"));
+        @Test
+        @DisplayName("getAllKeysList should return list with all theme keys")
+        void getAllKeysList_should_return_correct_list() {
+            List<String> keys = ThemeType.getAllKeysList();
+            assertEquals(EXPECTED_CONSTANT_COUNT, keys.size());
+
+            // Verify keys from each category
+            assertThat(keys).contains(
+                "PrimaryColor",
+                "SaveColor",
+                "FontFamily",
+                "BackgroundColor",
+                "ContainerBackground",
+                "SectionBackground",
+                "BorderColor",
+                "DividerColor",
+                "TextColor",
+                "SuccessColor",
+                "WarningColor",
+                "ErrorColor",
+                "NeutralColor",
+                "BorderRadius"
+            );
+        }
+
+        @Test
+        @DisplayName("getAllKeysList should return keys in declaration order")
+        void getAllKeysList_should_return_keys_in_order() {
+            List<String> keys = ThemeType.getAllKeysList();
+
+            // First key should be PrimaryColor (first constant)
+            assertEquals("PrimaryColor", keys.get(0));
+            // Last key should be BorderRadius (last constant)
+            assertEquals("BorderRadius", keys.get(keys.size() - 1));
+        }
+
+        @Test
+        @DisplayName("getAllKeysList should return an unmodifiable list")
+        void getAllKeysList_should_return_unmodifiable_list() {
+            List<String> keys = ThemeType.getAllKeysList();
+            assertThatThrownBy(() -> keys.add("NEW"))
+                .isInstanceOf(UnsupportedOperationException.class);
+            assertThatThrownBy(() -> keys.remove(0))
+                .isInstanceOf(UnsupportedOperationException.class);
+            assertThatThrownBy(keys::clear)
+                .isInstanceOf(UnsupportedOperationException.class);
+        }
     }
 
-    /**
-     * Tests that getAllKeysList returns an unmodifiable list.
-     */
-    @Test
-    @DisplayName("getAllKeysList should return an unmodifiable list")
-    void getAllKeysList_shouldReturnUnmodifiableList() {
-        List<String> keys = ThemeType.getAllKeysList();
-        assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
-        assertThrows(UnsupportedOperationException.class, () -> keys.remove(0));
+    // -------------------------------------------------------------------------
+    // valueOf Method Tests (for complete coverage)
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("valueOf Method Tests")
+    class ValueOfMethodTests {
+
+        @Test
+        @DisplayName("valueOf should return correct enum for valid name")
+        void valueOf_should_return_correct_enum() {
+            assertEquals(ThemeType.PRIMARY_COLOR, ThemeType.valueOf("PRIMARY_COLOR"));
+            assertEquals(ThemeType.SAVE_COLOR, ThemeType.valueOf("SAVE_COLOR"));
+            assertEquals(ThemeType.BORDER_RADIUS, ThemeType.valueOf("BORDER_RADIUS"));
+        }
+
+        @Test
+        @DisplayName("valueOf should throw IllegalArgumentException for invalid name")
+        void valueOf_should_throw_for_invalid_name() {
+            assertThatThrownBy(() -> ThemeType.valueOf("INVALID"))
+                .isInstanceOf(IllegalArgumentException.class);
+        }
     }
 }

@@ -18,16 +18,16 @@ import java.util.stream.Collectors;
 public enum ThemeType {
 
     // ==================== Brand Identity ====================
-    
+
     /**
      * The primary brand color used throughout the application.
      */
-    PRIMARY_COLOR("PrimaryColor", "The main brand color used for primary actions, headers, and key UI elements (e.g., #1976D2)."),
+    PRIMARY_COLOR("PrimaryColor", "The main brand color used for primary actions, headers, and key UI elements."),
 
     /**
-     * The secondary brand color used for accents and highlights.
+     * The color used for save actions.
      */
-    SECONDARY_COLOR("SecondaryColor", "The secondary brand color used for accents, highlights, and secondary actions (e.g., #FF9800)."),
+    SAVE_COLOR("SaveColor", "The color used for save buttons and related actions."),
 
     /**
      * The URL or base64-encoded data of the application logo.
@@ -66,61 +66,58 @@ public enum ThemeType {
     /**
      * The main background color of the application.
      */
-    BACKGROUND_COLOR("BackgroundColor", "The main background color for the application body (e.g., #FFFFFF, #F5F5F5)."),
+    BACKGROUND_COLOR("BackgroundColor", "The main background color for the application body."),
 
     /**
-     * The background color for the header section.
+     * The background color for containers and cards.
      */
-    HEADER_BACKGROUND("HeaderBackground", "The background color for the application header/navbar (e.g., #1976D2)."),
+    CONTAINER_BACKGROUND("ContainerBackground", "The background color for containers, cards, and content areas."),
 
     /**
-     * The background color for the sidebar/navigation menu.
+     * The background color for highlighted sections.
      */
-    SIDEBAR_BACKGROUND("SidebarBackground", "The background color for the sidebar or navigation menu (e.g., #263238)."),
+    SECTION_BACKGROUND("SectionBackground", "The background color for highlighted or selected sections."),
+
+    // ==================== Border & Divider Colors ====================
 
     /**
-     * The background color for the footer section.
+     * The color used for borders.
      */
-    FOOTER_BACKGROUND("FooterBackground", "The background color for the application footer (e.g., #212121)."),
+    BORDER_COLOR("BorderColor", "The color for borders and container outlines."),
+
+    /**
+     * The color used for dividers.
+     */
+    DIVIDER_COLOR("DividerColor", "The color for dividers and separators."),
 
     // ==================== Text Colors ====================
 
     /**
      * The primary text color used for general content.
      */
-    TEXT_COLOR("TextColor", "The primary text color for body content and general text (e.g., #212121, #333333)."),
-
-    /**
-     * The text color used on primary colored backgrounds.
-     */
-    TEXT_ON_PRIMARY("TextOnPrimary", "The text color used on primary color backgrounds for contrast (e.g., #FFFFFF)."),
-
-    /**
-     * The color used for hyperlinks.
-     */
-    LINK_COLOR("LinkColor", "The color for hyperlinks and clickable text elements (e.g., #1565C0)."),
+    TEXT_COLOR("TextColor", "The primary text color for body content and general text."),
 
     // ==================== Status Colors ====================
 
     /**
      * The color indicating success states and positive feedback.
      */
-    SUCCESS_COLOR("SuccessColor", "The color for success messages, confirmations, and positive indicators (e.g., #4CAF50)."),
+    SUCCESS_COLOR("SuccessColor", "The color for success messages, validation, and positive indicators."),
 
     /**
      * The color indicating warning states and cautionary feedback.
      */
-    WARNING_COLOR("WarningColor", "The color for warning messages and cautionary indicators (e.g., #FF9800)."),
+    WARNING_COLOR("WarningColor", "The color for warning messages and cautionary indicators."),
 
     /**
      * The color indicating error states and negative feedback.
      */
-    ERROR_COLOR("ErrorColor", "The color for error messages, validation failures, and critical alerts (e.g., #F44336)."),
+    ERROR_COLOR("ErrorColor", "The color for error messages, delete actions, and critical alerts."),
 
     /**
-     * The color indicating informational states.
+     * The color indicating neutral or inactive states.
      */
-    INFO_COLOR("InfoColor", "The color for informational messages and neutral notifications (e.g., #2196F3)."),
+    NEUTRAL_COLOR("NeutralColor", "The color for neutral, inactive, or unknown states."),
 
     // ==================== UI Elements ====================
 
@@ -176,20 +173,20 @@ public enum ThemeType {
     }
 
     /**
-     * Retrieves all theme configuration attributes as a read-only Map where the key is the technical key 
+     * Retrieves all theme configuration attributes as a read-only Map where the key is the technical key
      * and the value is the description.
      * @return A map containing all theme attribute data (Key -> Description).
      */
     public static Map<String, String> getAllData() {
-        Map<String, String> data = 
+        Map<String, String> data =
             Arrays.stream(ThemeType.values())
             .collect(Collectors.toMap(
-                ThemeType::getKey, 
-                ThemeType::getDescription, 
-                (oldValue, newValue) -> oldValue, 
-                LinkedHashMap::new 
+                ThemeType::getKey,
+                ThemeType::getDescription,
+                (oldValue, newValue) -> oldValue,
+                LinkedHashMap::new
             ));
-        
+
         return Collections.unmodifiableMap(data);
     }
 
