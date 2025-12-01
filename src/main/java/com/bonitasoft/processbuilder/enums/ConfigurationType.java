@@ -29,7 +29,12 @@ public enum ConfigurationType {
      */
     SMTP("Smtp", "Defines the SMTP server configuration settings for email notifications, including host address, port number, SSL/TLS encryption, and authentication parameters."),
 
-    PROC_EXECUTION_CONNECTOR("ProcExecutionConnector", "Info of process execution connector configuration."),
+    /**
+     * Represents the classification key for **Process Execution Connector** definitions.
+     * This type is used to identify and retrieve master data records that
+     * define the connector settings for process execution operations.
+     */
+    PROC_EXECUTION_CONNECTOR("ProcExecutionConnector", "Defines the process execution connector configuration for automated workflow integrations."),
 
     /**
      * Represents the classification key for **Theme Configuration** definitions.

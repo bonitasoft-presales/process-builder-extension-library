@@ -11,13 +11,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class JsonNodeUtilsTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JsonNodeUtilsTest.class);
     private static final JsonNodeFactory NODE_FACTORY = JsonNodeFactory.instance;
 
     // -------------------------------------------------------------------------
@@ -240,28 +236,28 @@ class JsonNodeUtilsTest {
         @Test
         @DisplayName("Should return false for null operator")
         void should_return_false_for_null_operator() {
-            boolean result = JsonNodeUtils.evaluateCondition("value", null, "expected", LOGGER);
+            boolean result = JsonNodeUtils.evaluateCondition("value", null, "expected");
             assertFalse(result);
         }
 
         @Test
         @DisplayName("Should return false for null operator with null logger")
         void should_return_false_for_null_operator_with_null_logger() {
-            boolean result = JsonNodeUtils.evaluateCondition("value", null, "expected", null);
+            boolean result = JsonNodeUtils.evaluateCondition("value", null, "expected");
             assertFalse(result);
         }
 
         @Test
         @DisplayName("Should return false for unknown operator")
         void should_return_false_for_unknown_operator() {
-            boolean result = JsonNodeUtils.evaluateCondition("value", "unknown", "expected", LOGGER);
+            boolean result = JsonNodeUtils.evaluateCondition("value", "unknown", "expected");
             assertFalse(result);
         }
 
         @Test
         @DisplayName("Should return false for unknown operator with null logger")
         void should_return_false_for_unknown_operator_with_null_logger() {
-            boolean result = JsonNodeUtils.evaluateCondition("value", "unknown", "expected", null);
+            boolean result = JsonNodeUtils.evaluateCondition("value", "unknown", "expected");
             assertFalse(result);
         }
 
@@ -273,43 +269,43 @@ class JsonNodeUtilsTest {
             @Test
             @DisplayName("equals should return true for equal strings")
             void equals_should_return_true_for_equal_strings() {
-                assertTrue(JsonNodeUtils.evaluateCondition("test", "equals", "test", LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition("test", "equals", "test"));
             }
 
             @Test
             @DisplayName("== should return true for equal strings")
             void equals_symbol_should_return_true_for_equal_strings() {
-                assertTrue(JsonNodeUtils.evaluateCondition("test", "==", "test", LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition("test", "==", "test"));
             }
 
             @Test
             @DisplayName("equals should return false for different strings")
             void equals_should_return_false_for_different_strings() {
-                assertFalse(JsonNodeUtils.evaluateCondition("test", "equals", "other", LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition("test", "equals", "other"));
             }
 
             @Test
             @DisplayName("equals should return true for both null values")
             void equals_should_return_true_for_both_null() {
-                assertTrue(JsonNodeUtils.evaluateCondition(null, "equals", null, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(null, "equals", null));
             }
 
             @Test
             @DisplayName("equals should return false when only current is null")
             void equals_should_return_false_when_current_is_null() {
-                assertFalse(JsonNodeUtils.evaluateCondition(null, "equals", "test", LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(null, "equals", "test"));
             }
 
             @Test
             @DisplayName("equals should return false when only expected is null")
             void equals_should_return_false_when_expected_is_null() {
-                assertFalse(JsonNodeUtils.evaluateCondition("test", "equals", null, LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition("test", "equals", null));
             }
 
             @Test
             @DisplayName("EQUALS (uppercase) should work case-insensitively")
             void equals_should_work_case_insensitively() {
-                assertTrue(JsonNodeUtils.evaluateCondition("test", "EQUALS", "test", LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition("test", "EQUALS", "test"));
             }
         }
 
@@ -321,31 +317,31 @@ class JsonNodeUtilsTest {
             @Test
             @DisplayName("notequals should return true for different strings")
             void notequals_should_return_true_for_different_strings() {
-                assertTrue(JsonNodeUtils.evaluateCondition("test", "notequals", "other", LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition("test", "notequals", "other"));
             }
 
             @Test
             @DisplayName("!= should return true for different strings")
             void notequals_symbol_should_return_true_for_different_strings() {
-                assertTrue(JsonNodeUtils.evaluateCondition("test", "!=", "other", LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition("test", "!=", "other"));
             }
 
             @Test
             @DisplayName("notequals should return false for equal strings")
             void notequals_should_return_false_for_equal_strings() {
-                assertFalse(JsonNodeUtils.evaluateCondition("test", "notequals", "test", LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition("test", "notequals", "test"));
             }
 
             @Test
             @DisplayName("notequals should return false for both null values")
             void notequals_should_return_false_for_both_null() {
-                assertFalse(JsonNodeUtils.evaluateCondition(null, "notequals", null, LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(null, "notequals", null));
             }
 
             @Test
             @DisplayName("notequals should return true when only current is null")
             void notequals_should_return_true_when_current_is_null() {
-                assertTrue(JsonNodeUtils.evaluateCondition(null, "notequals", "test", LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(null, "notequals", "test"));
             }
         }
 
@@ -357,31 +353,31 @@ class JsonNodeUtilsTest {
             @Test
             @DisplayName("contains should return true when substring exists")
             void contains_should_return_true_when_substring_exists() {
-                assertTrue(JsonNodeUtils.evaluateCondition("hello world", "contains", "world", LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition("hello world", "contains", "world"));
             }
 
             @Test
             @DisplayName("contains should return false when substring not found")
             void contains_should_return_false_when_substring_not_found() {
-                assertFalse(JsonNodeUtils.evaluateCondition("hello world", "contains", "xyz", LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition("hello world", "contains", "xyz"));
             }
 
             @Test
             @DisplayName("contains should return false when current value is null")
             void contains_should_return_false_when_current_is_null() {
-                assertFalse(JsonNodeUtils.evaluateCondition(null, "contains", "test", LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(null, "contains", "test"));
             }
 
             @Test
             @DisplayName("contains should return true when expected is null (empty string)")
             void contains_should_return_true_when_expected_is_null() {
-                assertTrue(JsonNodeUtils.evaluateCondition("test", "contains", null, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition("test", "contains", null));
             }
 
             @Test
             @DisplayName("contains should work with numbers converted to strings")
             void contains_should_work_with_numbers() {
-                assertTrue(JsonNodeUtils.evaluateCondition(12345, "contains", "234", LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(12345, "contains", "234"));
             }
         }
 
@@ -393,31 +389,31 @@ class JsonNodeUtilsTest {
             @Test
             @DisplayName("greaterthan should return true when current > expected")
             void greaterthan_should_return_true_when_current_greater() {
-                assertTrue(JsonNodeUtils.evaluateCondition(10, "greaterthan", 5, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(10, "greaterthan", 5));
             }
 
             @Test
             @DisplayName("> should return true when current > expected")
             void greaterthan_symbol_should_return_true_when_current_greater() {
-                assertTrue(JsonNodeUtils.evaluateCondition(10, ">", 5, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(10, ">", 5));
             }
 
             @Test
             @DisplayName("greaterthan should return false when current < expected")
             void greaterthan_should_return_false_when_current_less() {
-                assertFalse(JsonNodeUtils.evaluateCondition(5, "greaterthan", 10, LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(5, "greaterthan", 10));
             }
 
             @Test
             @DisplayName("greaterthan should return false when current == expected")
             void greaterthan_should_return_false_when_equal() {
-                assertFalse(JsonNodeUtils.evaluateCondition(5, "greaterthan", 5, LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(5, "greaterthan", 5));
             }
 
             @Test
             @DisplayName("greaterthan should return false for non-comparable values")
             void greaterthan_should_return_false_for_non_comparable() {
-                assertFalse(JsonNodeUtils.evaluateCondition(new Object(), "greaterthan", new Object(), LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(new Object(), "greaterthan", new Object()));
             }
         }
 
@@ -429,31 +425,31 @@ class JsonNodeUtilsTest {
             @Test
             @DisplayName("lessthan should return true when current < expected")
             void lessthan_should_return_true_when_current_less() {
-                assertTrue(JsonNodeUtils.evaluateCondition(5, "lessthan", 10, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(5, "lessthan", 10));
             }
 
             @Test
             @DisplayName("< should return true when current < expected")
             void lessthan_symbol_should_return_true_when_current_less() {
-                assertTrue(JsonNodeUtils.evaluateCondition(5, "<", 10, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(5, "<", 10));
             }
 
             @Test
             @DisplayName("lessthan should return false when current > expected")
             void lessthan_should_return_false_when_current_greater() {
-                assertFalse(JsonNodeUtils.evaluateCondition(10, "lessthan", 5, LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(10, "lessthan", 5));
             }
 
             @Test
             @DisplayName("lessthan should return false when current == expected")
             void lessthan_should_return_false_when_equal() {
-                assertFalse(JsonNodeUtils.evaluateCondition(5, "lessthan", 5, LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(5, "lessthan", 5));
             }
 
             @Test
             @DisplayName("lessthan should return false for non-comparable values")
             void lessthan_should_return_false_for_non_comparable() {
-                assertFalse(JsonNodeUtils.evaluateCondition(new Object(), "lessthan", new Object(), LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(new Object(), "lessthan", new Object()));
             }
         }
 
@@ -465,31 +461,31 @@ class JsonNodeUtilsTest {
             @Test
             @DisplayName("greaterorequal should return true when current > expected")
             void greaterorequal_should_return_true_when_current_greater() {
-                assertTrue(JsonNodeUtils.evaluateCondition(10, "greaterorequal", 5, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(10, "greaterorequal", 5));
             }
 
             @Test
             @DisplayName(">= should return true when current >= expected")
             void greaterorequal_symbol_should_return_true_when_current_greater_or_equal() {
-                assertTrue(JsonNodeUtils.evaluateCondition(10, ">=", 5, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(10, ">=", 5));
             }
 
             @Test
             @DisplayName("greaterorequal should return true when current == expected")
             void greaterorequal_should_return_true_when_equal() {
-                assertTrue(JsonNodeUtils.evaluateCondition(5, "greaterorequal", 5, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(5, "greaterorequal", 5));
             }
 
             @Test
             @DisplayName("greaterorequal should return false when current < expected")
             void greaterorequal_should_return_false_when_current_less() {
-                assertFalse(JsonNodeUtils.evaluateCondition(3, "greaterorequal", 5, LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(3, "greaterorequal", 5));
             }
 
             @Test
             @DisplayName("greaterorequal should return false for non-comparable values")
             void greaterorequal_should_return_false_for_non_comparable() {
-                assertFalse(JsonNodeUtils.evaluateCondition(new Object(), ">=", new Object(), LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(new Object(), ">=", new Object()));
             }
         }
 
@@ -501,31 +497,31 @@ class JsonNodeUtilsTest {
             @Test
             @DisplayName("lessorequal should return true when current < expected")
             void lessorequal_should_return_true_when_current_less() {
-                assertTrue(JsonNodeUtils.evaluateCondition(5, "lessorequal", 10, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(5, "lessorequal", 10));
             }
 
             @Test
             @DisplayName("<= should return true when current <= expected")
             void lessorequal_symbol_should_return_true_when_current_less_or_equal() {
-                assertTrue(JsonNodeUtils.evaluateCondition(5, "<=", 10, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(5, "<=", 10));
             }
 
             @Test
             @DisplayName("lessorequal should return true when current == expected")
             void lessorequal_should_return_true_when_equal() {
-                assertTrue(JsonNodeUtils.evaluateCondition(5, "lessorequal", 5, LOGGER));
+                assertTrue(JsonNodeUtils.evaluateCondition(5, "lessorequal", 5));
             }
 
             @Test
             @DisplayName("lessorequal should return false when current > expected")
             void lessorequal_should_return_false_when_current_greater() {
-                assertFalse(JsonNodeUtils.evaluateCondition(10, "lessorequal", 5, LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(10, "lessorequal", 5));
             }
 
             @Test
             @DisplayName("lessorequal should return false for non-comparable values")
             void lessorequal_should_return_false_for_non_comparable() {
-                assertFalse(JsonNodeUtils.evaluateCondition(new Object(), "<=", new Object(), LOGGER));
+                assertFalse(JsonNodeUtils.evaluateCondition(new Object(), "<=", new Object()));
             }
         }
     }
@@ -541,7 +537,7 @@ class JsonNodeUtilsTest {
         @Test
         @DisplayName("Should throw NullPointerException when actual is null")
         void should_throw_when_actual_is_null() {
-            assertThatThrownBy(() -> JsonNodeUtils.compareValues(null, "expected", LOGGER))
+            assertThatThrownBy(() -> JsonNodeUtils.compareValues(null, "expected"))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("Actual value cannot be null");
         }
@@ -549,7 +545,7 @@ class JsonNodeUtilsTest {
         @Test
         @DisplayName("Should throw NullPointerException when expected is null")
         void should_throw_when_expected_is_null() {
-            assertThatThrownBy(() -> JsonNodeUtils.compareValues("actual", null, LOGGER))
+            assertThatThrownBy(() -> JsonNodeUtils.compareValues("actual", null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("Expected value cannot be null");
         }
@@ -557,42 +553,42 @@ class JsonNodeUtilsTest {
         @Test
         @DisplayName("Should compare Integer and Double as numbers")
         void should_compare_integer_and_double_as_numbers() {
-            int result = JsonNodeUtils.compareValues(10, 5.0, LOGGER);
+            int result = JsonNodeUtils.compareValues(10, 5.0);
             assertThat(result).isGreaterThan(0);
         }
 
         @Test
         @DisplayName("Should compare Long and Integer as numbers")
         void should_compare_long_and_integer_as_numbers() {
-            int result = JsonNodeUtils.compareValues(5L, 10, LOGGER);
+            int result = JsonNodeUtils.compareValues(5L, 10);
             assertThat(result).isLessThan(0);
         }
 
         @Test
         @DisplayName("Should compare Float and Double as numbers")
         void should_compare_float_and_double_as_numbers() {
-            int result = JsonNodeUtils.compareValues(5.0f, 5.0, LOGGER);
+            int result = JsonNodeUtils.compareValues(5.0f, 5.0);
             assertThat(result).isEqualTo(0);
         }
 
         @Test
         @DisplayName("Should compare same type directly - strings")
         void should_compare_same_type_strings() {
-            int result = JsonNodeUtils.compareValues("apple", "banana", LOGGER);
+            int result = JsonNodeUtils.compareValues("apple", "banana");
             assertThat(result).isLessThan(0);
         }
 
         @Test
         @DisplayName("Should compare same type directly - integers")
         void should_compare_same_type_integers() {
-            int result = JsonNodeUtils.compareValues(10, 5, LOGGER);
+            int result = JsonNodeUtils.compareValues(10, 5);
             assertThat(result).isGreaterThan(0);
         }
 
         @Test
         @DisplayName("Should compare same type directly - equal values")
         void should_compare_same_type_equal_values() {
-            int result = JsonNodeUtils.compareValues("test", "test", LOGGER);
+            int result = JsonNodeUtils.compareValues("test", "test");
             assertThat(result).isEqualTo(0);
         }
 
@@ -600,7 +596,7 @@ class JsonNodeUtilsTest {
         @DisplayName("Should compare different types as strings")
         void should_compare_different_types_as_strings() {
             // String "5" vs Boolean true - should compare as strings
-            int result = JsonNodeUtils.compareValues("5", true, LOGGER);
+            int result = JsonNodeUtils.compareValues("5", true);
             // "5" vs "true" - string comparison
             assertThat(result).isNotEqualTo(0);
         }
@@ -608,7 +604,7 @@ class JsonNodeUtilsTest {
         @Test
         @DisplayName("Should compare with null logger (uses class logger)")
         void should_compare_with_null_logger() {
-            int result = JsonNodeUtils.compareValues(10, 5, null);
+            int result = JsonNodeUtils.compareValues(10, 5);
             assertThat(result).isGreaterThan(0);
         }
 
@@ -616,14 +612,14 @@ class JsonNodeUtilsTest {
         @DisplayName("Should handle Double comparison edge cases")
         void should_handle_double_comparison_edge_cases() {
             // Very close double values
-            int result = JsonNodeUtils.compareValues(1.0000001, 1.0000002, LOGGER);
+            int result = JsonNodeUtils.compareValues(1.0000001, 1.0000002);
             assertThat(result).isLessThan(0);
         }
 
         @Test
         @DisplayName("Should compare negative numbers correctly")
         void should_compare_negative_numbers() {
-            int result = JsonNodeUtils.compareValues(-10, -5, LOGGER);
+            int result = JsonNodeUtils.compareValues(-10, -5);
             assertThat(result).isLessThan(0);
         }
     }
@@ -645,7 +641,7 @@ class JsonNodeUtilsTest {
             Object currentValue = JsonNodeUtils.convertJsonNodeToObject(currentNode);
             Object expectedValue = JsonNodeUtils.convertJsonNodeToObject(expectedNode);
 
-            boolean result = JsonNodeUtils.evaluateCondition(currentValue, ">", expectedValue, LOGGER);
+            boolean result = JsonNodeUtils.evaluateCondition(currentValue, ">", expectedValue);
             assertTrue(result);
         }
 
@@ -658,7 +654,7 @@ class JsonNodeUtilsTest {
             Object currentValue = JsonNodeUtils.convertJsonNodeToObject(currentNode);
             Object expectedValue = JsonNodeUtils.convertJsonNodeToObject(expectedNode);
 
-            boolean result = JsonNodeUtils.evaluateCondition(currentValue, "contains", expectedValue, LOGGER);
+            boolean result = JsonNodeUtils.evaluateCondition(currentValue, "contains", expectedValue);
             assertTrue(result);
         }
 
@@ -671,7 +667,7 @@ class JsonNodeUtilsTest {
             Object currentValue = JsonNodeUtils.convertJsonNodeToObject(currentNode);
             Object expectedValue = JsonNodeUtils.convertJsonNodeToObject(expectedNode);
 
-            boolean result = JsonNodeUtils.evaluateCondition(currentValue, "==", expectedValue, LOGGER);
+            boolean result = JsonNodeUtils.evaluateCondition(currentValue, "==", expectedValue);
             assertTrue(result);
         }
     }
@@ -700,7 +696,7 @@ class JsonNodeUtilsTest {
         @MethodSource("equalityOperators")
         @DisplayName("Equality operators should work correctly")
         void equality_operators_should_work(String operator, Object current, Object expected, boolean expectedResult) {
-            boolean result = JsonNodeUtils.evaluateCondition(current, operator, expected, LOGGER);
+            boolean result = JsonNodeUtils.evaluateCondition(current, operator, expected);
             assertEquals(expectedResult, result);
         }
 
@@ -723,8 +719,423 @@ class JsonNodeUtilsTest {
         @MethodSource("comparisonOperators")
         @DisplayName("Comparison operators should work correctly")
         void comparison_operators_should_work(String operator, Object current, Object expected, boolean expectedResult) {
-            boolean result = JsonNodeUtils.evaluateCondition(current, operator, expected, LOGGER);
+            boolean result = JsonNodeUtils.evaluateCondition(current, operator, expected);
             assertEquals(expectedResult, result);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // evaluateAllConditions Tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("evaluateAllConditions Tests")
+    class EvaluateAllConditionsTests {
+
+        /**
+         * Helper to create a condition object node.
+         */
+        private ObjectNode createCondition(String stepRef, String fieldRef,
+                                           String operator, Object value) {
+            ObjectNode condition = NODE_FACTORY.objectNode();
+            if (stepRef != null) {
+                condition.put("stepRef", stepRef);
+            }
+            if (fieldRef != null) {
+                condition.put("fieldRef", fieldRef);
+            }
+            if (operator != null) {
+                condition.put("operator", operator);
+            }
+            if (value != null) {
+                if (value instanceof String) {
+                    condition.put("value", (String) value);
+                } else if (value instanceof Integer) {
+                    condition.put("value", (Integer) value);
+                } else if (value instanceof Boolean) {
+                    condition.put("value", (Boolean) value);
+                } else if (value instanceof Double) {
+                    condition.put("value", (Double) value);
+                }
+            }
+            return condition;
+        }
+
+        /**
+         * Simple resolver that returns fixed values based on fieldRef.
+         */
+        private BiFunction<String, String, String> createSimpleResolver() {
+            return (fieldRef, stepRef) -> {
+                if ("status".equals(fieldRef)) {
+                    return "APPROVED";
+                }
+                if ("amount".equals(fieldRef)) {
+                    return "100";
+                }
+                if ("name".equals(fieldRef)) {
+                    return "John";
+                }
+                return null;
+            };
+        }
+
+        // --- Null and Empty Conditions Tests ---
+
+        @Test
+        @DisplayName("Should return true when conditionsNode is null")
+        void should_return_true_when_conditions_null() {
+            BiFunction<String, String, String> resolver = (f, s) -> "value";
+            boolean result = JsonNodeUtils.evaluateAllConditions(null, resolver);
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should return true when conditionsNode is empty array")
+        void should_return_true_when_conditions_empty() {
+            ArrayNode emptyArray = NODE_FACTORY.arrayNode();
+            BiFunction<String, String, String> resolver = (f, s) -> "value";
+            boolean result = JsonNodeUtils.evaluateAllConditions(emptyArray, resolver);
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should return true when conditionsNode is not an array")
+        void should_return_true_when_conditions_not_array() {
+            ObjectNode notAnArray = NODE_FACTORY.objectNode();
+            notAnArray.put("key", "value");
+            BiFunction<String, String, String> resolver = (f, s) -> "value";
+            boolean result = JsonNodeUtils.evaluateAllConditions(notAnArray, resolver);
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should return false when dataValueResolver is null")
+        void should_return_false_when_resolver_null() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "field1", "equals", "value"));
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, null);
+            assertFalse(result);
+        }
+
+        // --- Single Condition Tests ---
+
+        @Test
+        @DisplayName("Should return true when single condition matches with equals")
+        void should_return_true_single_condition_equals_match() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "equals", "APPROVED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should return false when single condition does not match")
+        void should_return_false_single_condition_no_match() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "equals", "REJECTED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Should return true with contains operator")
+        void should_return_true_with_contains_operator() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "contains", "APPROV"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should return true with notequals operator")
+        void should_return_true_with_notequals_operator() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "notequals", "REJECTED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        // --- Multiple Conditions Tests ---
+
+        @Test
+        @DisplayName("Should return true when all conditions match")
+        void should_return_true_all_conditions_match() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "equals", "APPROVED"));
+            conditions.add(createCondition("step1", "name", "equals", "John"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should return false when one condition fails (short-circuit)")
+        void should_return_false_one_condition_fails() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "equals", "APPROVED"));
+            conditions.add(createCondition("step1", "name", "equals", "Jane")); // This will fail
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Should return false when first condition fails (short-circuit)")
+        void should_return_false_first_condition_fails() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "equals", "REJECTED")); // Fails first
+            conditions.add(createCondition("step1", "name", "equals", "John"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertFalse(result);
+        }
+
+        // --- Validation Error Tests ---
+
+        @Test
+        @DisplayName("Should return false when operator is null")
+        void should_return_false_operator_null() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", null, "APPROVED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Should return false when operator is blank")
+        void should_return_false_operator_blank() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "   ", "APPROVED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Should return false when fieldRef is null")
+        void should_return_false_fieldRef_null() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", null, "equals", "APPROVED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Should return false when fieldRef is blank")
+        void should_return_false_fieldRef_blank() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "  ", "equals", "APPROVED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Should return false when stepRef is null")
+        void should_return_false_stepRef_null() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition(null, "status", "equals", "APPROVED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Should return false when stepRef is blank")
+        void should_return_false_stepRef_blank() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("  ", "status", "equals", "APPROVED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertFalse(result);
+        }
+
+        // --- Data Not Found Tests ---
+
+        @Test
+        @DisplayName("Should return false when resolver returns null (no data found)")
+        void should_return_false_resolver_returns_null() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "unknown_field", "equals", "value"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertFalse(result);
+        }
+
+        // --- Resolver Exception Tests ---
+
+        @Test
+        @DisplayName("Should return false when resolver throws exception")
+        void should_return_false_resolver_throws_exception() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "equals", "APPROVED"));
+
+            BiFunction<String, String, String> failingResolver = (f, s) -> {
+                throw new RuntimeException("Database connection failed");
+            };
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, failingResolver);
+            assertFalse(result);
+        }
+
+        // --- Different Value Types Tests ---
+
+        @Test
+        @DisplayName("Should handle integer comparison")
+        void should_handle_integer_comparison() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "amount", "equals", "100"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should handle boolean expected value converted to string comparison")
+        void should_handle_boolean_expected_value() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            ObjectNode condition = createCondition("step1", "status", "equals", null);
+            condition.put("value", true);
+            conditions.add(condition);
+
+            // When expected is Boolean true, it's converted to Boolean object
+            // The resolver returns "true" string, which doesn't equal Boolean.TRUE
+            BiFunction<String, String, String> resolver = (f, s) -> "true";
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, resolver);
+            // String "true" != Boolean.TRUE, so this returns false
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Should handle null expected value")
+        void should_handle_null_expected_value() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            ObjectNode condition = NODE_FACTORY.objectNode();
+            condition.put("stepRef", "step1");
+            condition.put("fieldRef", "status");
+            condition.put("operator", "equals");
+            condition.putNull("value");
+            conditions.add(condition);
+
+            BiFunction<String, String, String> resolver = (f, s) -> "someValue";
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, resolver);
+            assertFalse(result); // "someValue" != null
+        }
+
+        // --- Basic Functionality Tests ---
+
+        @Test
+        @DisplayName("Should work with valid resolver and matching condition")
+        void should_work_with_valid_resolver() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "equals", "APPROVED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        // --- Comparison Operators Tests ---
+
+        @Test
+        @DisplayName("Should handle greaterthan operator with string comparison")
+        void should_handle_greaterthan_operator() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            // Note: String comparison is lexicographic, so "100" < "50" because '1' < '5'
+            // Use "050" so that "100" > "050" lexicographically
+            conditions.add(createCondition("step1", "amount", "greaterthan", "050"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should handle lessthan operator")
+        void should_handle_lessthan_operator() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "amount", "lessthan", "200"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should handle greaterorequal operator")
+        void should_handle_greaterorequal_operator() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "amount", "greaterorequal", "100"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should handle lessorequal operator")
+        void should_handle_lessorequal_operator() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "amount", "lessorequal", "100"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        // --- Symbol Operators Tests ---
+
+        @Test
+        @DisplayName("Should handle == operator symbol")
+        void should_handle_equals_symbol() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "==", "APPROVED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should handle != operator symbol")
+        void should_handle_notequals_symbol() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "!=", "REJECTED"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        // --- Complex Scenarios Tests ---
+
+        @Test
+        @DisplayName("Should handle multiple conditions with different operators")
+        void should_handle_multiple_conditions_different_operators() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("step1", "status", "equals", "APPROVED"));
+            // Note: String comparison is lexicographic, "100" > "050" because '1' > '0'
+            conditions.add(createCondition("step1", "amount", "greaterthan", "050"));
+            conditions.add(createCondition("step1", "name", "contains", "oh"));
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, createSimpleResolver());
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Should use correct stepRef when resolving data")
+        void should_use_correct_stepRef() {
+            ArrayNode conditions = NODE_FACTORY.arrayNode();
+            conditions.add(createCondition("specific_step", "status", "equals", "STEP_VALUE"));
+
+            BiFunction<String, String, String> stepAwareResolver = (fieldRef, stepRef) -> {
+                if ("specific_step".equals(stepRef) && "status".equals(fieldRef)) {
+                    return "STEP_VALUE";
+                }
+                return null;
+            };
+
+            boolean result = JsonNodeUtils.evaluateAllConditions(conditions, stepAwareResolver);
+            assertTrue(result);
         }
     }
 }

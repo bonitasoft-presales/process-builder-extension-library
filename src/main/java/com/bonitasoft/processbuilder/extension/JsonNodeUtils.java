@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.stream.StreamSupport;
 
 /**
  * Utility class for working with Jackson {@link JsonNode} objects and evaluating conditions.
@@ -167,15 +169,13 @@ public final class JsonNodeUtils {
      * @param currentValue  the current value to compare (may be null)
      * @param operator      the comparison operator (case-insensitive)
      * @param expectedValue the expected value to compare against (may be null)
-     * @param logger        the logger for warning messages (if null, uses class logger)
      * @return {@code true} if the condition is satisfied, {@code false} otherwise
      */
     public static boolean evaluateCondition(Object currentValue, String operator,
-                                            Object expectedValue, Logger logger) {
-        Logger log = logger != null ? logger : LOGGER;
+                                            Object expectedValue) {
 
         if (operator == null) {
-            log.warn("Operator is null. Defaulting to false.");
+            LOGGER.warn("Operator is null. Defaulting to false.");
             return false;
         }
 
@@ -186,15 +186,15 @@ public final class JsonNodeUtils {
             case OP_NOT_EQUALS, OP_NOT_EQUALS_SYMBOL -> evaluateNotEquals(currentValue, expectedValue);
             case OP_CONTAINS -> evaluateContains(currentValue, expectedValue);
             case OP_GREATER_THAN, OP_GREATER_THAN_SYMBOL ->
-                evaluateComparison(currentValue, expectedValue, log, 1);
+                evaluateComparison(currentValue, expectedValue, 1);
             case OP_LESS_THAN, OP_LESS_THAN_SYMBOL ->
-                evaluateComparison(currentValue, expectedValue, log, -1);
+                evaluateComparison(currentValue, expectedValue, -1);
             case OP_GREATER_OR_EQUAL, OP_GREATER_OR_EQUAL_SYMBOL ->
-                evaluateComparisonOrEqual(currentValue, expectedValue, log, 1);
+                evaluateComparisonOrEqual(currentValue, expectedValue, 1);
             case OP_LESS_OR_EQUAL, OP_LESS_OR_EQUAL_SYMBOL ->
-                evaluateComparisonOrEqual(currentValue, expectedValue, log, -1);
+                evaluateComparisonOrEqual(currentValue, expectedValue, -1);
             default -> {
-                log.warn("Unknown operator: {}. Defaulting to false.", operator);
+                LOGGER.warn("Unknown operator: {}. Defaulting to false.", operator);
                 yield false;
             }
         };
@@ -213,13 +213,12 @@ public final class JsonNodeUtils {
      *
      * @param actual   the actual value to compare (must not be null)
      * @param expected the expected value to compare against (must not be null)
-     * @param logger   the logger for debugging (if null, uses class logger)
      * @return a negative integer, zero, or a positive integer as the actual value
      *         is less than, equal to, or greater than the expected value
      * @throws NullPointerException if actual or expected is null
      */
     @SuppressWarnings("unchecked")
-    public static int compareValues(Comparable<?> actual, Comparable<?> expected, Logger logger) {
+    public static int compareValues(Comparable<?> actual, Comparable<?> expected) {
         Objects.requireNonNull(actual, "Actual value cannot be null");
         Objects.requireNonNull(expected, "Expected value cannot be null");
 
@@ -239,8 +238,136 @@ public final class JsonNodeUtils {
         return actual.toString().compareTo(expected.toString());
     }
 
+    /**
+     * Evaluates all conditions in a JSON array, returning true only if ALL conditions are met.
+     * <p>
+     * This method is designed for evaluating process conditions where each condition references
+     * a step and field, compares against an expected value using an operator. The actual data
+     * retrieval is delegated to the caller via the {@code dataValueResolver} function.
+     * </p>
+     * <p>
+     * Each condition in the array must have the following structure:
+     * </p>
+     * <pre>{@code
+     * {
+     *   "stepRef": "step_identifier",
+     *   "variableName": "field_name",
+     *   "variableOperator": "equals",
+     *   "variableValue": "expected_value"
+     * }
+     * }</pre>
+     * <p>
+     * The method short-circuits on the first failing condition (uses {@code allMatch}).
+     * </p>
+     *
+     * @param conditionsNode    the JSON array containing condition objects (may be null or empty)
+     * @param dataValueResolver a function that takes (fieldRef, stepRef) and returns the current
+     *                          data value as a String, or null if not found
+     * @return {@code true} if all conditions are met or if conditionsNode is null/empty,
+     *         {@code false} if any condition fails or has invalid structure
+     */
+    public static boolean evaluateAllConditions(
+            JsonNode conditionsNode,
+            BiFunction<String, String, String> dataValueResolver) {
+
+        // Handle null or empty conditions array - considered as "no conditions to fail"
+        if (conditionsNode == null || !conditionsNode.isArray() || conditionsNode.isEmpty()) {
+            LOGGER.debug("No conditions to evaluate or conditionsNode is not an array. Returning true.");
+            return true;
+        }
+
+        // Validate dataValueResolver
+        if (dataValueResolver == null) {
+            LOGGER.error("dataValueResolver function is null. Cannot evaluate conditions.");
+            return false;
+        }
+
+        // ALL conditions must be true (allMatch short-circuits on first false)
+        return StreamSupport.stream(conditionsNode.spliterator(), false)
+            .allMatch(condition -> evaluateSingleCondition(condition, dataValueResolver));
+    }
+
+    /**
+     * Evaluates a single condition from a JSON object.
+     *
+     * @param condition         the condition JSON object
+     * @param dataValueResolver the function to resolve data values
+     * @return true if the condition is met, false otherwise
+     */
+    private static boolean evaluateSingleCondition(
+            JsonNode condition,
+            BiFunction<String, String, String> dataValueResolver) {
+
+        // Extract condition fields
+        String stepRef = getTextOrNull(condition, "stepRef");
+        String fieldRef = getTextOrNull(condition, "fieldRef");
+        String operator = getTextOrNull(condition, "operator");
+        JsonNode expectedValueNode = condition.get("value");
+
+        LOGGER.debug("Evaluating condition: stepRef='{}', fieldRef='{}', operator='{}'",
+                    stepRef, fieldRef, operator);
+
+        // Validate operator
+        if (operator == null || operator.isBlank()) {
+            LOGGER.error("Invalid operator for field '{}'. Operator is null or blank.", fieldRef);
+            return false;
+        }
+
+        // Validate required fields
+        if (fieldRef == null || fieldRef.isBlank() || stepRef == null || stepRef.isBlank()) {
+            LOGGER.error("Missing fieldRef or stepRef for condition. fieldRef='{}', stepRef='{}'",
+                        fieldRef, stepRef);
+            return false;
+        }
+
+        // Retrieve current value using the resolver function
+        String currentValue;
+        try {
+            currentValue = dataValueResolver.apply(fieldRef, stepRef);
+        } catch (Exception e) {
+            LOGGER.error("Error retrieving data for field '{}' in step '{}': {}",
+                        fieldRef, stepRef, e.getMessage());
+            return false;
+        }
+
+        // Check if data was found
+        if (currentValue == null) {
+            LOGGER.warn("No data found for field '{}' in step '{}'. Condition fails.",
+                       fieldRef, stepRef);
+            return false;
+        }
+
+        // Convert expected value and evaluate
+        Object expectedValue = convertJsonNodeToObject(expectedValueNode);
+        boolean conditionMet = evaluateCondition(currentValue, operator, expectedValue);
+
+        LOGGER.info("Condition '{}': current='{}' {} expected='{}' -> {}",
+                   fieldRef, currentValue, operator, expectedValue,
+                   conditionMet ? "PASSED" : "FAILED");
+
+        return conditionMet;
+    }
+
+    /**
+     * Safely extracts a text value from a JSON node path.
+     *
+     * @param node the parent node
+     * @param fieldName the field name to extract
+     * @return the text value, or null if not present or not textual
+     */
+    private static String getTextOrNull(JsonNode node, String fieldName) {
+        if (node == null) {
+            return null;
+        }
+        JsonNode fieldNode = node.path(fieldName);
+        if (fieldNode.isMissingNode() || fieldNode.isNull()) {
+            return null;
+        }
+        return fieldNode.asText(null);
+    }
+
     // -------------------------------------------------------------------------
-    // Private helper methods
+    // Private helper methods for condition evaluation
     // -------------------------------------------------------------------------
 
     /**
@@ -286,15 +413,14 @@ public final class JsonNodeUtils {
      *
      * @param currentValue  the current value
      * @param expectedValue the expected value
-     * @param logger        the logger
      * @param direction     1 for greater than, -1 for less than
      * @return true if the comparison holds
      */
     private static boolean evaluateComparison(Object currentValue, Object expectedValue,
-                                              Logger logger, int direction) {
+                                              int direction) {
         if (currentValue instanceof Comparable<?> currentComp
             && expectedValue instanceof Comparable<?> expectedComp) {
-            int result = compareValues(currentComp, expectedComp, logger);
+            int result = compareValues(currentComp, expectedComp);
             return direction > 0 ? result > 0 : result < 0;
         }
         return false;
@@ -305,15 +431,14 @@ public final class JsonNodeUtils {
      *
      * @param currentValue  the current value
      * @param expectedValue the expected value
-     * @param logger        the logger
      * @param direction     1 for greater or equal, -1 for less or equal
      * @return true if the comparison holds
      */
     private static boolean evaluateComparisonOrEqual(Object currentValue, Object expectedValue,
-                                                     Logger logger, int direction) {
+                                                     int direction) {
         if (currentValue instanceof Comparable<?> currentComp
             && expectedValue instanceof Comparable<?> expectedComp) {
-            int result = compareValues(currentComp, expectedComp, logger);
+            int result = compareValues(currentComp, expectedComp);
             return direction > 0 ? result >= 0 : result <= 0;
         }
         return false;

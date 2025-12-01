@@ -35,8 +35,22 @@ public final class Constants { // Marked as final to prevent inheritance
      */
     public static final String EMPTY = "";
 
+    /**
+     * Profile name constant for the PB User profile.
+     * This profile grants basic user access to Process Builder features.
+     */
     public static final String PB_USER_PROFILE = "PB User";
+
+    /**
+     * Profile name constant for the PB Administrator profile.
+     * This profile grants full administrative access to Process Builder.
+     */
     public static final String PB_ADMINISTRATOR_PROFILE = "PB Administrator";
+
+    /**
+     * Profile name constant for the PB Process Manager profile.
+     * This profile grants process management capabilities in Process Builder.
+     */
     public static final String PB_PROCESS_MANAGER_PROFILE = "PB Process Manager";
 
 }

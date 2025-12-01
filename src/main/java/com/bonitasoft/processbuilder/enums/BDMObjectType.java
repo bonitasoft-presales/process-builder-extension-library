@@ -65,6 +65,12 @@ public enum BDMObjectType {
     PB_ACTION("PBAction", "Action object defining process operations and their configurations"),
 
     /**
+     * Represents a PBActionContent BDM object.
+     * Used when searching or validating the content and details associated with process actions.
+     */
+    PB_ACTION_CONTENT("PBActionContent", "Action Content object containing detailed information and parameters for process actions"),
+
+    /**
      * Represents a PBCategory BDM object.
      * Used when searching or validating process categories for organization and classification.
      */

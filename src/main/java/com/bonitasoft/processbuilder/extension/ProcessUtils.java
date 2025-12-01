@@ -8,6 +8,7 @@ import com.bonitasoft.processbuilder.mapper.UserMapper;
 import com.bonitasoft.processbuilder.records.UserRecord;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -382,6 +383,53 @@ public final class ProcessUtils {
     }
 
     /**
+     * Searches for a list of BDM objects by a persistence ID, handling validation and error handling.
+     * This is a convenience method for queries that return collections based on a parent entity ID.
+     * <p>
+     * This method is particularly useful for Bonita scripts where you need to retrieve
+     * related BDM objects (e.g., all PBActionContent for a given PBAction).
+     * </p>
+     *
+     * @param <T> The generic type of the BDM objects in the returned list.
+     * @param persistenceIdInput The persistence ID of the parent entity (can be null or not positive).
+     * @param searchFunction The function that performs the search. Must accept a Long ID and return a List of BDM objects.
+     * @param objectType The name of the BDM object class (e.g., "PBActionContent"). Used for logging purposes.
+     * @return A list of BDM objects if found, or an empty list if the persistence ID is invalid or no results found.
+     */
+    public static <T> List<T> searchBDMList(
+            Long persistenceIdInput,
+            Function<Long, List<T>> searchFunction,
+            String objectType) {
+
+        if (persistenceIdInput == null || persistenceIdInput <= 0L) {
+            LOGGER.warn("Skipping search: persistenceId is null or not positive for object type {}. Received: {}",
+                        objectType, persistenceIdInput);
+            return Collections.emptyList();
+        }
+
+        LOGGER.info("Fetching {} list for persistenceId: {}", objectType, persistenceIdInput);
+
+        try {
+            List<T> resultList = searchFunction.apply(persistenceIdInput);
+
+            if (resultList == null || resultList.isEmpty()) {
+                LOGGER.info("No {} found for persistenceId: {}", objectType, persistenceIdInput);
+                return Collections.emptyList();
+            }
+
+            LOGGER.info("Successfully retrieved {} {}(s) for persistenceId: {}",
+                        resultList.size(), objectType, persistenceIdInput);
+
+            return resultList;
+
+        } catch (Exception e) {
+            LOGGER.error("Error fetching {} list for persistenceId: {}. Cause: {}",
+                        objectType, persistenceIdInput, e.getMessage(), e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
      * Finds the most recent step process instance using a search function.
      * <p>
      * This method accepts a search function that returns a list of step instances
@@ -439,6 +487,17 @@ public final class ProcessUtils {
         }
     }
 
+    /**
+     * Retrieves the list of user IDs associated with a specific profile.
+     * <p>
+     * This method searches for all users assigned to the specified profile, including users
+     * assigned directly, through roles, through groups, or through memberships (role + group).
+     * </p>
+     *
+     * @param apiAccessor An instance of {@link APIAccessor} to access Bonita APIs.
+     * @param profileName The name of the profile to search for user assignments.
+     * @return A list of user IDs associated with the profile, or an empty list if an error occurs.
+     */
     public List<Long> getUserIdsInProfile(APIAccessor apiAccessor, String profileName) {
         try {
             List<Long> userIds = new ArrayList<>();

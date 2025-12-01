@@ -126,13 +126,13 @@ class BDMObjectTypeTest {
     // =========================================================================
 
     @Test
-    @DisplayName("getAllData should return map with all 13 BDM object types")
+    @DisplayName("getAllData should return map with all 14 BDM object types")
     void getAllData_should_return_map_with_all_types() {
         // When
         Map<String, String> data = BDMObjectType.getAllData();
 
         // Then
-        assertEquals(13, data.size());
+        assertEquals(14, data.size());
     }
 
     @Test
@@ -146,6 +146,7 @@ class BDMObjectTypeTest {
         assertTrue(data.containsKey("PBProcessInstance"));
         assertTrue(data.containsKey("PBStepProcessInstance"));
         assertTrue(data.containsKey("PBAction"));
+        assertTrue(data.containsKey("PBActionContent"));
         assertTrue(data.containsKey("PBCategory"));
         assertTrue(data.containsKey("PBEntityType"));
         assertTrue(data.containsKey("PBFiles"));
@@ -187,13 +188,13 @@ class BDMObjectTypeTest {
     // =========================================================================
 
     @Test
-    @DisplayName("getAllKeysList should return list with all 13 keys")
+    @DisplayName("getAllKeysList should return list with all 14 keys")
     void getAllKeysList_should_return_list_with_all_keys() {
         // When
         List<String> keys = BDMObjectType.getAllKeysList();
 
         // Then
-        assertEquals(13, keys.size());
+        assertEquals(14, keys.size());
     }
 
     @Test
@@ -204,6 +205,7 @@ class BDMObjectTypeTest {
 
         // Then
         assertTrue(keys.contains("PBAction"));
+        assertTrue(keys.contains("PBActionContent"));
         assertTrue(keys.contains("PBProcess"));
         assertTrue(keys.contains("PBCategory"));
         assertTrue(keys.contains("PBProcessInstance"));
@@ -315,16 +317,17 @@ class BDMObjectTypeTest {
     // =========================================================================
 
     @Test
-    @DisplayName("Verify all 13 enum constants exist")
+    @DisplayName("Verify all 14 enum constants exist")
     void verify_all_enum_constants_exist() {
         // When/Then
-        assertEquals(13, BDMObjectType.values().length);
-        
+        assertEquals(14, BDMObjectType.values().length);
+
         // Verify each constant
         assertNotNull(BDMObjectType.PB_DATA_PROCESS_INSTANCE);
         assertNotNull(BDMObjectType.PB_PROCESS_INSTANCE);
         assertNotNull(BDMObjectType.PB_STEP_PROCESS_INSTANCE);
         assertNotNull(BDMObjectType.PB_ACTION);
+        assertNotNull(BDMObjectType.PB_ACTION_CONTENT);
         assertNotNull(BDMObjectType.PB_CATEGORY);
         assertNotNull(BDMObjectType.PB_ENTITY_TYPE);
         assertNotNull(BDMObjectType.PB_FILES);
