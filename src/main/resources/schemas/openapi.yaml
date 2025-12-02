@@ -92,8 +92,12 @@ components:
         actionType: { type: string }
         added: { type: boolean }
         content:
-          type: array
-          items: {}
+          oneOf:
+            - type: array
+              items: {} 
+            - type: object
+              properties: {} 
+              additionalProperties: true
       required:
         - actionType
         - added
