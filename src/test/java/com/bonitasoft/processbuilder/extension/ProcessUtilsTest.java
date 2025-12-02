@@ -990,4 +990,179 @@ class ProcessUtilsTest {
         assertSame(instance2, result2);
         assertNotEquals(result1.getId(), result2.getId());
     }
+
+    // =========================================================================
+    // SECTION 9: searchBDMList TESTS
+    // =========================================================================
+
+    @Test
+    @DisplayName("searchBDMList should return list when persistenceId is valid and results exist")
+    void searchBDMList_should_return_list_on_valid_persistence_id() {
+        // Given
+        MockBDM item1 = new MockBDM(1L);
+        MockBDM item2 = new MockBDM(2L);
+        List<MockBDM> expectedList = List.of(item1, item2);
+        Function<Long, List<MockBDM>> listSearchFunction = id -> expectedList;
+
+        // When
+        List<MockBDM> result = ProcessUtils.searchBDMList(PERSISTENCE_ID, listSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertSame(item1, result.get(0));
+        assertSame(item2, result.get(1));
+    }
+
+    @Test
+    @DisplayName("searchBDMList should return empty list when persistenceId is null")
+    void searchBDMList_should_return_empty_list_on_null_persistence_id() {
+        // Given
+        Function<Long, List<MockBDM>> listSearchFunction = id -> List.of(new MockBDM(1L));
+
+        // When
+        List<MockBDM> result = ProcessUtils.searchBDMList(null, listSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("searchBDMList should return empty list when persistenceId is zero")
+    void searchBDMList_should_return_empty_list_on_zero_persistence_id() {
+        // Given
+        Function<Long, List<MockBDM>> listSearchFunction = id -> List.of(new MockBDM(1L));
+
+        // When
+        List<MockBDM> result = ProcessUtils.searchBDMList(0L, listSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("searchBDMList should return empty list when persistenceId is negative")
+    void searchBDMList_should_return_empty_list_on_negative_persistence_id() {
+        // Given
+        Function<Long, List<MockBDM>> listSearchFunction = id -> List.of(new MockBDM(1L));
+
+        // When
+        List<MockBDM> result = ProcessUtils.searchBDMList(-1L, listSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("searchBDMList should return empty list when search function returns null")
+    void searchBDMList_should_return_empty_list_when_search_returns_null() {
+        // Given
+        Function<Long, List<MockBDM>> listSearchFunction = id -> null;
+
+        // When
+        List<MockBDM> result = ProcessUtils.searchBDMList(PERSISTENCE_ID, listSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("searchBDMList should return empty list when search function returns empty list")
+    void searchBDMList_should_return_empty_list_when_search_returns_empty() {
+        // Given
+        Function<Long, List<MockBDM>> listSearchFunction = id -> Collections.emptyList();
+
+        // When
+        List<MockBDM> result = ProcessUtils.searchBDMList(PERSISTENCE_ID, listSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("searchBDMList should return empty list when search function throws exception")
+    void searchBDMList_should_return_empty_list_when_search_throws_exception() {
+        // Given
+        Function<Long, List<MockBDM>> listSearchFunction = id -> {
+            throw new RuntimeException("Database error");
+        };
+
+        // When
+        List<MockBDM> result = ProcessUtils.searchBDMList(PERSISTENCE_ID, listSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("searchBDMList should work with different generic types")
+    void searchBDMList_should_work_with_different_generic_types() {
+        // Given
+        Function<Long, List<String>> stringSearchFunction = id -> List.of("Item1", "Item2", "Item3");
+
+        // When
+        List<String> result = ProcessUtils.searchBDMList(100L, stringSearchFunction, "StringObject");
+
+        // Then
+        assertNotNull(result);
+        assertEquals(3, result.size());
+        assertEquals("Item1", result.get(0));
+    }
+
+    @Test
+    @DisplayName("searchBDMList should handle large result lists")
+    void searchBDMList_should_handle_large_result_lists() {
+        // Given: Create a large list
+        List<MockBDM> largeList = new java.util.ArrayList<>();
+        for (int i = 0; i < 1000; i++) {
+            largeList.add(new MockBDM((long) i));
+        }
+        Function<Long, List<MockBDM>> listSearchFunction = id -> largeList;
+
+        // When
+        List<MockBDM> result = ProcessUtils.searchBDMList(PERSISTENCE_ID, listSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1000, result.size());
+    }
+
+    @Test
+    @DisplayName("searchBDMList should pass correct persistenceId to search function")
+    void searchBDMList_should_pass_correct_persistence_id() {
+        // Given
+        final long[] capturedId = new long[1];
+        Function<Long, List<MockBDM>> listSearchFunction = id -> {
+            capturedId[0] = id;
+            return List.of(new MockBDM(id));
+        };
+
+        // When
+        ProcessUtils.searchBDMList(PERSISTENCE_ID, listSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertEquals(PERSISTENCE_ID, capturedId[0]);
+    }
+
+    @Test
+    @DisplayName("searchBDMList should handle single item list")
+    void searchBDMList_should_handle_single_item_list() {
+        // Given
+        MockBDM singleItem = new MockBDM(100L);
+        Function<Long, List<MockBDM>> listSearchFunction = id -> Collections.singletonList(singleItem);
+
+        // When
+        List<MockBDM> result = ProcessUtils.searchBDMList(PERSISTENCE_ID, listSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertSame(singleItem, result.get(0));
+    }
 }
