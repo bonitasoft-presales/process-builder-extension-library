@@ -1138,4 +1138,194 @@ class JsonNodeUtilsTest {
             assertTrue(result);
         }
     }
+
+    // -------------------------------------------------------------------------
+    // getRedirectionName Tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("getRedirectionName Tests")
+    class GetRedirectionNameTests {
+
+        @Test
+        @DisplayName("Should return Unknown when redirection is null")
+        void should_return_unknown_when_null() {
+            String result = JsonNodeUtils.getRedirectionName(null);
+            assertEquals(JsonNodeUtils.DEFAULT_REDIRECTION_NAME, result);
+        }
+
+        @Test
+        @DisplayName("Should return name from new structure (parameters.name)")
+        void should_return_name_from_new_structure() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            ObjectNode parameters = NODE_FACTORY.objectNode();
+            parameters.put("name", "NewRedirection");
+            redirection.set("parameters", parameters);
+
+            String result = JsonNodeUtils.getRedirectionName(redirection);
+            assertEquals("NewRedirection", result);
+        }
+
+        @Test
+        @DisplayName("Should return name from old structure (name directly)")
+        void should_return_name_from_old_structure() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            redirection.put("name", "OldRedirection");
+
+            String result = JsonNodeUtils.getRedirectionName(redirection);
+            assertEquals("OldRedirection", result);
+        }
+
+        @Test
+        @DisplayName("Should prioritize new structure over old structure")
+        void should_prioritize_new_structure() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            ObjectNode parameters = NODE_FACTORY.objectNode();
+            parameters.put("name", "NewName");
+            redirection.set("parameters", parameters);
+            redirection.put("name", "OldName");
+
+            String result = JsonNodeUtils.getRedirectionName(redirection);
+            assertEquals("NewName", result);
+        }
+
+        @Test
+        @DisplayName("Should return Unknown when no name found")
+        void should_return_unknown_when_no_name() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            redirection.put("otherField", "value");
+
+            String result = JsonNodeUtils.getRedirectionName(redirection);
+            assertEquals(JsonNodeUtils.DEFAULT_REDIRECTION_NAME, result);
+        }
+
+        @Test
+        @DisplayName("Should return Unknown when parameters exists but has no name")
+        void should_return_unknown_when_parameters_without_name() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            ObjectNode parameters = NODE_FACTORY.objectNode();
+            parameters.put("otherField", "value");
+            redirection.set("parameters", parameters);
+
+            String result = JsonNodeUtils.getRedirectionName(redirection);
+            assertEquals(JsonNodeUtils.DEFAULT_REDIRECTION_NAME, result);
+        }
+
+        @Test
+        @DisplayName("Should handle empty name in new structure")
+        void should_handle_empty_name_new_structure() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            ObjectNode parameters = NODE_FACTORY.objectNode();
+            parameters.put("name", "");
+            redirection.set("parameters", parameters);
+
+            String result = JsonNodeUtils.getRedirectionName(redirection);
+            assertEquals("", result);
+        }
+
+        @Test
+        @DisplayName("Should handle empty name in old structure")
+        void should_handle_empty_name_old_structure() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            redirection.put("name", "");
+
+            String result = JsonNodeUtils.getRedirectionName(redirection);
+            assertEquals("", result);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // getTargetStep Tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("getTargetStep Tests")
+    class GetTargetStepTests {
+
+        @Test
+        @DisplayName("Should return null when redirection is null")
+        void should_return_null_when_null() {
+            String result = JsonNodeUtils.getTargetStep(null);
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Should return targetStep from new structure (parameters.targetStep)")
+        void should_return_targetStep_from_new_structure() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            ObjectNode parameters = NODE_FACTORY.objectNode();
+            parameters.put("targetStep", "Step_Review");
+            redirection.set("parameters", parameters);
+
+            String result = JsonNodeUtils.getTargetStep(redirection);
+            assertEquals("Step_Review", result);
+        }
+
+        @Test
+        @DisplayName("Should return targetStep from old structure (targetStep directly)")
+        void should_return_targetStep_from_old_structure() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            redirection.put("targetStep", "Step_Approval");
+
+            String result = JsonNodeUtils.getTargetStep(redirection);
+            assertEquals("Step_Approval", result);
+        }
+
+        @Test
+        @DisplayName("Should prioritize new structure over old structure")
+        void should_prioritize_new_structure() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            ObjectNode parameters = NODE_FACTORY.objectNode();
+            parameters.put("targetStep", "NewStep");
+            redirection.set("parameters", parameters);
+            redirection.put("targetStep", "OldStep");
+
+            String result = JsonNodeUtils.getTargetStep(redirection);
+            assertEquals("NewStep", result);
+        }
+
+        @Test
+        @DisplayName("Should return null when no targetStep found")
+        void should_return_null_when_no_targetStep() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            redirection.put("otherField", "value");
+
+            String result = JsonNodeUtils.getTargetStep(redirection);
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Should return null when parameters exists but has no targetStep")
+        void should_return_null_when_parameters_without_targetStep() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            ObjectNode parameters = NODE_FACTORY.objectNode();
+            parameters.put("otherField", "value");
+            redirection.set("parameters", parameters);
+
+            String result = JsonNodeUtils.getTargetStep(redirection);
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Should handle empty targetStep in new structure")
+        void should_handle_empty_targetStep_new_structure() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            ObjectNode parameters = NODE_FACTORY.objectNode();
+            parameters.put("targetStep", "");
+            redirection.set("parameters", parameters);
+
+            String result = JsonNodeUtils.getTargetStep(redirection);
+            assertEquals("", result);
+        }
+
+        @Test
+        @DisplayName("Should handle empty targetStep in old structure")
+        void should_handle_empty_targetStep_old_structure() {
+            ObjectNode redirection = NODE_FACTORY.objectNode();
+            redirection.put("targetStep", "");
+
+            String result = JsonNodeUtils.getTargetStep(redirection);
+            assertEquals("", result);
+        }
+    }
 }

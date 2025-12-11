@@ -443,4 +443,83 @@ public final class JsonNodeUtils {
         }
         return false;
     }
+
+    // -------------------------------------------------------------------------
+    // Redirection utility methods (backward-compatible with old and new structure)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Default value returned when the redirection name cannot be determined.
+     */
+    public static final String DEFAULT_REDIRECTION_NAME = "Unknown";
+
+    /**
+     * Retrieves the redirection name from a JSON node, supporting both old and new data structures.
+     * <p>
+     * This method provides backward compatibility by checking:
+     * </p>
+     * <ol>
+     *   <li><b>New structure:</b> {@code parameters.name}</li>
+     *   <li><b>Old structure:</b> {@code name} (directly on the node)</li>
+     * </ol>
+     * <p>
+     * If neither structure contains the name, returns {@value #DEFAULT_REDIRECTION_NAME}.
+     * </p>
+     *
+     * @param redirection the JSON node containing redirection data (may be null)
+     * @return the redirection name, or {@value #DEFAULT_REDIRECTION_NAME} if not found
+     */
+    public static String getRedirectionName(JsonNode redirection) {
+        if (redirection == null) {
+            return DEFAULT_REDIRECTION_NAME;
+        }
+
+        // New structure: parameters.name
+        JsonNode parametersNode = redirection.get("parameters");
+        if (parametersNode != null && parametersNode.has("name")) {
+            return parametersNode.get("name").asText();
+        }
+
+        // Old structure: name directly
+        if (redirection.has("name")) {
+            return redirection.get("name").asText();
+        }
+
+        return DEFAULT_REDIRECTION_NAME;
+    }
+
+    /**
+     * Retrieves the target step from a JSON node, supporting both old and new data structures.
+     * <p>
+     * This method provides backward compatibility by checking:
+     * </p>
+     * <ol>
+     *   <li><b>New structure:</b> {@code parameters.targetStep}</li>
+     *   <li><b>Old structure:</b> {@code targetStep} (directly on the node)</li>
+     * </ol>
+     * <p>
+     * If neither structure contains the target step, returns {@code null}.
+     * </p>
+     *
+     * @param redirection the JSON node containing redirection data (may be null)
+     * @return the target step identifier, or {@code null} if not found
+     */
+    public static String getTargetStep(JsonNode redirection) {
+        if (redirection == null) {
+            return null;
+        }
+
+        // New structure: parameters.targetStep
+        JsonNode parametersNode = redirection.get("parameters");
+        if (parametersNode != null && parametersNode.has("targetStep")) {
+            return parametersNode.get("targetStep").asText();
+        }
+
+        // Old structure: targetStep directly
+        if (redirection.has("targetStep")) {
+            return redirection.get("targetStep").asText();
+        }
+
+        return null;
+    }
 }
