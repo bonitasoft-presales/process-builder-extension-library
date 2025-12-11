@@ -61,9 +61,8 @@ class PasswordCryptoTest {
         @Test
         @DisplayName("isMasterPasswordConfigured should return correct value")
         void should_check_master_password_configured() {
-            // This test verifies the method doesn't throw
-            boolean result = PasswordCrypto.isMasterPasswordConfigured();
-            assertNotNull(result);
+            // This test verifies the method executes without throwing and returns a valid boolean
+            assertDoesNotThrow(() -> PasswordCrypto.isMasterPasswordConfigured());
         }
 
         @Test
