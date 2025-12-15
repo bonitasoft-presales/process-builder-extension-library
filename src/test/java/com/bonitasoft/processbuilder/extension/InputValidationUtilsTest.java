@@ -2,11 +2,12 @@ package com.bonitasoft.processbuilder.extension;
 
 import org.bonitasoft.engine.connector.ConnectorValidationException;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -322,5 +323,261 @@ class InputValidationUtilsTest {
         // When validating the input
         // Then no exception should be thrown
         assertDoesNotThrow(() -> InputValidationUtils.checkPositiveLongInput("testParam", inputGetter));
+    }
+
+    // -------------------------------------------------------------------------
+    // parseStringToPositiveLong Tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("parseStringToPositiveLong Tests")
+    class ParseStringToPositiveLongTests {
+
+        @Test
+        @DisplayName("Should return empty Optional for null input")
+        void should_return_empty_for_null_input() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong(null, "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for empty string")
+        void should_return_empty_for_empty_string() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("", "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for whitespace-only string")
+        void should_return_empty_for_whitespace_only() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("   ", "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for 'null' string (lowercase)")
+        void should_return_empty_for_null_string_lowercase() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("null", "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for 'NULL' string (uppercase)")
+        void should_return_empty_for_null_string_uppercase() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("NULL", "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for 'Null' string (mixed case)")
+        void should_return_empty_for_null_string_mixed_case() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("Null", "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for invalid number format")
+        void should_return_empty_for_invalid_number() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("abc123", "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for decimal number")
+        void should_return_empty_for_decimal_number() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("123.45", "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for zero")
+        void should_return_empty_for_zero() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("0", "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for negative number")
+        void should_return_empty_for_negative_number() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("-100", "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return valid Long for positive number")
+        void should_return_value_for_positive_number() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("42", "testParam");
+            assertTrue(result.isPresent());
+            assertEquals(42L, result.get());
+        }
+
+        @Test
+        @DisplayName("Should return valid Long for positive number with leading/trailing spaces")
+        void should_return_value_for_positive_number_with_spaces() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("  123  ", "testParam");
+            assertTrue(result.isPresent());
+            assertEquals(123L, result.get());
+        }
+
+        @Test
+        @DisplayName("Should return valid Long for value of 1 (edge case)")
+        void should_return_value_for_one() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("1", "testParam");
+            assertTrue(result.isPresent());
+            assertEquals(1L, result.get());
+        }
+
+        @Test
+        @DisplayName("Should return valid Long for large positive number")
+        void should_return_value_for_large_positive_number() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("9223372036854775807", "testParam");
+            assertTrue(result.isPresent());
+            assertEquals(Long.MAX_VALUE, result.get());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for number exceeding Long.MAX_VALUE")
+        void should_return_empty_for_overflow_number() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("9223372036854775808", "testParam");
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for string with special characters")
+        void should_return_empty_for_special_characters() {
+            Optional<Long> result = InputValidationUtils.parseStringToPositiveLong("12@34", "testParam");
+            assertTrue(result.isEmpty());
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // parseStringToLong Tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("parseStringToLong Tests")
+    class ParseStringToLongTests {
+
+        @Test
+        @DisplayName("Should return null for null input")
+        void should_return_null_for_null_input() {
+            Long result = InputValidationUtils.parseStringToLong(null, "actionPersistenceIdInput");
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Should return null for empty string")
+        void should_return_null_for_empty_string() {
+            Long result = InputValidationUtils.parseStringToLong("", "actionPersistenceIdInput");
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Should return null for whitespace-only string")
+        void should_return_null_for_whitespace_only() {
+            Long result = InputValidationUtils.parseStringToLong("   ", "actionPersistenceIdInput");
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Should return null for 'null' string (lowercase)")
+        void should_return_null_for_null_string_lowercase() {
+            Long result = InputValidationUtils.parseStringToLong("null", "actionPersistenceIdInput");
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Should return null for 'NULL' string (uppercase)")
+        void should_return_null_for_null_string_uppercase() {
+            Long result = InputValidationUtils.parseStringToLong("NULL", "actionPersistenceIdInput");
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Should return null for 'Null' string (mixed case)")
+        void should_return_null_for_null_string_mixed_case() {
+            Long result = InputValidationUtils.parseStringToLong("Null", "actionPersistenceIdInput");
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Should return 0L for invalid number format")
+        void should_return_zero_for_invalid_number() {
+            Long result = InputValidationUtils.parseStringToLong("abc123", "actionPersistenceIdInput");
+            assertEquals(0L, result);
+        }
+
+        @Test
+        @DisplayName("Should return 0L for decimal number")
+        void should_return_zero_for_decimal_number() {
+            Long result = InputValidationUtils.parseStringToLong("123.45", "actionPersistenceIdInput");
+            assertEquals(0L, result);
+        }
+
+        @Test
+        @DisplayName("Should return 0 for zero string")
+        void should_return_zero_for_zero_string() {
+            Long result = InputValidationUtils.parseStringToLong("0", "actionPersistenceIdInput");
+            assertEquals(0L, result);
+        }
+
+        @Test
+        @DisplayName("Should return negative value for negative number string")
+        void should_return_negative_for_negative_string() {
+            Long result = InputValidationUtils.parseStringToLong("-100", "actionPersistenceIdInput");
+            assertEquals(-100L, result);
+        }
+
+        @Test
+        @DisplayName("Should return valid Long for positive number")
+        void should_return_value_for_positive_number() {
+            Long result = InputValidationUtils.parseStringToLong("42", "actionPersistenceIdInput");
+            assertEquals(42L, result);
+        }
+
+        @Test
+        @DisplayName("Should return valid Long for positive number with leading/trailing spaces")
+        void should_return_value_for_positive_number_with_spaces() {
+            Long result = InputValidationUtils.parseStringToLong("  123  ", "actionPersistenceIdInput");
+            assertEquals(123L, result);
+        }
+
+        @Test
+        @DisplayName("Should return valid Long for value of 1")
+        void should_return_value_for_one() {
+            Long result = InputValidationUtils.parseStringToLong("1", "actionPersistenceIdInput");
+            assertEquals(1L, result);
+        }
+
+        @Test
+        @DisplayName("Should return Long.MAX_VALUE for large positive number")
+        void should_return_max_value_for_large_number() {
+            Long result = InputValidationUtils.parseStringToLong("9223372036854775807", "actionPersistenceIdInput");
+            assertEquals(Long.MAX_VALUE, result);
+        }
+
+        @Test
+        @DisplayName("Should return 0L for number exceeding Long.MAX_VALUE (overflow)")
+        void should_return_zero_for_overflow() {
+            Long result = InputValidationUtils.parseStringToLong("9223372036854775808", "actionPersistenceIdInput");
+            assertEquals(0L, result);
+        }
+
+        @Test
+        @DisplayName("Should return 0L for string with special characters")
+        void should_return_zero_for_special_characters() {
+            Long result = InputValidationUtils.parseStringToLong("12@34", "actionPersistenceIdInput");
+            assertEquals(0L, result);
+        }
+
+        @Test
+        @DisplayName("Should handle different param names correctly")
+        void should_handle_different_param_names() {
+            Long result1 = InputValidationUtils.parseStringToLong("100", "processId");
+            Long result2 = InputValidationUtils.parseStringToLong("200", "caseId");
+
+            assertEquals(100L, result1);
+            assertEquals(200L, result2);
+        }
     }
 }

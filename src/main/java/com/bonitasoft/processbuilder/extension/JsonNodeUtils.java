@@ -14,9 +14,10 @@ import java.util.stream.StreamSupport;
  * Provides methods for:
  * </p>
  * <ul>
- *   <li>Converting {@link JsonNode} instances to their corresponding Java types</li>
- *   <li>Evaluating comparison conditions between values</li>
- *   <li>Safely comparing {@link Comparable} values of potentially different types</li>
+ * <li>Converting {@link JsonNode} instances to their corresponding Java types</li>
+ * <li>Evaluating comparison conditions between values</li>
+ * <li>Safely comparing {@link Comparable} values of potentially different types</li>
+ * <li>Safely navigating JSON structures using a dot-separated path.</li>
  * </ul>
  * <p>
  * This class is designed to be non-instantiable and should only be accessed via static methods.
@@ -111,14 +112,14 @@ public final class JsonNodeUtils {
      * The conversion follows these rules:
      * </p>
      * <ul>
-     *   <li>{@code null} or {@code NullNode} returns {@code null}</li>
-     *   <li>Text nodes return {@link String}</li>
-     *   <li>Boolean nodes return {@link Boolean}</li>
-     *   <li>Integer nodes return {@link Integer}</li>
-     *   <li>Long nodes return {@link Long}</li>
-     *   <li>Double or Float nodes return {@link Double}</li>
-     *   <li>Array or Object nodes return their JSON string representation</li>
-     *   <li>Any other type returns the text representation</li>
+     * <li>{@code null} or {@code NullNode} returns {@code null}</li>
+     * <li>Text nodes return {@link String}</li>
+     * <li>Boolean nodes return {@link Boolean}</li>
+     * <li>Integer nodes return {@link Integer}</li>
+     * <li>Long nodes return {@link Long}</li>
+     * <li>Double or Float nodes return {@link Double}</li>
+     * <li>Array or Object nodes return their JSON string representation</li>
+     * <li>Any other type returns the text representation</li>
      * </ul>
      *
      * @param node the JsonNode to convert (may be null)
@@ -152,18 +153,52 @@ public final class JsonNodeUtils {
     }
 
     /**
+     * Safely retrieves the value of a field from a JSON structure using a dot-separated path.
+     * <p>
+     * This method prevents {@code NullPointerException} by safely navigating through nested objects.
+     * </p>
+     *
+     * @param rootNode the starting {@link JsonNode} (e.g., the root of the JSON structure).
+     * @param path the dot-separated path to the desired field (e.g., "subject", "recipients.type").
+     * @return the {@link JsonNode} representing the value at the specified path, or {@code null} if the path is invalid,
+     * the field does not exist, or the value is JSON null.
+     */
+    public static JsonNode getValueByPath(JsonNode rootNode, String path) {
+        if (rootNode == null || path == null || path.isBlank()) {
+            return null;
+        }
+
+        String[] pathSegments = path.split("\\.");
+        JsonNode currentNode = rootNode;
+
+        for (String segment : pathSegments) {
+            if (currentNode == null || !currentNode.isObject()) {
+                // If the current node is null or not an object, the path is invalid.
+                return null;
+            }
+
+            // .get(segment) safely returns null if the field does not exist
+            currentNode = currentNode.get(segment.trim());
+        }
+
+        // Return the final node. It might be null (if path failed) or NullNode (if value was explicit null).
+        return (currentNode == null || currentNode.isNull()) ? null : currentNode;
+    }
+
+
+    /**
      * Evaluates a condition comparing two values using the specified operator.
      * <p>
      * Supported operators (case-insensitive):
      * </p>
      * <ul>
-     *   <li>{@code equals} or {@code ==}: equality comparison</li>
-     *   <li>{@code notequals} or {@code !=}: inequality comparison</li>
-     *   <li>{@code contains}: string containment check</li>
-     *   <li>{@code greaterthan} or {@code >}: greater than comparison</li>
-     *   <li>{@code lessthan} or {@code <}: less than comparison</li>
-     *   <li>{@code greaterorequal} or {@code >=}: greater than or equal comparison</li>
-     *   <li>{@code lessorequal} or {@code <=}: less than or equal comparison</li>
+     * <li>{@code equals} or {@code ==}: equality comparison</li>
+     * <li>{@code notequals} or {@code !=}: inequality comparison</li>
+     * <li>{@code contains}: string containment check</li>
+     * <li>{@code greaterthan} or {@code >}: greater than comparison</li>
+     * <li>{@code lessthan} or {@code <}: less than comparison</li>
+     * <li>{@code greaterorequal} or {@code >=}: greater than or equal comparison</li>
+     * <li>{@code lessorequal} or {@code <=}: less than or equal comparison</li>
      * </ul>
      *
      * @param currentValue  the current value to compare (may be null)
@@ -206,15 +241,15 @@ public final class JsonNodeUtils {
      * Comparison rules:
      * </p>
      * <ul>
-     *   <li>If both values are {@link Number}, they are converted to {@link Double} for comparison</li>
-     *   <li>If both values are of the same type, they are compared directly</li>
-     *   <li>If types differ (and are not both numbers), they are compared as strings</li>
+     * <li>If both values are {@link Number}, they are converted to {@link Double} for consistent comparison</li>
+     * <li>If both values are of the same type, they are compared directly</li>
+     * <li>If types differ (and are not both numbers), they are compared as strings</li>
      * </ul>
      *
      * @param actual   the actual value to compare (must not be null)
      * @param expected the expected value to compare against (must not be null)
      * @return a negative integer, zero, or a positive integer as the actual value
-     *         is less than, equal to, or greater than the expected value
+     * is less than, equal to, or greater than the expected value
      * @throws NullPointerException if actual or expected is null
      */
     @SuppressWarnings("unchecked")
@@ -250,10 +285,10 @@ public final class JsonNodeUtils {
      * </p>
      * <pre>{@code
      * {
-     *   "stepRef": "step_identifier",
-     *   "variableName": "field_name",
-     *   "variableOperator": "equals",
-     *   "variableValue": "expected_value"
+     * "stepRef": "step_identifier",
+     * "variableName": "field_name",
+     * "variableOperator": "equals",
+     * "variableValue": "expected_value"
      * }
      * }</pre>
      * <p>
@@ -262,9 +297,9 @@ public final class JsonNodeUtils {
      *
      * @param conditionsNode    the JSON array containing condition objects (may be null or empty)
      * @param dataValueResolver a function that takes (fieldRef, stepRef) and returns the current
-     *                          data value as a String, or null if not found
+     * data value as a String, or null if not found
      * @return {@code true} if all conditions are met or if conditionsNode is null/empty,
-     *         {@code false} if any condition fails or has invalid structure
+     * {@code false} if any condition fails or has invalid structure
      */
     public static boolean evaluateAllConditions(
             JsonNode conditionsNode,
@@ -459,8 +494,8 @@ public final class JsonNodeUtils {
      * This method provides backward compatibility by checking:
      * </p>
      * <ol>
-     *   <li><b>New structure:</b> {@code parameters.name}</li>
-     *   <li><b>Old structure:</b> {@code name} (directly on the node)</li>
+     * <li><b>New structure:</b> {@code parameters.name}</li>
+     * <li><b>Old structure:</b> {@code name} (directly on the node)</li>
      * </ol>
      * <p>
      * If neither structure contains the name, returns {@value #DEFAULT_REDIRECTION_NAME}.
@@ -494,8 +529,8 @@ public final class JsonNodeUtils {
      * This method provides backward compatibility by checking:
      * </p>
      * <ol>
-     *   <li><b>New structure:</b> {@code parameters.targetStep}</li>
-     *   <li><b>Old structure:</b> {@code targetStep} (directly on the node)</li>
+     * <li><b>New structure:</b> {@code parameters.targetStep}</li>
+     * <li><b>Old structure:</b> {@code targetStep} (directly on the node)</li>
      * </ol>
      * <p>
      * If neither structure contains the target step, returns {@code null}.
