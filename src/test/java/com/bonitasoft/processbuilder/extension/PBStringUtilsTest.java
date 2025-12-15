@@ -205,4 +205,125 @@ class PBStringUtilsTest {
     void toUpperSnakeCase_should_return_empty_string() {
         assertEquals("", PBStringUtils.toUpperSnakeCase(""));
     }
+
+    // -------------------------------------------------------------------------
+    // resolveTemplateVariables Tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with null template input.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should return null for null template")
+    void resolveTemplateVariables_should_return_null_for_null_template() {
+        assertNull(PBStringUtils.resolveTemplateVariables(null, (refStep, dataName) -> "value"));
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with empty template input.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should return empty string for empty template")
+    void resolveTemplateVariables_should_return_empty_for_empty_template() {
+        assertEquals("", PBStringUtils.resolveTemplateVariables("", (refStep, dataName) -> "value"));
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with null resolver function.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should return original template when resolver is null")
+    void resolveTemplateVariables_should_return_template_when_resolver_is_null() {
+        String template = "Hello {{step1:name}}";
+        assertEquals(template, PBStringUtils.resolveTemplateVariables(template, null));
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with template containing no variables.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should return unchanged template when no variables present")
+    void resolveTemplateVariables_should_return_unchanged_when_no_variables() {
+        String template = "Hello World, this is a plain template.";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> "value");
+        assertEquals(template, result);
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with a single variable successfully resolved.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should resolve single variable successfully")
+    void resolveTemplateVariables_should_resolve_single_variable() {
+        String template = "Hello {{step1:userName}}, welcome!";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> {
+            if ("step1".equals(refStep) && "userName".equals(dataName)) {
+                return "John";
+            }
+            return null;
+        });
+        assertEquals("Hello John, welcome!", result);
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with multiple variables successfully resolved.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should resolve multiple variables successfully")
+    void resolveTemplateVariables_should_resolve_multiple_variables() {
+        String template = "User: {{step1:firstName}} {{step1:lastName}}, Role: {{step2:role}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> {
+            if ("step1".equals(refStep) && "firstName".equals(dataName)) {
+                return "Jane";
+            }
+            if ("step1".equals(refStep) && "lastName".equals(dataName)) {
+                return "Doe";
+            }
+            if ("step2".equals(refStep) && "role".equals(dataName)) {
+                return "Admin";
+            }
+            return null;
+        });
+        assertEquals("User: Jane Doe, Role: Admin", result);
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} when resolver returns null for a variable.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should use default value when resolver returns null")
+    void resolveTemplateVariables_should_use_default_when_resolver_returns_null() {
+        String template = "Value: {{step1:unknownData}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> null);
+        assertEquals("Value: VAR_NOT_RESOLVED", result);
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} when resolver throws an exception.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should use default value when resolver throws exception")
+    void resolveTemplateVariables_should_handle_resolver_exception() {
+        String template = "Value: {{step1:errorData}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> {
+            throw new RuntimeException("Simulated resolver failure");
+        });
+        assertEquals("Value: VAR_NOT_RESOLVED", result);
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with mixed resolved and unresolved variables.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should handle mixed resolved and unresolved variables")
+    void resolveTemplateVariables_should_handle_mixed_variables() {
+        String template = "Hello {{step1:name}}, your ID is {{step2:unknown}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> {
+            if ("step1".equals(refStep) && "name".equals(dataName)) {
+                return "Alice";
+            }
+            return null;
+        });
+        assertEquals("Hello Alice, your ID is VAR_NOT_RESOLVED", result);
+    }
 }

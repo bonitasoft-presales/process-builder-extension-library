@@ -1,5 +1,13 @@
 package com.bonitasoft.processbuilder.extension;
 
+import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Utility class providing common String manipulation methods, focusing on
  * normalization and case formatting.
@@ -12,6 +20,30 @@ package com.bonitasoft.processbuilder.extension;
  * @since 1.0
  */
 public final class PBStringUtils {
+
+    /**
+     * A logger for this class, used to record log messages and provide debugging information.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(PBStringUtils.class);
+
+    /** 
+     * Regex pattern to capture variables in the format {{refStep:dataName}}. 
+     */
+    private static final Pattern VARIABLE_PATTERN;
+
+    private static final String DEFAULT_REPLACEMENT = "VAR_NOT_RESOLVED";
+
+    // Static block for pattern compilation
+    static {
+        Pattern p;
+        try {
+            p = Pattern.compile("\\{\\{(\\w+):(\\w+)\\}\\}");
+        } catch (PatternSyntaxException e) {
+            LOGGER.error("Fatal Error: Could not compile template variable regex.", e);
+            p = null;
+        }
+        VARIABLE_PATTERN = p;
+    }
 
     /**
      * Private constructor to prevent instantiation of this utility class.
@@ -131,4 +163,56 @@ public final class PBStringUtils {
         return snakeCase;
     }
 
+
+    /**
+     * Resolves and replaces all variables in the format {@code {{refStep:dataName}}} within a template string.
+     * The replacement value is retrieved via a functional interface provided by the caller.
+     *
+     * @param template The string containing the variables to be resolved.
+     * @param dataValueResolver A function that takes (refStep, dataName) and returns the corresponding data value as a String.
+     * This function encapsulates the DAO lookup logic (e.g., PBDataProcessInstanceDAO.findByStepRefAndDataName).
+     * @return The template with all variables resolved, or the original template if it's null/empty.
+     */
+    public static String resolveTemplateVariables(String template, BiFunction<String, String, String> dataValueResolver) {
+        
+        if (template == null || template.isEmpty() || VARIABLE_PATTERN == null) {
+            return template;
+        }
+
+        if (dataValueResolver == null) {
+            LOGGER.error("Data value resolver function is null. Cannot resolve template variables.");
+            return template;
+        }
+
+        final Matcher matcher = VARIABLE_PATTERN.matcher(template);
+        final StringBuffer result = new StringBuffer();
+
+        while (matcher.find()) {
+            final String refStep = matcher.group(1);  // Reference Step ID
+            final String dataName = matcher.group(2); // Data Name/Field
+            String replacementValue = DEFAULT_REPLACEMENT;
+
+            try {
+                // Call the functional interface to get the data (decoupled from the DAO implementation)
+                String retrievedValue = dataValueResolver.apply(refStep, dataName);
+                
+                if (retrievedValue != null) {
+                    replacementValue = retrievedValue;
+                    LOGGER.debug("Resolved variable {{}:{}} to value: {}", refStep, dataName, replacementValue);
+                } else {
+                    LOGGER.warn("Variable not resolved: {{}:{}} - Resolver returned null.", refStep, dataName);
+                }
+                
+            } catch (Exception e) {
+                LOGGER.error("Error executing resolver for variable {{}:{}}.", refStep, dataName, e);
+            }
+            
+            // Append replacement and advance matcher position
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacementValue));
+        }
+
+        matcher.appendTail(result);
+
+        return result.toString();
+    }
 }
