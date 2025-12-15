@@ -52,7 +52,7 @@
         <commons-io.version>2.17.0</commons-io.version>
         <lombok.version>1.18.42</lombok.version>
 
-        <openapi-generator-maven-plugin.version>7.2.0</openapi-generator-maven-plugin.version> 
+        <openapi-generator-maven-plugin.version>7.10.0</openapi-generator-maven-plugin.version> 
     </properties>
 
     <dependencyManagement>
@@ -377,7 +377,7 @@
                         </goals>
                         <configuration>
                             <generatorName>html</generatorName> 
-                            <inputSpec>${project.basedir}/src/main/resources/schemas/openapi.yaml</inputSpec>
+                            <inputSpec>src/main/resources/schemas/openapi.yaml</inputSpec>
                             <output>${project.build.directory}/site/schema-doc</output>
                             
                             <generateApis>false</generateApis>
