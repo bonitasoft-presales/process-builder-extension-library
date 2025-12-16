@@ -551,6 +551,156 @@ class JsonNodeUtilsTest {
     }
 
     // -------------------------------------------------------------------------
+    // getTextValueByPath (JsonNode overload) Tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("getTextValueByPath (JsonNode) Tests")
+    class GetTextValueByPathFromJsonNodeTests {
+
+        private final JsonNode root = createTestStructure();
+
+        @Test
+        @DisplayName("Should return null for null root node")
+        void should_return_null_for_null_root() {
+            assertNull(JsonNodeUtils.getTextValueByPath((JsonNode) null, "subject"));
+        }
+
+        @Test
+        @DisplayName("Should return null for null path")
+        void should_return_null_for_null_path() {
+            assertNull(JsonNodeUtils.getTextValueByPath(root, null));
+        }
+
+        @Test
+        @DisplayName("Should return null for blank path")
+        void should_return_null_for_blank_path() {
+            assertNull(JsonNodeUtils.getTextValueByPath(root, "  "));
+        }
+
+        @Test
+        @DisplayName("Should return text value without quotes for string field")
+        void should_return_text_value_without_quotes() {
+            String result = JsonNodeUtils.getTextValueByPath(root, "subject");
+            assertEquals("Test Subject", result);
+        }
+
+        @Test
+        @DisplayName("Should return text representation of number field")
+        void should_return_text_for_number_field() {
+            String result = JsonNodeUtils.getTextValueByPath(root, "count");
+            assertEquals("10", result);
+        }
+
+        @Test
+        @DisplayName("Should return text value for nested field")
+        void should_return_text_for_nested_field() {
+            String result = JsonNodeUtils.getTextValueByPath(root, "recipients.type");
+            assertEquals("step_users", result);
+        }
+
+        @Test
+        @DisplayName("Should return text value for deep nested field")
+        void should_return_text_for_deep_nested_field() {
+            String result = JsonNodeUtils.getTextValueByPath(root, "recipients.nestedObject.deepValue");
+            assertEquals("999", result);
+        }
+
+        @Test
+        @DisplayName("Should return null for non-existent field")
+        void should_return_null_for_non_existent_field() {
+            assertNull(JsonNodeUtils.getTextValueByPath(root, "nonExistent"));
+        }
+
+        @Test
+        @DisplayName("Should return null for JSON null field")
+        void should_return_null_for_json_null_field() {
+            assertNull(JsonNodeUtils.getTextValueByPath(root, "nullField"));
+        }
+
+        @Test
+        @DisplayName("Should return null for invalid intermediate path")
+        void should_return_null_for_invalid_intermediate_path() {
+            assertNull(JsonNodeUtils.getTextValueByPath(root, "subject.invalid"));
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // getTextValueByPath (String overload) Tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("getTextValueByPath (String) Tests")
+    class GetTextValueByPathFromStringJsonTests {
+
+        private static final String VALID_JSON = "{\"name\": \"John\", \"address\": {\"city\": \"Madrid\", \"zip\": 28001}, \"active\": true}";
+
+        @Test
+        @DisplayName("Should return null for null JSON string")
+        void should_return_null_for_null_json_string() {
+            assertNull(JsonNodeUtils.getTextValueByPath((String) null, "name"));
+        }
+
+        @Test
+        @DisplayName("Should return null for empty JSON string")
+        void should_return_null_for_empty_json_string() {
+            assertNull(JsonNodeUtils.getTextValueByPath("", "name"));
+        }
+
+        @Test
+        @DisplayName("Should return null for invalid JSON string")
+        void should_return_null_for_invalid_json_string() {
+            assertNull(JsonNodeUtils.getTextValueByPath("not valid json", "name"));
+        }
+
+        @Test
+        @DisplayName("Should return null for null path")
+        void should_return_null_for_null_path() {
+            assertNull(JsonNodeUtils.getTextValueByPath(VALID_JSON, null));
+        }
+
+        @Test
+        @DisplayName("Should return text value without quotes for top-level field")
+        void should_return_text_value_without_quotes() {
+            String result = JsonNodeUtils.getTextValueByPath(VALID_JSON, "name");
+            assertEquals("John", result);
+        }
+
+        @Test
+        @DisplayName("Should return text value for nested string field")
+        void should_return_text_for_nested_string_field() {
+            String result = JsonNodeUtils.getTextValueByPath(VALID_JSON, "address.city");
+            assertEquals("Madrid", result);
+        }
+
+        @Test
+        @DisplayName("Should return text representation of nested number field")
+        void should_return_text_for_nested_number_field() {
+            String result = JsonNodeUtils.getTextValueByPath(VALID_JSON, "address.zip");
+            assertEquals("28001", result);
+        }
+
+        @Test
+        @DisplayName("Should return text representation of boolean field")
+        void should_return_text_for_boolean_field() {
+            String result = JsonNodeUtils.getTextValueByPath(VALID_JSON, "active");
+            assertEquals("true", result);
+        }
+
+        @Test
+        @DisplayName("Should return null for non-existent field")
+        void should_return_null_for_non_existent_field() {
+            assertNull(JsonNodeUtils.getTextValueByPath(VALID_JSON, "nonExistent"));
+        }
+
+        @Test
+        @DisplayName("Should return null for non-existent nested path")
+        void should_return_null_for_non_existent_nested_path() {
+            assertNull(JsonNodeUtils.getTextValueByPath(VALID_JSON, "address.country"));
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // evaluateCondition Tests (Existing tests are kept)
     // -------------------------------------------------------------------------
 

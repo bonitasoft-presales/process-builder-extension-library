@@ -208,6 +208,55 @@ public final class JsonNodeUtils {
     }
 
     /**
+     * Retrieves the text value at the specified path from a {@link JsonNode}.
+     * <p>
+     * This is a convenience method that navigates to the specified path and returns the value
+     * as a plain {@link String} (without JSON quotes). Unlike {@link #getValueByPath(JsonNode, String)}
+     * which returns a {@link JsonNode}, this method directly returns the text representation.
+     * </p>
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * JsonNode root = objectMapper.readTree("{\"user\": {\"name\": \"John\"}}");
+     * String name = JsonNodeUtils.getTextValueByPath(root, "user.name");
+     * // Returns: "John" (without quotes)
+     * }</pre>
+     *
+     * @param rootNode the starting {@link JsonNode} (e.g., the root of the JSON structure).
+     * @param path     the dot-separated path to the desired field (e.g., "user.name", "address.city").
+     * @return the text value at the specified path, or {@code null} if the path is invalid,
+     *         the field does not exist, or the value is JSON null.
+     */
+    public static String getTextValueByPath(JsonNode rootNode, String path) {
+        JsonNode node = getValueByPath(rootNode, path);
+        return (node != null) ? node.asText() : null;
+    }
+
+    /**
+     * Retrieves the text value at the specified path from a JSON string.
+     * <p>
+     * This is a convenience method that first parses the JSON string, navigates to the specified path,
+     * and returns the value as a plain {@link String} (without JSON quotes).
+     * </p>
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>{@code
+     * String json = "{\"address\": {\"city\": \"Madrid\", \"zip\": \"28001\"}}";
+     * String city = JsonNodeUtils.getTextValueByPath(json, "address.city");
+     * // Returns: "Madrid" (without quotes)
+     * }</pre>
+     *
+     * @param jsonString the JSON string to parse (e.g., "{\"name\": \"John\"}").
+     * @param path       the dot-separated path to the desired field (e.g., "address.city").
+     * @return the text value at the specified path, or {@code null} if the JSON is invalid,
+     *         the path is invalid, the field does not exist, or the value is JSON null.
+     */
+    public static String getTextValueByPath(String jsonString, String path) {
+        JsonNode node = getValueByPath(jsonString, path);
+        return (node != null) ? node.asText() : null;
+    }
+
+    /**
      * Converts a JSON string to a {@link JsonNode}.
      * <p>
      * This method safely parses a JSON string and returns the corresponding {@link JsonNode}.
