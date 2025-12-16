@@ -264,7 +264,7 @@ class JsonNodeUtilsTest {
         @Test
         @DisplayName("Should return null for null root node")
         void should_return_null_for_null_root() {
-            assertNull(JsonNodeUtils.getValueByPath(null, "subject"));
+            assertNull(JsonNodeUtils.getValueByPath((JsonNode) null, "subject"));
         }
 
         @Test
@@ -369,6 +369,184 @@ class JsonNodeUtilsTest {
             JsonNode result = JsonNodeUtils.getValueByPath(root, "dataArray");
             assertNotNull(result);
             assertTrue(result.isArray());
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // convertStringToJsonNode Tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("convertStringToJsonNode Tests")
+    class ConvertStringToJsonNodeTests {
+
+        @Test
+        @DisplayName("Should return null for null input")
+        void should_return_null_for_null_input() {
+            assertNull(JsonNodeUtils.convertStringToJsonNode(null));
+        }
+
+        @Test
+        @DisplayName("Should return null for empty string")
+        void should_return_null_for_empty_string() {
+            assertNull(JsonNodeUtils.convertStringToJsonNode(""));
+        }
+
+        @Test
+        @DisplayName("Should return null for blank string")
+        void should_return_null_for_blank_string() {
+            assertNull(JsonNodeUtils.convertStringToJsonNode("   "));
+        }
+
+        @Test
+        @DisplayName("Should return null for invalid JSON")
+        void should_return_null_for_invalid_json() {
+            assertNull(JsonNodeUtils.convertStringToJsonNode("not valid json"));
+        }
+
+        @Test
+        @DisplayName("Should return null for malformed JSON")
+        void should_return_null_for_malformed_json() {
+            assertNull(JsonNodeUtils.convertStringToJsonNode("{name: missing quotes}"));
+        }
+
+        @Test
+        @DisplayName("Should parse valid JSON object")
+        void should_parse_valid_json_object() {
+            String json = "{\"name\": \"John\", \"age\": 30}";
+            JsonNode result = JsonNodeUtils.convertStringToJsonNode(json);
+
+            assertNotNull(result);
+            assertTrue(result.isObject());
+            assertEquals("John", result.get("name").asText());
+            assertEquals(30, result.get("age").asInt());
+        }
+
+        @Test
+        @DisplayName("Should parse valid JSON array")
+        void should_parse_valid_json_array() {
+            String json = "[\"a\", \"b\", \"c\"]";
+            JsonNode result = JsonNodeUtils.convertStringToJsonNode(json);
+
+            assertNotNull(result);
+            assertTrue(result.isArray());
+            assertEquals(3, result.size());
+        }
+
+        @Test
+        @DisplayName("Should parse nested JSON structure")
+        void should_parse_nested_json_structure() {
+            String json = "{\"user\": {\"address\": {\"city\": \"Madrid\"}}}";
+            JsonNode result = JsonNodeUtils.convertStringToJsonNode(json);
+
+            assertNotNull(result);
+            assertTrue(result.isObject());
+            assertEquals("Madrid", result.get("user").get("address").get("city").asText());
+        }
+
+        @Test
+        @DisplayName("Should parse JSON with different value types")
+        void should_parse_json_with_different_value_types() {
+            String json = "{\"string\": \"text\", \"number\": 42, \"boolean\": true, \"nullValue\": null}";
+            JsonNode result = JsonNodeUtils.convertStringToJsonNode(json);
+
+            assertNotNull(result);
+            assertTrue(result.get("string").isTextual());
+            assertTrue(result.get("number").isInt());
+            assertTrue(result.get("boolean").isBoolean());
+            assertTrue(result.get("nullValue").isNull());
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // getValueByPath (String overload) Tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("getValueByPath (String overload) Tests")
+    class GetValueByPathFromStringTests {
+
+        private static final String VALID_JSON = "{\"name\": \"John\", \"address\": {\"city\": \"Madrid\", \"zip\": 28001}}";
+
+        @Test
+        @DisplayName("Should return null for null JSON string")
+        void should_return_null_for_null_json_string() {
+            assertNull(JsonNodeUtils.getValueByPath((String) null, "name"));
+        }
+
+        @Test
+        @DisplayName("Should return null for empty JSON string")
+        void should_return_null_for_empty_json_string() {
+            assertNull(JsonNodeUtils.getValueByPath("", "name"));
+        }
+
+        @Test
+        @DisplayName("Should return null for invalid JSON string")
+        void should_return_null_for_invalid_json_string() {
+            assertNull(JsonNodeUtils.getValueByPath("not valid json", "name"));
+        }
+
+        @Test
+        @DisplayName("Should return null for null path")
+        void should_return_null_for_null_path() {
+            assertNull(JsonNodeUtils.getValueByPath(VALID_JSON, null));
+        }
+
+        @Test
+        @DisplayName("Should return null for blank path")
+        void should_return_null_for_blank_path() {
+            assertNull(JsonNodeUtils.getValueByPath(VALID_JSON, "  "));
+        }
+
+        @Test
+        @DisplayName("Should return value for top-level field")
+        void should_return_value_for_top_level_field() {
+            JsonNode result = JsonNodeUtils.getValueByPath(VALID_JSON, "name");
+
+            assertNotNull(result);
+            assertEquals("John", result.asText());
+        }
+
+        @Test
+        @DisplayName("Should return value for nested field")
+        void should_return_value_for_nested_field() {
+            JsonNode result = JsonNodeUtils.getValueByPath(VALID_JSON, "address.city");
+
+            assertNotNull(result);
+            assertEquals("Madrid", result.asText());
+        }
+
+        @Test
+        @DisplayName("Should return number value for nested numeric field")
+        void should_return_number_for_nested_numeric_field() {
+            JsonNode result = JsonNodeUtils.getValueByPath(VALID_JSON, "address.zip");
+
+            assertNotNull(result);
+            assertTrue(result.isInt());
+            assertEquals(28001, result.asInt());
+        }
+
+        @Test
+        @DisplayName("Should return null for non-existent field")
+        void should_return_null_for_non_existent_field() {
+            assertNull(JsonNodeUtils.getValueByPath(VALID_JSON, "nonExistent"));
+        }
+
+        @Test
+        @DisplayName("Should return null for non-existent nested path")
+        void should_return_null_for_non_existent_nested_path() {
+            assertNull(JsonNodeUtils.getValueByPath(VALID_JSON, "address.country"));
+        }
+
+        @Test
+        @DisplayName("Should return object node for object path")
+        void should_return_object_node_for_object_path() {
+            JsonNode result = JsonNodeUtils.getValueByPath(VALID_JSON, "address");
+
+            assertNotNull(result);
+            assertTrue(result.isObject());
+            assertTrue(result.has("city"));
+            assertTrue(result.has("zip"));
         }
     }
 

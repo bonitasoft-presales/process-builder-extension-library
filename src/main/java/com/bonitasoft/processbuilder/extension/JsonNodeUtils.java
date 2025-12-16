@@ -1,6 +1,8 @@
 package com.bonitasoft.processbuilder.extension;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -185,6 +187,52 @@ public final class JsonNodeUtils {
         return (currentNode == null || currentNode.isNull()) ? null : currentNode;
     }
 
+    /**
+     * Safely retrieves the value of a field from a JSON string using a dot-separated path.
+     * <p>
+     * This is a convenience method that first converts the JSON string to a {@link JsonNode}
+     * and then navigates to the specified path.
+     * </p>
+     *
+     * @param jsonString the JSON string to parse (e.g., "{\"name\": \"John\", \"address\": {\"city\": \"Madrid\"}}").
+     * @param path       the dot-separated path to the desired field (e.g., "address.city").
+     * @return the {@link JsonNode} representing the value at the specified path, or {@code null} if the JSON
+     *         is invalid, the path is invalid, the field does not exist, or the value is JSON null.
+     */
+    public static JsonNode getValueByPath(String jsonString, String path) {
+        JsonNode rootNode = convertStringToJsonNode(jsonString);
+        if (rootNode == null) {
+            return null;
+        }
+        return getValueByPath(rootNode, path);
+    }
+
+    /**
+     * Converts a JSON string to a {@link JsonNode}.
+     * <p>
+     * This method safely parses a JSON string and returns the corresponding {@link JsonNode}.
+     * If the input is null, empty, or not valid JSON, it returns {@code null} and logs the error.
+     * </p>
+     *
+     * @param jsonString the JSON string to parse (may be null or empty).
+     * @return the parsed {@link JsonNode}, or {@code null} if the input is null, empty, or invalid JSON.
+     */
+    public static JsonNode convertStringToJsonNode(String jsonString) {
+        if (jsonString == null || jsonString.isBlank()) {
+            LOGGER.debug("JSON string is null or blank. Returning null.");
+            return null;
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            JsonNode jsonNode = objectMapper.readTree(jsonString);
+            LOGGER.debug("Successfully parsed JSON string. Node type: {}", jsonNode.getNodeType());
+            return jsonNode;
+        } catch (JsonProcessingException e) {
+            LOGGER.error("Error parsing JSON string: {}", e.getMessage());
+            return null;
+        }
+    }
 
     /**
      * Evaluates a condition comparing two values using the specified operator.
