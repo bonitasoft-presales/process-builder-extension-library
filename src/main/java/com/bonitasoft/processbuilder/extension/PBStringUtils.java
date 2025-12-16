@@ -194,8 +194,10 @@ public final class PBStringUtils {
 
             try {
                 // Call the functional interface to get the data (decoupled from the DAO implementation)
+                LOGGER.info("DataValueResolver applay {}:{} ", refStep, dataName);
                 String retrievedValue = dataValueResolver.apply(refStep, dataName);
-                
+                LOGGER.info("Resolved variable {}:{} to value: {}", refStep, dataName, replacementValue != null ? retrievedValue : "null");
+
                 if (retrievedValue != null) {
                     replacementValue = retrievedValue;
                     LOGGER.debug("Resolved variable {{}:{}} to value: {}", refStep, dataName, replacementValue);
