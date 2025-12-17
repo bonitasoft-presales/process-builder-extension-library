@@ -23,12 +23,12 @@ class ActionParameterTypeTest {
     // -------------------------------------------------------------------------
 
     /**
-     * Tests that the enum contains exactly seven constants.
+     * Tests that the enum contains exactly ten constants.
      */
     @Test
-    @DisplayName("Should contain exactly seven action parameter constants")
-    void should_contain_seven_constants() {
-        assertEquals(7, ActionParameterType.values().length);
+    @DisplayName("Should contain exactly ten action parameter constants")
+    void should_contain_ten_constants() {
+        assertEquals(10, ActionParameterType.values().length);
     }
 
     // -------------------------------------------------------------------------
@@ -96,6 +96,33 @@ class ActionParameterTypeTest {
     @DisplayName("SUBJECT constant should be defined")
     void should_define_SUBJECT_constant() {
         assertEquals("SUBJECT", ActionParameterType.SUBJECT.name());
+    }
+
+    /**
+     * Tests the existence and name of the RECIPIENTS_SPECIFIC_EMAILS constant.
+     */
+    @Test
+    @DisplayName("RECIPIENTS_SPECIFIC_EMAILS constant should be defined")
+    void should_define_RECIPIENTS_SPECIFIC_EMAILS_constant() {
+        assertEquals("RECIPIENTS_SPECIFIC_EMAILS", ActionParameterType.RECIPIENTS_SPECIFIC_EMAILS.name());
+    }
+
+    /**
+     * Tests the existence and name of the RECIPIENTS_USER_IDS constant.
+     */
+    @Test
+    @DisplayName("RECIPIENTS_USER_IDS constant should be defined")
+    void should_define_RECIPIENTS_USER_IDS_constant() {
+        assertEquals("RECIPIENTS_USER_IDS", ActionParameterType.RECIPIENTS_USER_IDS.name());
+    }
+
+    /**
+     * Tests the existence and name of the RECIPIENTS_MEMBERSHIP_IDS constant.
+     */
+    @Test
+    @DisplayName("RECIPIENTS_MEMBERSHIP_IDS constant should be defined")
+    void should_define_RECIPIENTS_MEMBERSHIP_IDS_constant() {
+        assertEquals("RECIPIENTS_MEMBERSHIP_IDS", ActionParameterType.RECIPIENTS_MEMBERSHIP_IDS.name());
     }
 
     // -------------------------------------------------------------------------
@@ -170,6 +197,36 @@ class ActionParameterTypeTest {
     void subject_should_have_correct_key_and_description() {
         assertEquals("subject", ActionParameterType.SUBJECT.getKey());
         assertTrue(ActionParameterType.SUBJECT.getDescription().contains("subject"));
+    }
+
+    /**
+     * Tests the key and description of the RECIPIENTS_SPECIFIC_EMAILS constant.
+     */
+    @Test
+    @DisplayName("RECIPIENTS_SPECIFIC_EMAILS should have correct key and description")
+    void recipientsSpecificEmails_should_have_correct_key_and_description() {
+        assertEquals("recipients.specificEmails", ActionParameterType.RECIPIENTS_SPECIFIC_EMAILS.getKey());
+        assertTrue(ActionParameterType.RECIPIENTS_SPECIFIC_EMAILS.getDescription().contains("email"));
+    }
+
+    /**
+     * Tests the key and description of the RECIPIENTS_USER_IDS constant.
+     */
+    @Test
+    @DisplayName("RECIPIENTS_USER_IDS should have correct key and description")
+    void recipientsUserIds_should_have_correct_key_and_description() {
+        assertEquals("recipients.userIds", ActionParameterType.RECIPIENTS_USER_IDS.getKey());
+        assertTrue(ActionParameterType.RECIPIENTS_USER_IDS.getDescription().contains("user"));
+    }
+
+    /**
+     * Tests the key and description of the RECIPIENTS_MEMBERSHIP_IDS constant.
+     */
+    @Test
+    @DisplayName("RECIPIENTS_MEMBERSHIP_IDS should have correct key and description")
+    void recipientsMembershipIds_should_have_correct_key_and_description() {
+        assertEquals("recipients.membershipIds", ActionParameterType.RECIPIENTS_MEMBERSHIP_IDS.getKey());
+        assertTrue(ActionParameterType.RECIPIENTS_MEMBERSHIP_IDS.getDescription().contains("membership"));
     }
 
     // -------------------------------------------------------------------------
@@ -260,13 +317,13 @@ class ActionParameterTypeTest {
     // -------------------------------------------------------------------------
 
     /**
-     * Tests that getAllData returns a map with all seven constants.
+     * Tests that getAllData returns a map with all ten constants.
      */
     @Test
-    @DisplayName("getAllData should return map with all seven constants")
+    @DisplayName("getAllData should return map with all ten constants")
     void getAllData_shouldReturnCorrectMap() {
         Map<String, String> data = ActionParameterType.getAllData();
-        assertEquals(7, data.size());
+        assertEquals(10, data.size());
         assertTrue(data.containsKey("name"));
         assertTrue(data.containsKey("targetStep"));
         assertTrue(data.containsKey("recipients"));
@@ -274,6 +331,9 @@ class ActionParameterTypeTest {
         assertTrue(data.containsKey("recipients.stepId"));
         assertTrue(data.containsKey("message"));
         assertTrue(data.containsKey("subject"));
+        assertTrue(data.containsKey("recipients.specificEmails"));
+        assertTrue(data.containsKey("recipients.userIds"));
+        assertTrue(data.containsKey("recipients.membershipIds"));
     }
 
     /**
@@ -292,13 +352,13 @@ class ActionParameterTypeTest {
     // -------------------------------------------------------------------------
 
     /**
-     * Tests that getAllKeysList returns a list with all seven keys.
+     * Tests that getAllKeysList returns a list with all ten keys.
      */
     @Test
-    @DisplayName("getAllKeysList should return list with all seven keys")
+    @DisplayName("getAllKeysList should return list with all ten keys")
     void getAllKeysList_shouldReturnCorrectList() {
         List<String> keys = ActionParameterType.getAllKeysList();
-        assertEquals(7, keys.size());
+        assertEquals(10, keys.size());
         assertTrue(keys.contains("name"));
         assertTrue(keys.contains("targetStep"));
         assertTrue(keys.contains("recipients"));
@@ -306,6 +366,9 @@ class ActionParameterTypeTest {
         assertTrue(keys.contains("recipients.stepId"));
         assertTrue(keys.contains("message"));
         assertTrue(keys.contains("subject"));
+        assertTrue(keys.contains("recipients.specificEmails"));
+        assertTrue(keys.contains("recipients.userIds"));
+        assertTrue(keys.contains("recipients.membershipIds"));
     }
 
     /**

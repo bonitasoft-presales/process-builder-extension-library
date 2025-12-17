@@ -50,7 +50,22 @@ public enum ActionParameterType {
     /**
      * The subject line for email notification actions.
      */
-    SUBJECT("subject", "The subject line for email notifications. Supports template variables.");
+    SUBJECT("subject", "The subject line for email notifications. Supports template variables."),
+
+    /**
+     * The list of specific email addresses for notification recipients.
+     */
+    RECIPIENTS_SPECIFIC_EMAILS("recipients.specificEmails", "The list of specific email addresses for direct notification delivery."),
+
+    /**
+     * The list of user identifiers for notification recipients.
+     */
+    RECIPIENTS_USER_IDS("recipients.userIds", "The list of user identifiers to resolve as notification recipients."),
+
+    /**
+     * The list of membership identifiers for notification recipients.
+     */
+    RECIPIENTS_MEMBERSHIP_IDS("recipients.membershipIds", "The list of membership identifiers (group/role combinations) to resolve as notification recipients.");
 
     private final String key;
     private final String description;
