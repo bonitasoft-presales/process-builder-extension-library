@@ -111,7 +111,7 @@ public enum RecipientsType {
             return null;
         }
         String trimmedKey = key.trim();
-        return Arrays.stream(RecipientsType.values())
+        return Arrays.stream(values())
             .filter(type -> type.getKey().equalsIgnoreCase(trimmedKey))
             .findFirst()
             .orElse(null);
@@ -125,7 +125,7 @@ public enum RecipientsType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> data =
-            Arrays.stream(RecipientsType.values())
+            Arrays.stream(values())
                 .collect(Collectors.toMap(
                     RecipientsType::getKey,
                     RecipientsType::getDescription,
@@ -142,7 +142,7 @@ public enum RecipientsType {
      * @return An unmodifiable list containing all recipient type keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(RecipientsType.values())
+        return Arrays.stream(values())
             .map(RecipientsType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

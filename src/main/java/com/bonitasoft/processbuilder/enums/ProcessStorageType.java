@@ -89,7 +89,7 @@ public enum ProcessStorageType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(ProcessStorageType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 ProcessStorageType::getKey, 
                 ProcessStorageType::getDescription, 
@@ -105,7 +105,7 @@ public enum ProcessStorageType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(ProcessStorageType.values())
+        return Arrays.stream(values())
             .map(ProcessStorageType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

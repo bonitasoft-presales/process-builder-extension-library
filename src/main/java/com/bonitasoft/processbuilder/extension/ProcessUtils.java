@@ -130,7 +130,9 @@ public final class ProcessUtils {
             if (executedByUserId <= 0) {
                 LOGGER.debug("Task instance ID {} was not executed by a human user (executedBy ID: {}).",
                             activityInstanceId, executedByUserId);
-                return new UserRecord(executedByUserId, "system_or_unassigned", "System or Unassigned", "system_or_unassigned", "system_or_unassigned", "system_or_unassigned");
+                return new UserRecord(
+                        executedByUserId, "system_or_unassigned", "System or Unassigned",
+                        "system_or_unassigned", "system_or_unassigned", "system_or_unassigned");
             }
 
             IdentityAPI identityAPI = apiAccessor.getIdentityAPI();
@@ -501,7 +503,6 @@ public final class ProcessUtils {
     public List<Long> getUserIdsInProfile(APIAccessor apiAccessor, String profileName) {
         try {
             List<Long> userIds = new ArrayList<>();
-            List<ProfileMember> profileMemberList = new ArrayList<>();
 
             ProfileAPI profileAPI = apiAccessor.getProfileAPI();
             IdentityAPI identityAPI = apiAccessor.getIdentityAPI();
@@ -516,12 +517,9 @@ public final class ProcessUtils {
             Profile administratorProfile = profileList.get(0);
 
             searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
-            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID,administratorProfile.getId());
-            SearchResult<ProfileMember> searchResultProfileMember = profileAPI.searchProfileMembers(MemberType.USER.name(), searchBuilder.done());
-
-            if (!searchResultProfileMember.getResult().isEmpty()) {
-                profileMemberList.addAll(searchResultProfileMember.getResult());
-            }
+            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID, administratorProfile.getId());
+            SearchResult<ProfileMember> searchResultProfileMember =
+                    profileAPI.searchProfileMembers(MemberType.USER.name(), searchBuilder.done());
 
             for (ProfileMember profileMember : searchResultProfileMember.getResult()) {
                 if (profileMember.getUserId() > 0) {
@@ -530,43 +528,35 @@ public final class ProcessUtils {
             }
 
             searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
-            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID,administratorProfile.getId());
-            searchResultProfileMember = profileAPI.searchProfileMembers(MemberType.ROLE.name(), searchBuilder.done());
-
-            if (!searchResultProfileMember.getResult().isEmpty()) {
-                profileMemberList.addAll(searchResultProfileMember.getResult());
-            }
+            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID, administratorProfile.getId());
+            searchResultProfileMember =
+                    profileAPI.searchProfileMembers(MemberType.ROLE.name(), searchBuilder.done());
 
             for (ProfileMember profileMember : searchResultProfileMember.getResult()) {
                 if (profileMember.getRoleId() > 0) {
-                    List<User> roleUsers = identityAPI.getActiveUsersInRole(profileMember.getRoleId(), 0,Integer.MAX_VALUE, UserCriterion.USER_NAME_ASC);
+                    List<User> roleUsers = identityAPI.getActiveUsersInRole(
+                            profileMember.getRoleId(), 0, Integer.MAX_VALUE, UserCriterion.USER_NAME_ASC);
                     userIds.addAll(UserMapper.toLongIds(roleUsers));
-
                 }
             }
 
             searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
-            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID,administratorProfile.getId());
-            searchResultProfileMember = profileAPI.searchProfileMembers(MemberType.GROUP.name(), searchBuilder.done());
-
-            if (!searchResultProfileMember.getResult().isEmpty()) {
-                profileMemberList.addAll(searchResultProfileMember.getResult());
-            }
+            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID, administratorProfile.getId());
+            searchResultProfileMember =
+                    profileAPI.searchProfileMembers(MemberType.GROUP.name(), searchBuilder.done());
 
             for (ProfileMember profileMember : searchResultProfileMember.getResult()) {
                 if (profileMember.getGroupId() > 0) {
-                    List<User> groupUsers = identityAPI.getActiveUsersInGroup(profileMember.getGroupId(), 0, Integer.MAX_VALUE, UserCriterion.USER_NAME_ASC);
+                    List<User> groupUsers = identityAPI.getActiveUsersInGroup(
+                            profileMember.getGroupId(), 0, Integer.MAX_VALUE, UserCriterion.USER_NAME_ASC);
                     userIds.addAll(UserMapper.toLongIds(groupUsers));
                 }
             }
 
             searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
-            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID,administratorProfile.getId());
-            searchResultProfileMember = profileAPI.searchProfileMembers(MemberType.MEMBERSHIP.name(), searchBuilder.done());
-
-            if (!searchResultProfileMember.getResult().isEmpty()) {
-                profileMemberList.addAll(searchResultProfileMember.getResult());
-            }
+            searchBuilder.filter(ProfileMemberSearchDescriptor.PROFILE_ID, administratorProfile.getId());
+            searchResultProfileMember =
+                    profileAPI.searchProfileMembers(MemberType.MEMBERSHIP.name(), searchBuilder.done());
 
             for (ProfileMember profileMember : searchResultProfileMember.getResult()) {
                 if (profileMember.getGroupId() > 0 && profileMember.getRoleId() > 0) {

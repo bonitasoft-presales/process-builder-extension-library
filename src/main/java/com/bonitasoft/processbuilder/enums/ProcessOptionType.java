@@ -120,7 +120,7 @@ public enum ProcessOptionType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(ProcessOptionType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 ProcessOptionType::getKey, 
                 ProcessOptionType::getDescription, 
@@ -136,7 +136,7 @@ public enum ProcessOptionType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(ProcessOptionType.values())
+        return Arrays.stream(values())
             .map(ProcessOptionType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

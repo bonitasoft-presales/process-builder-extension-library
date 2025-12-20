@@ -80,7 +80,7 @@ public enum ExecutionConnectorType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> data =
-            Arrays.stream(ExecutionConnectorType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 ExecutionConnectorType::getKey,
                 ExecutionConnectorType::getDescription,
@@ -96,7 +96,7 @@ public enum ExecutionConnectorType {
      * @return A list containing all attribute keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(ExecutionConnectorType.values())
+        return Arrays.stream(values())
             .map(ExecutionConnectorType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

@@ -13,7 +13,7 @@ import java.util.Optional;
  * NOTE: This utility assumes the calling class has an accessible 'getInputParameter(String name)' method.
  * </p>
  */
-public class InputValidationUtils {
+public final class InputValidationUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InputValidationUtils.class);
 
@@ -161,7 +161,9 @@ public class InputValidationUtils {
      * @param inputGetter A functional interface (Supplier) to retrieve the input parameter value.
      * @throws ConnectorValidationException if the parameter is not a positive Integer.
      */
-    public static void checkPositiveIntegerInput(final String inputName, final java.util.function.Supplier<Object> inputGetter) throws ConnectorValidationException {
+    public static void checkPositiveIntegerInput(
+            final String inputName,
+            final java.util.function.Supplier<Object> inputGetter) throws ConnectorValidationException {
         try {
             Integer value = (Integer) inputGetter.get();
             checkPositiveNumber(inputName, value, "integer");
@@ -176,7 +178,9 @@ public class InputValidationUtils {
      * @param inputGetter A functional interface (Supplier) to retrieve the input parameter value.
      * @throws ConnectorValidationException if the parameter is not a positive Long.
      */
-    public static void checkPositiveLongInput(final String inputName, final java.util.function.Supplier<Object> inputGetter) throws ConnectorValidationException {
+    public static void checkPositiveLongInput(
+            final String inputName,
+            final java.util.function.Supplier<Object> inputGetter) throws ConnectorValidationException {
         try {
             Long value = (Long) inputGetter.get();
             checkPositiveNumber(inputName, value, "long");

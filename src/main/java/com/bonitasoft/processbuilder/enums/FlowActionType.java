@@ -86,7 +86,7 @@ public enum FlowActionType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(FlowActionType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 FlowActionType::getKey, 
                 FlowActionType::getDescription, 
@@ -102,7 +102,7 @@ public enum FlowActionType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(FlowActionType.values())
+        return Arrays.stream(values())
             .map(FlowActionType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

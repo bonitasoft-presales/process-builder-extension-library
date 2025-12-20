@@ -90,7 +90,7 @@ public enum CriticalityType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(CriticalityType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 CriticalityType::getKey, 
                 CriticalityType::getDescription, 
@@ -106,7 +106,7 @@ public enum CriticalityType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(CriticalityType.values())
+        return Arrays.stream(values())
             .map(CriticalityType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

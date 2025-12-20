@@ -118,7 +118,7 @@ public enum ObjectsManagementOptionType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(ObjectsManagementOptionType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 ObjectsManagementOptionType::getKey, 
                 ObjectsManagementOptionType::getDescription, 
@@ -134,7 +134,7 @@ public enum ObjectsManagementOptionType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(ObjectsManagementOptionType.values())
+        return Arrays.stream(values())
             .map(ObjectsManagementOptionType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

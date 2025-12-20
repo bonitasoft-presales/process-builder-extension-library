@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
  * A utility class for handling logging and exception throwing.
  * This class centralizes error management to ensure consistency.
  */
-public class ExceptionUtils {
+public final class ExceptionUtils {
 
     /**
      * A logger for this class, used to record log messages and provide debugging information.
@@ -138,7 +138,8 @@ public class ExceptionUtils {
             
         } catch (NoSuchMethodException e) {
             // This occurs if the class T does not have the required String constructor.
-            LOGGER.error("Fatal Error: Exception class '{}' does not have a public constructor that accepts a single String message.", exceptionClass.getName(), e);
+            LOGGER.error("Fatal Error: Exception class '{}' does not have a public constructor "
+                    + "that accepts a single String message.", exceptionClass.getName(), e);
             throw new RuntimeException("Error during exception construction for class: " + exceptionClass.getName(), e);
         } catch (Exception e) {
             // Catches other reflection-related issues (IllegalAccessException, InvocationTargetException, etc.)

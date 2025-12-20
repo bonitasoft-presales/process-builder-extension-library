@@ -9,7 +9,7 @@ import java.util.stream.StreamSupport;
 /**
  * Utility class for generic JSON structure validation checks, decoupled from the main parsing logic.
  */
-public class JsonValidationUtils {
+public final class JsonValidationUtils {
 
     /**
      * Private constructor to prevent instantiation of this utility class.
@@ -28,7 +28,11 @@ public class JsonValidationUtils {
      * @param errorMessageField The name of the field to use in the error message.
      * @throws ConnectorValidationException if the field is missing or has an invalid type.
      */
-    public static void validateField(final JsonNode parentNode, final String fieldName, final Predicate<JsonNode> typeCheck, final String errorMessageField) throws ConnectorValidationException {
+    public static void validateField(
+            final JsonNode parentNode,
+            final String fieldName,
+            final Predicate<JsonNode> typeCheck,
+            final String errorMessageField) throws ConnectorValidationException {
         JsonNode fieldNode = parentNode.get(fieldName);
 
         Optional.ofNullable(fieldNode)

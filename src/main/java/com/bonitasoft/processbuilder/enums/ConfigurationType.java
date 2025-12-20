@@ -27,7 +27,9 @@ public enum ConfigurationType {
      * define the email server settings required for sending notifications 
      * (e.g., host, port, SSL/TLS, authentication credentials).
      */
-    SMTP("Smtp", "Defines the SMTP server configuration settings for email notifications, including host address, port number, SSL/TLS encryption, and authentication parameters."),
+    SMTP("Smtp",
+            "Defines the SMTP server configuration settings for email notifications, "
+                    + "including host address, port number, SSL/TLS encryption, and authentication parameters."),
 
     /**
      * Represents the classification key for **Process Execution Connector** definitions.
@@ -42,7 +44,9 @@ public enum ConfigurationType {
      * define the visual appearance and branding of the application 
      * (e.g., colors, logos, fonts, styles).
      */
-    THEME("Theme", "Defines the visual theme configuration for the application, including primary and secondary colors, logo, typography, and other branding elements.");
+    THEME("Theme",
+            "Defines the visual theme configuration for the application, including primary and secondary colors, "
+                    + "logo, typography, and other branding elements.");
 
     private final String key;
     private final String description;
@@ -100,7 +104,7 @@ public enum ConfigurationType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(ConfigurationType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 ConfigurationType::getKey, 
                 ConfigurationType::getDescription, 
@@ -116,7 +120,7 @@ public enum ConfigurationType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(ConfigurationType.values())
+        return Arrays.stream(values())
             .map(ConfigurationType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

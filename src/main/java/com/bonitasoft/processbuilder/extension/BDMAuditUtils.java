@@ -25,7 +25,7 @@ import com.bonitasoft.processbuilder.records.UserRecord;
  * </ul>
  * 
  */
-public class BDMAuditUtils {
+public final class BDMAuditUtils {
 
     /**
      * A logger for this class, used to record log messages and provide debugging information.

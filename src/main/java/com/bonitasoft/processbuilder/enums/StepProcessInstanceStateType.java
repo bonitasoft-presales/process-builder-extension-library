@@ -87,7 +87,7 @@ public enum StepProcessInstanceStateType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(StepProcessInstanceStateType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 StepProcessInstanceStateType::getKey, 
                 StepProcessInstanceStateType::getDescription, 
@@ -103,7 +103,7 @@ public enum StepProcessInstanceStateType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(StepProcessInstanceStateType.values())
+        return Arrays.stream(values())
             .map(StepProcessInstanceStateType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

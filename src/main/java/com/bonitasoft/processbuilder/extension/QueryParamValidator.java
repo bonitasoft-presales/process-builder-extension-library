@@ -7,7 +7,7 @@ package com.bonitasoft.processbuilder.extension;
  * This class follows the utility pattern with a private constructor and static methods only.
  * </p>
  */
-public class QueryParamValidator {
+public final class QueryParamValidator {
 
     /**
      * Private constructor to prevent instantiation of this utility class.

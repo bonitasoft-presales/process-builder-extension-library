@@ -182,7 +182,7 @@ public enum BDMObjectType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> objectTypeData = 
-            Arrays.stream(BDMObjectType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 BDMObjectType::getKey, 
                 BDMObjectType::getDescription, 
@@ -199,7 +199,7 @@ public enum BDMObjectType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(BDMObjectType.values())
+        return Arrays.stream(values())
             .map(BDMObjectType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

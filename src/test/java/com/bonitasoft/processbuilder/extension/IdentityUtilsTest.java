@@ -398,6 +398,76 @@ class IdentityUtilsTest {
         assertThat(result).containsExactlyInAnyOrder(100L, 200L);
     }
 
+    /**
+     * Tests that getUsersByMemberships handles objects that return non-Long values.
+     */
+    @Test
+    @DisplayName("getUsersByMemberships should handle objects returning non-Long values")
+    void getUsersByMemberships_should_handle_non_long_return() throws Exception {
+        // Given an object that returns Integer instead of Long
+        Object membershipWithInteger = new Object() {
+            @SuppressWarnings("unused")
+            public Integer getGroupId() { return 10; }
+            @SuppressWarnings("unused")
+            public Integer getRoleId() { return 20; }
+        };
+        List<Object> memberships = Collections.singletonList(membershipWithInteger);
+
+        when(searchResult.getResult()).thenReturn(Collections.emptyList());
+        when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
+
+        // When getting users by memberships
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
+
+        // Then empty set should be returned (method extracts nothing useful)
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that getUserManager returns the exact managerId value.
+     */
+    @Test
+    @DisplayName("getUserManager should return the exact manager ID from user")
+    void getUserManager_should_return_exact_value() throws Exception {
+        // Given a user with specific manager ID
+        Long expectedManagerId = 12345L;
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+        when(user.getManagerUserId()).thenReturn(expectedManagerId);
+
+        // When getting the user manager
+        Long result = IdentityUtils.getUserManager(USER_ID, identityAPI);
+
+        // Then the exact manager ID should be returned
+        assertThat(result).isEqualTo(expectedManagerId);
+        assertThat(result).isNotEqualTo(USER_ID);
+        assertThat(result).isPositive();
+    }
+
+    /**
+     * Tests that getUsersByMemberships correctly handles multiple OR conditions.
+     */
+    @Test
+    @DisplayName("getUsersByMemberships should build correct query for multiple memberships")
+    void getUsersByMemberships_should_handle_multiple_memberships() throws Exception {
+        // Given multiple memberships
+        MockMembership membership1 = new MockMembership(10L, 20L);
+        MockMembership membership2 = new MockMembership(30L, null);
+        MockMembership membership3 = new MockMembership(null, 40L);
+        List<MockMembership> memberships = Arrays.asList(membership1, membership2, membership3);
+
+        User user1 = mock(User.class);
+        when(user1.getId()).thenReturn(100L);
+        when(searchResult.getResult()).thenReturn(Collections.singletonList(user1));
+        when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
+
+        // When getting users by memberships
+        Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
+
+        // Then users should be returned and API should be called
+        assertThat(result).containsExactly(100L);
+        verify(identityAPI).searchUsers(any(SearchOptions.class));
+    }
+
     // -------------------------------------------------------------------------
     // Mock Helper Class
     // -------------------------------------------------------------------------

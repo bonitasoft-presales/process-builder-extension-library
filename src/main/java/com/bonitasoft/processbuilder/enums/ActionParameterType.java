@@ -65,7 +65,8 @@ public enum ActionParameterType {
     /**
      * The list of membership identifiers for notification recipients.
      */
-    RECIPIENTS_MEMBERSHIP_IDS("recipients.membershipIds", "The list of membership identifiers (group/role combinations) to resolve as notification recipients.");
+    RECIPIENTS_MEMBERSHIP_IDS("recipients.membershipIds",
+            "The list of membership identifiers (group/role combinations) to resolve as notification recipients.");
 
     private final String key;
     private final String description;
@@ -125,7 +126,7 @@ public enum ActionParameterType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> data =
-            Arrays.stream(ActionParameterType.values())
+            Arrays.stream(values())
                 .collect(Collectors.toMap(
                     ActionParameterType::getKey,
                     ActionParameterType::getDescription,
@@ -142,7 +143,7 @@ public enum ActionParameterType {
      * @return An unmodifiable list containing all parameter keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(ActionParameterType.values())
+        return Arrays.stream(values())
             .map(ActionParameterType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

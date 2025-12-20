@@ -27,6 +27,9 @@
         <junit-jupiter-engine.version>5.10.1</junit-jupiter-engine.version>
         <assertj-core.version>3.24.2</assertj-core.version>
         <mockito-core.version>5.6.0</mockito-core.version>
+        <jqwik.version>1.8.2</jqwik.version>
+        <pitest.version>1.15.3</pitest.version>
+        <pitest-junit5.version>1.2.1</pitest-junit5.version>
         <!--<logback-classic.version>1.2.13</logback-classic.version>-->
         <logback-classic.version>1.5.18</logback-classic.version>
 
@@ -108,6 +111,13 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${logback-classic.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- jqwik - Property-Based Testing -->
+        <dependency>
+            <groupId>net.jqwik</groupId>
+            <artifactId>jqwik</artifactId>
+            <version>${jqwik.version}</version>
             <scope>test</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.github.everit-org.json-schema/org.everit.json.schema -->
@@ -254,6 +264,25 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <includes>
+                            <include>**/*Test.java</include>
+                            <include>**/*Tests.java</include>
+                            <include>**/*PropertyTest.java</include>
+                            <include>**/*PropertyTests.java</include>
+                        </includes>
+                        <properties>
+                            <configurationParameters>
+                                junit.jupiter.extensions.autodetection.enabled = true
+                                junit.jupiter.execution.parallel.enabled = true
+                                junit.jupiter.execution.parallel.mode.default = concurrent
+                                junit.jupiter.execution.parallel.mode.classes.default = concurrent
+                            </configurationParameters>
+                        </properties>
+                        <!-- Parallel test execution for faster builds -->
+                        <forkCount>1C</forkCount>
+                        <reuseForks>true</reuseForks>
+                    </configuration>
                 </plugin>
             </plugins>            
         </pluginManagement>
@@ -356,6 +385,42 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <version>${maven-site-plugin.version}</version>
+            </plugin>
+            <!-- PIT Mutation Testing - Moved to 'mutation' profile for faster builds -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>${pitest.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-junit5-plugin</artifactId>
+                        <version>${pitest-junit5.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <targetClasses>
+                        <param>com.bonitasoft.processbuilder.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>com.bonitasoft.processbuilder.*</param>
+                    </targetTests>
+                    <mutators>
+                        <mutator>DEFAULTS</mutator>
+                    </mutators>
+                    <outputFormats>
+                        <outputFormat>HTML</outputFormat>
+                        <outputFormat>XML</outputFormat>
+                    </outputFormats>
+                    <threads>8</threads>
+                    <timestampedReports>false</timestampedReports>
+                    <excludedClasses>
+                        <excludedClass>**.*PropertyTest</excludedClass>
+                    </excludedClasses>
+                    <timeoutConstant>8000</timeoutConstant>
+                    <timeoutFactor>1.5</timeoutFactor>
+                </configuration>
+                <!-- No automatic execution - run manually with 'mvn pitest:mutationCoverage' -->
             </plugin>
 
 
@@ -486,4 +551,62 @@
             <url>https://maven.pkg.github.com/${github.owner}/${github.repo}</url>
         </repository>
     </distributionManagement>
+
+    <profiles>
+        <!-- Quick build - skips tests for fast compilation -->
+        <profile>
+            <id>quick</id>
+            <properties>
+                <maven.test.skip>true</maven.test.skip>
+            </properties>
+        </profile>
+
+        <!-- Full QA profile - includes mutation testing -->
+        <profile>
+            <id>full-qa</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <executions>
+                            <execution>
+                                <id>pit-report</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>mutationCoverage</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <mutators>
+                                <mutator>STRONGER</mutator>
+                            </mutators>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- CI profile - optimized for continuous integration -->
+        <profile>
+            <id>ci</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <properties>
+                                <configurationParameters>
+                                    jqwik.tries.default = 100
+                                    junit.jupiter.execution.parallel.enabled = true
+                                </configurationParameters>
+                            </properties>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

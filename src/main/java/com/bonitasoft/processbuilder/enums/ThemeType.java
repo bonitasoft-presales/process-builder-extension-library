@@ -179,7 +179,7 @@ public enum ThemeType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> data =
-            Arrays.stream(ThemeType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 ThemeType::getKey,
                 ThemeType::getDescription,
@@ -195,7 +195,7 @@ public enum ThemeType {
      * @return A list containing all theme attribute keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(ThemeType.values())
+        return Arrays.stream(values())
             .map(ThemeType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

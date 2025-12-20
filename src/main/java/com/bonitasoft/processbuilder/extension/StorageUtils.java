@@ -13,7 +13,7 @@ import com.bonitasoft.processbuilder.enums.ProcessStorageType;
  * @author Bonitasoft
  * @since 1.0
  */
-public class StorageUtils {
+public final class StorageUtils {
 
     /**
      * Set of storage keys that indicate Bonita BDM database storage.

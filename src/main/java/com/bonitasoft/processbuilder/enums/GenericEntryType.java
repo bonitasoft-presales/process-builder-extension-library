@@ -90,7 +90,7 @@ public enum GenericEntryType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(GenericEntryType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 GenericEntryType::getKey, 
                 GenericEntryType::getDescription, 
@@ -106,7 +106,7 @@ public enum GenericEntryType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(GenericEntryType.values())
+        return Arrays.stream(values())
             .map(GenericEntryType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

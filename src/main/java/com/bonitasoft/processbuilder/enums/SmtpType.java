@@ -45,7 +45,9 @@ public enum SmtpType {
     /**
      * Indicates whether to trust the server certificate without validation.
      */
-    TRUST_CERTIFICATE("TrustCertificate", "When enabled, accepts the server certificate without strict validation. Use with caution in production environments."),
+    TRUST_CERTIFICATE("TrustCertificate",
+            "When enabled, accepts the server certificate without strict validation. "
+                    + "Use with caution in production environments."),
 
     /**
      * The username for SMTP server authentication.
@@ -110,7 +112,7 @@ public enum SmtpType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> data = 
-            Arrays.stream(SmtpType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 SmtpType::getKey, 
                 SmtpType::getDescription, 
@@ -126,7 +128,7 @@ public enum SmtpType {
      * @return A list containing all SMTP attribute keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(SmtpType.values())
+        return Arrays.stream(values())
             .map(SmtpType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

@@ -150,46 +150,96 @@ class PasswordCryptoTest {
         @Test
         @DisplayName("Should return false for null")
         void should_return_false_for_null() {
-            assertFalse(PasswordCrypto.isEncrypted(null));
+            boolean result = PasswordCrypto.isEncrypted(null);
+            assertThat(result).isFalse();
         }
 
         @Test
         @DisplayName("Should return false for empty string")
         void should_return_false_for_empty() {
-            assertFalse(PasswordCrypto.isEncrypted(""));
+            boolean result = PasswordCrypto.isEncrypted("");
+            assertThat(result).isFalse();
         }
 
         @Test
         @DisplayName("Should return false for blank string")
         void should_return_false_for_blank() {
-            assertFalse(PasswordCrypto.isEncrypted("   "));
+            boolean result = PasswordCrypto.isEncrypted("   ");
+            assertThat(result).isFalse();
         }
 
         @Test
         @DisplayName("Should return false for short text")
         void should_return_false_for_short_text() {
-            assertFalse(PasswordCrypto.isEncrypted("short"));
+            boolean result = PasswordCrypto.isEncrypted("short");
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("Should return false for text exactly at min length minus one")
+        void should_return_false_for_text_at_boundary() {
+            // MIN_ENCRYPTED_LENGTH is 60, so 59 chars should fail
+            String almostLongEnough = "A".repeat(59);
+            boolean result = PasswordCrypto.isEncrypted(almostLongEnough);
+            assertThat(result).isFalse();
         }
 
         @Test
         @DisplayName("Should return false for plain text")
         void should_return_false_for_plain_text() {
-            assertFalse(PasswordCrypto.isEncrypted("This is a plain password"));
+            boolean result = PasswordCrypto.isEncrypted("This is a plain password");
+            assertThat(result).isFalse();
         }
 
         @Test
         @DisplayName("Should return false for text with non-Base64 chars")
         void should_return_false_for_non_base64() {
             String invalid = "This contains invalid characters!!!@@##$$";
-            assertFalse(PasswordCrypto.isEncrypted(invalid));
+            boolean result = PasswordCrypto.isEncrypted(invalid);
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("Should return false for long text with special characters")
+        void should_return_false_for_long_non_base64() {
+            // Long enough but contains invalid characters
+            String longInvalid = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+            boolean result = PasswordCrypto.isEncrypted(longInvalid);
+            assertThat(result).isFalse();
         }
 
         @Test
         @DisplayName("Should return true for valid Base64 of sufficient length")
         void should_return_true_for_long_base64() {
-            // Generate a long enough valid Base64 string
+            // Generate a long enough valid Base64 string (60+ chars)
             String longBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/==";
-            assertTrue(PasswordCrypto.isEncrypted(longBase64));
+            boolean result = PasswordCrypto.isEncrypted(longBase64);
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("Should return true for Base64 exactly at minimum length")
+        void should_return_true_at_exactly_min_length() {
+            // Exactly 60 valid Base64 characters
+            String exactlyMinLength = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567";
+            boolean result = PasswordCrypto.isEncrypted(exactlyMinLength);
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("Should return true for Base64 with padding")
+        void should_return_true_for_base64_with_padding() {
+            String withPadding = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345==";
+            boolean result = PasswordCrypto.isEncrypted(withPadding);
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("Should return true for Base64 with plus and slash")
+        void should_return_true_for_base64_with_special_chars() {
+            String withSpecial = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef+/ijklmnopqrstuvwxyz012345==";
+            boolean result = PasswordCrypto.isEncrypted(withSpecial);
+            assertThat(result).isTrue();
         }
     }
 

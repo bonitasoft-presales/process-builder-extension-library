@@ -102,7 +102,7 @@ public enum ActionType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(ActionType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 ActionType::getKey, 
                 ActionType::getDescription, 
@@ -118,7 +118,7 @@ public enum ActionType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(ActionType.values())
+        return Arrays.stream(values())
             .map(ActionType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }

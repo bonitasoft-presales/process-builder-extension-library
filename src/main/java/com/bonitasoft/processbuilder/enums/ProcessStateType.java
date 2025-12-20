@@ -88,7 +88,7 @@ public enum ProcessStateType {
      */
     public static Map<String, String> getAllData() {
         Map<String, String> stateData = 
-            Arrays.stream(ProcessStateType.values())
+            Arrays.stream(values())
             .collect(Collectors.toMap(
                 ProcessStateType::getKey, 
                 ProcessStateType::getDescription, 
@@ -104,7 +104,7 @@ public enum ProcessStateType {
      * @return A list containing all technical keys.
      */
     public static List<String> getAllKeysList() {
-        return Arrays.stream(ProcessStateType.values())
+        return Arrays.stream(values())
             .map(ProcessStateType::getKey)
             .collect(Collectors.toUnmodifiableList());
     }
