@@ -6,13 +6,15 @@
 * **Coverage Goal:** **100% test coverage** for all Java classes - NO EXCEPTIONS
 * **Assertion Library:** **AssertJ ONLY** - NEVER use JUnit native assertions
 * **Framework:** JUnit 5 (Jupiter) with Mockito for mocking
-* **Property Testing:** jqwik for invariant verification
-* **Mutation Testing:** PIT for test quality validation
+* **Property Testing:** jqwik for invariant verification and security testing
+* **Mutation Testing:** PIT for test quality validation (target: >80% mutation score)
+* **Security Testing:** Property-based tests for CVE and vulnerability protection
 
 ### 1.2. Test Class Structure
 Every class requires corresponding test classes:
 * `{ClassName}Test.java` - Unit tests with Mockito
 * `{ClassName}PropertyTest.java` - Property-based tests (for DTOs/Records/Enums)
+* `SecurityVulnerabilityPropertyTest.java` - Security-focused property tests
 
 ---
 
@@ -74,6 +76,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -104,6 +108,9 @@ class MyClassTest {
 
     @InjectMocks
     private MyClass underTest;
+
+    @Captor
+    private ArgumentCaptor<SomeOptions> optionsCaptor;
 
     // =========================================================================
     // CONSTRUCTOR TESTS (for utility classes)
@@ -267,7 +274,30 @@ verify(repository).save(captor.capture());
 assertThat(captor.getValue().getName()).isEqualTo("expected");
 ```
 
-### 6.3. Static Method Mocking
+### 6.3. ArgumentCaptor for Complex Verifications
+```java
+// CRITICAL for mutation testing - verify actual arguments passed
+@Captor
+private ArgumentCaptor<SearchOptions> searchOptionsCaptor;
+
+@Test
+@DisplayName("should execute search with correct options")
+void should_execute_search_with_options() throws Exception {
+    // Given
+    when(searchResult.getResult()).thenReturn(Collections.emptyList());
+    when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
+
+    // When
+    MyClass.searchMethod(input, identityAPI);
+
+    // Then - verify searchUsers was called with SearchOptions
+    verify(identityAPI).searchUsers(searchOptionsCaptor.capture());
+    SearchOptions capturedOptions = searchOptionsCaptor.getValue();
+    assertThat(capturedOptions).isNotNull();
+}
+```
+
+### 6.4. Static Method Mocking
 ```java
 @Test
 void should_handle_static_method() {
@@ -366,6 +396,7 @@ void should_filter_and_map_correctly() {
 * Methods with mathematical properties
 * Parsers and validators
 * Any code with invariants
+* Security vulnerability testing
 
 ### 8.2. Property Test Template
 ```java
@@ -471,14 +502,275 @@ arbitrary.injectNull(0.2)  // 20% null chance
 
 ---
 
-## 9. QA Best Practices
+## 9. Mutation Testing with PIT
 
-### 9.1. Test Independence
+### 9.1. Overview
+PIT (Pitest) is a mutation testing tool that measures test quality by introducing small changes (mutations) to the code and checking if tests detect them.
+
+**Key Metrics:**
+| Metric | Target | Description |
+|--------|--------|-------------|
+| Line Coverage | >90% | Lines executed by tests |
+| Mutation Score | >80% | Percentage of mutations killed |
+| Test Strength | >80% | Mutations killed / Mutations covered |
+
+### 9.2. Running Mutation Tests
+```bash
+# Run mutation testing
+mvn clean test pitest:mutationCoverage
+
+# Run with stronger mutators
+mvn clean test pitest:mutationCoverage -Dpitest.mutators=STRONGER
+
+# View report
+target/pit-reports/index.html
+```
+
+### 9.3. Common PIT Mutations and How to Kill Them
+
+#### 9.3.1. Return Value Mutations
+```java
+// MUTATION: "replaced Long return value with 0L"
+// Affects: return null; (replaced with return 0L)
+
+// BAD TEST - doesn't distinguish null from 0L
+@Test
+void should_return_something() {
+    Long result = method(null);
+    assertThat(result).isNotEqualTo(1L);  // Passes for both null and 0L!
+}
+
+// GOOD TEST - explicitly checks for null
+@Test
+void should_return_null_for_null_input() {
+    Long result = method(null);
+    assertThat(result).isNull();  // Fails if mutation returns 0L
+}
+```
+
+#### 9.3.2. Conditional Boundary Mutations
+```java
+// MUTATION: "changed conditional boundary" (e.g., > to >=)
+
+// BAD TEST
+@Test
+void should_pass_for_positive() {
+    assertThat(isPositive(5)).isTrue();  // Passes for both > 0 and >= 0
+}
+
+// GOOD TEST - test the exact boundary
+@Test
+void should_return_false_for_zero() {
+    assertThat(isPositive(0)).isFalse();  // Kills > to >= mutation
+}
+
+@Test
+void should_return_true_for_one() {
+    assertThat(isPositive(1)).isTrue();   // Verifies > 0 behavior
+}
+```
+
+#### 9.3.3. Negated Conditionals
+```java
+// MUTATION: "negated conditional" (e.g., == to !=)
+
+// Ensure you test BOTH branches explicitly
+@Test
+void should_return_true_when_equal() {
+    assertThat(areEqual("a", "a")).isTrue();
+}
+
+@Test
+void should_return_false_when_not_equal() {
+    assertThat(areEqual("a", "b")).isFalse();
+}
+```
+
+#### 9.3.4. Math Operator Mutations
+```java
+// MUTATION: "replaced % with *" or "replaced + with -"
+
+// BAD TEST
+@Test
+void should_extract_seconds() {
+    assertEquals(30L, extractSeconds(150000L));  // 150 seconds
+    // Both % 60 and * 60 might not catch this
+}
+
+// GOOD TESTS - verify modulo behavior specifically
+@Test
+void should_return_zero_for_exactly_one_minute() {
+    // 60 seconds % 60 = 0, but 60 * 60 = 3600
+    assertThat(extractSeconds(60000L)).isEqualTo(0L);
+}
+
+@Test
+void should_return_one_for_61_seconds() {
+    // 61 % 60 = 1, but 61 * 60 = 3660
+    assertThat(extractSeconds(61000L)).isEqualTo(1L);
+}
+```
+
+#### 9.3.5. Void Method Call Mutations
+```java
+// MUTATION: "removed call to method()"
+
+// Use verify() to ensure methods are called
+@Test
+void should_call_logger() {
+    underTest.process(input);
+    verify(logger).info(anyString(), any());  // Kills "removed call" mutation
+}
+```
+
+### 9.4. Testing Private Methods for Mutation Coverage
+
+When PIT shows surviving mutations in private helper methods that are difficult to test through public API:
+
+```java
+// OPTION 1: Change private to package-private (preferred)
+// In production code:
+static Long extractLongValue(Object obj, String methodName) {  // Was private
+    // ...
+}
+
+// In test code (same package):
+@Test
+@DisplayName("extractLongValue should return null for null object")
+void extractLongValue_should_return_null_for_null() {
+    Long result = MyClass.extractLongValue(null, "getGroupId");
+    assertThat(result).isNull();  // Not 0L!
+}
+```
+
+### 9.5. Mutation Testing Checklist
+- [ ] Run `mvn pitest:mutationCoverage` after writing tests
+- [ ] Review surviving mutations in HTML report
+- [ ] For "return value with 0L" mutations: verify null returns explicitly
+- [ ] For boundary mutations: test exact boundary values (0, -1, MAX_VALUE)
+- [ ] For conditional mutations: test both true and false branches
+- [ ] For math mutations: use values that distinguish operators (+/-, */%, etc.)
+- [ ] Consider making private methods package-private for direct testing
+- [ ] Use ArgumentCaptor to verify mock interactions
+
+---
+
+## 10. Security Property Testing
+
+### 10.1. Purpose
+Security property tests protect against vulnerabilities like:
+* **CVE-2025-48924**: Uncontrolled Recursion in Apache Commons Lang
+* **ReDoS**: Regular Expression Denial of Service
+* **Stack Overflow**: Deep recursion attacks
+* **Memory Exhaustion**: Very large input handling
+
+### 10.2. Security Test Structure
+```java
+@DisplayName("Security Vulnerability Property Tests")
+class SecurityVulnerabilityPropertyTest {
+
+    private static final long MAX_EXECUTION_TIME_MS = 5000;
+
+    /**
+     * Tests that deeply nested patterns don't cause StackOverflowError.
+     * Targets: CVE-2025-48924
+     */
+    @Property(tries = 100)
+    @DisplayName("Deep recursion patterns should not cause StackOverflowError")
+    void deepRecursion_shouldNotCauseStackOverflow(
+            @ForAll @IntRange(min = 100, max = 5000) int depth) {
+
+        String maliciousInput = "[".repeat(depth) + "Content" + "]".repeat(depth);
+
+        assertThatCode(() -> {
+            MyClass.processInput(maliciousInput);
+        }).doesNotThrowAnyException();
+    }
+
+    /**
+     * Tests that very long strings don't cause timeout or memory issues.
+     */
+    @Property(tries = 20)
+    @DisplayName("Long strings should process within time limits")
+    void longStrings_shouldProcessInTime(
+            @ForAll @IntRange(min = 10000, max = 100000) int length) {
+
+        String longInput = "a".repeat(length);
+        long startTime = System.currentTimeMillis();
+
+        assertThatCode(() -> MyClass.processInput(longInput))
+            .doesNotThrowAnyException();
+
+        long executionTime = System.currentTimeMillis() - startTime;
+        assertThat(executionTime).isLessThan(MAX_EXECUTION_TIME_MS);
+    }
+
+    /**
+     * Tests that special characters don't break processing.
+     */
+    @Property(tries = 100)
+    @DisplayName("Special characters should be handled safely")
+    void specialCharacters_shouldBeSafe(
+            @ForAll @StringLength(min = 1, max = 1000) String input) {
+
+        String[] dangerous = {
+            input + "\u0000",          // Null byte
+            "{{" + input + "}}",       // Template injection
+            "${" + input + "}",        // Variable injection
+        };
+
+        for (String pattern : dangerous) {
+            assertThatCode(() -> MyClass.processInput(pattern))
+                .doesNotThrowAnyException();
+        }
+    }
+}
+```
+
+### 10.3. Security Testing Patterns
+
+| Attack Vector | Test Strategy |
+|---------------|---------------|
+| Deep recursion (CVE-2025-48924) | Generate deeply nested brackets/braces |
+| ReDoS | Incremental string lengths with regex patterns |
+| Stack overflow | Very deep nesting (1000-10000 levels) |
+| Memory exhaustion | Very long strings (100K+ characters) |
+| Null byte injection | Insert \u0000 into strings |
+| Unicode edge cases | Surrogate pairs, BOM, RTL characters |
+| Template injection | {{var}}, ${var}, <% %> patterns |
+
+### 10.4. Time Complexity Verification
+```java
+@Property(tries = 50)
+@DisplayName("Algorithm should have linear time complexity")
+void linearComplexity_shouldBeVerified(
+        @ForAll @IntRange(min = 1000, max = 50000) int length) {
+
+    String input = "a".repeat(length);
+    long startTime = System.currentTimeMillis();
+
+    MyClass.processInput(input);
+
+    long executionTime = System.currentTimeMillis() - startTime;
+
+    // Linear: ~1ms per 1000 chars
+    long maxExpectedTime = Math.max(100, length / 10);
+    assertThat(executionTime)
+        .as("Execution time should scale linearly")
+        .isLessThan(maxExpectedTime);
+}
+```
+
+---
+
+## 11. QA Best Practices
+
+### 11.1. Test Independence
 * Each test must be independent - no shared mutable state
 * Use `@BeforeEach` for common setup, not shared fields
 * Never rely on test execution order
 
-### 9.2. Test Data Management
+### 11.2. Test Data Management
 ```java
 // Use constants for repeated values
 private static final Long TEST_USER_ID = 1L;
@@ -493,13 +785,13 @@ private User createTestUser(Long id, String email) {
 }
 ```
 
-### 9.3. Test Readability
+### 11.3. Test Readability
 * One assertion concept per test (but multiple assertThat calls are OK)
 * Clear test names that describe the scenario
 * AAA pattern: Arrange, Act, Assert (with blank lines between)
 * Comments only for non-obvious setup
 
-### 9.4. Boundary Testing
+### 11.4. Boundary Testing
 ```java
 // Always test boundaries
 @Test void should_handle_zero() { }
@@ -510,7 +802,7 @@ private User createTestUser(Long id, String email) {
 @Test void should_handle_single_element_collection() { }
 ```
 
-### 9.5. Error Message Assertions
+### 11.5. Error Message Assertions
 ```java
 // Verify exception messages are helpful
 assertThatThrownBy(() -> service.process(null))
@@ -521,9 +813,9 @@ assertThatThrownBy(() -> service.process(null))
 
 ---
 
-## 10. Maven Commands
+## 12. Maven Commands
 
-### 10.1. Standard Execution
+### 12.1. Standard Execution
 ```bash
 # Full build with all reports
 mvn clean install site
@@ -536,9 +828,15 @@ mvn clean test
 
 # Tests with coverage report
 mvn clean test jacoco:report
+
+# Mutation testing
+mvn clean test pitest:mutationCoverage
+
+# Mutation testing with stronger mutators
+mvn clean test pitest:mutationCoverage -Dpitest.mutators=STRONGER
 ```
 
-### 10.2. Specific Tests
+### 12.2. Specific Tests
 ```bash
 # Single test class
 mvn test -Dtest=MyClassTest
@@ -546,25 +844,75 @@ mvn test -Dtest=MyClassTest
 # Property tests only
 mvn test -Dtest=*PropertyTest
 
+# Security tests only
+mvn test -Dtest=*SecurityVulnerability*
+
 # Pattern matching
 mvn test -Dtest=*Utils*Test
 ```
 
-### 10.3. Reports Location
+### 12.3. Reports Location
 | Report | Location |
 |--------|----------|
-| JaCoCo Coverage | `target/jacoco-report/index.html` |
+| JaCoCo Coverage | `target/site/jacoco/index.html` |
 | PIT Mutation | `target/pit-reports/index.html` |
 | Surefire Tests | `target/surefire-reports/` |
 
 ---
 
-## 11. Pre-Commit Checklist
+## 13. GitHub Actions Integration
+
+### 13.1. Mutation Testing Workflow
+The mutation testing workflow runs on-demand and generates a detailed summary:
+
+```yaml
+# .github/workflows/mutation.yml
+name: Mutation Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      mutator:
+        description: 'Mutator strength'
+        default: 'DEFAULTS'
+        type: choice
+        options:
+          - DEFAULTS
+          - STRONGER
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Run Mutation Testing
+        run: ./mvnw clean test pitest:mutationCoverage
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pit-mutation-report
+          path: target/pit-reports/
+```
+
+### 13.2. Interpreting CI Results
+- **Line Coverage <90%**: Add more unit tests
+- **Mutation Score <80%**: Review surviving mutations, improve assertions
+- **Test Strength <80%**: Tests are covering code but not detecting mutations
+
+---
+
+## 14. Pre-Commit Checklist
 
 Before committing any code:
 
 - [ ] All tests pass: `mvn clean test`
 - [ ] Coverage is 100%: Check JaCoCo report
+- [ ] Mutation score >80%: `mvn pitest:mutationCoverage`
 - [ ] No PMD violations: Check site report
 - [ ] No CPD duplications: Check site report
 - [ ] All public methods have @DisplayName tests
@@ -573,13 +921,14 @@ Before committing any code:
 - [ ] All branches covered (if/else/switch/ternary)
 - [ ] All catch blocks tested
 - [ ] Null/empty/boundary cases tested
+- [ ] Security property tests pass
 - [ ] Full build passes: `mvn clean install site`
 
 ---
 
-## 12. Common Mistakes to Avoid
+## 15. Common Mistakes to Avoid
 
-### 12.1. Testing Anti-Patterns
+### 15.1. Testing Anti-Patterns
 ```java
 // BAD: Testing implementation details
 verify(repository, times(3)).save(any()); // Brittle
@@ -606,7 +955,7 @@ var entity = new Entity(1L, "test");
 }
 ```
 
-### 12.2. Coverage Pitfalls
+### 15.2. Coverage Pitfalls
 ```java
 // BAD: False coverage (code runs but not verified)
 @Test void should_process() {
@@ -622,8 +971,64 @@ var entity = new Entity(1L, "test");
 }
 ```
 
+### 15.3. Mutation Testing Pitfalls
+```java
+// BAD: Doesn't distinguish null from 0L
+@Test void extractValue_should_work() {
+    Long result = extractValue(null, "method");
+    assertThat(result).isNotEqualTo(42L);  // Both null and 0L pass!
+}
+
+// GOOD: Explicitly verify null
+@Test void extractValue_should_return_null_for_null_input() {
+    Long result = extractValue(null, "method");
+    assertThat(result).isNull();  // Fails if mutation returns 0L
+}
+```
+
 ---
 
-**Version:** 3.0
-**Last Updated:** 2025-12-19
-**Scope:** Java unit testing, property-based testing, mutation testing
+## 16. Quick Reference Card
+
+### Assertions
+```java
+assertThat(x).isNull();
+assertThat(x).isNotNull();
+assertThat(x).isEqualTo(expected);
+assertThat(x).isNotEqualTo(unexpected);
+assertThat(list).isEmpty();
+assertThat(list).hasSize(n);
+assertThat(list).contains(item);
+assertThat(list).containsExactly(items);
+assertThat(optional).isPresent();
+assertThat(optional).isEmpty();
+assertThatThrownBy(() -> x).isInstanceOf(Exception.class);
+assertThatCode(() -> x).doesNotThrowAnyException();
+```
+
+### Mockito
+```java
+when(mock.method()).thenReturn(value);
+when(mock.method()).thenThrow(exception);
+verify(mock).method();
+verify(mock, times(n)).method();
+verify(mock, never()).method();
+ArgumentCaptor<T> captor = ArgumentCaptor.forClass(T.class);
+verify(mock).method(captor.capture());
+```
+
+### Property Testing
+```java
+@Property(tries = 100)
+void property(@ForAll Type value) { }
+
+@ForAll @IntRange(min = 0, max = 100) int x
+@ForAll @StringLength(min = 1, max = 50) String s
+@ForAll @From("provider") Type value
+```
+
+---
+
+**Version:** 4.0
+**Last Updated:** 2025-12-21
+**Scope:** Java unit testing, property-based testing, mutation testing, security testing
