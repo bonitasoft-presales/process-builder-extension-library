@@ -116,33 +116,34 @@ public final class ExceptionUtils {
      * that accepts a single String argument, or if instantiation fails due to reflection errors.
      */
     public static <T extends Exception> void logAndThrowWithClass(
-            Class<T> exceptionClass, 
+            Class<T> exceptionClass,
             String format,
             Object... args) throws T {
-                
+
         // 1. FORMATTING AND LOGGING
         String finalMessage = String.format(format, args);
         LOGGER.error(finalMessage);
-        
+
         // 2. SECURE THROW USING REFLECTION
         try {
             // Retrieve the constructor that accepts a single String (the message).
             // This explicitly resolves the constructor ambiguity issue.
             java.lang.reflect.Constructor<T> constructor = exceptionClass.getConstructor(String.class);
-            
+
             // Create and instantiate the exception, passing the formatted message
             T exceptionInstance = constructor.newInstance(finalMessage);
-            
+
             // Throw the generated exception instance
             throw exceptionInstance;
-            
+
         } catch (NoSuchMethodException e) {
             // This occurs if the class T does not have the required String constructor.
             LOGGER.error("Fatal Error: Exception class '{}' does not have a public constructor "
                     + "that accepts a single String message.", exceptionClass.getName(), e);
             throw new RuntimeException("Error during exception construction for class: " + exceptionClass.getName(), e);
-        } catch (Exception e) {
-            // Catches other reflection-related issues (IllegalAccessException, InvocationTargetException, etc.)
+        } catch (ReflectiveOperationException e) {
+            // Catches only reflection-related issues (IllegalAccessException, InstantiationException,
+            // InvocationTargetException) but NOT the thrown exception T which escapes the try block.
             LOGGER.error("Fatal Error: Could not instantiate exception class '{}'.", exceptionClass.getName(), e);
             throw new RuntimeException("Could not instantiate exception class: " + exceptionClass.getName(), e);
         }

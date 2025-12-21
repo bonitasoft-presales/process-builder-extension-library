@@ -109,66 +109,63 @@ class ExceptionUtilsPropertyTest {
 
     // =========================================================================
     // logAndThrowWithClass() PROPERTIES
-    // Note: This method has a KNOWN BUG where all exception types get caught
-    // by the internal catch block and wrapped in a RuntimeException.
-    // The tests below document this actual behavior.
+    // This method uses reflection to instantiate and throw exceptions.
     // =========================================================================
 
     @Property(tries = 500)
-    @Label("logAndThrowWithClass wraps all exceptions due to implementation bug")
-    void logAndThrowWithClassWrapsAllExceptionsDueToBug(
+    @Label("logAndThrowWithClass should throw IllegalArgumentException")
+    void logAndThrowWithClassShouldThrowIllegalArgumentException(
             @ForAll @StringLength(min = 1, max = 50) @AlphaChars String message) {
-        // Note: Due to a bug in logAndThrowWithClass, the thrown exception
-        // gets caught by the catch(Exception e) block and wrapped.
-        // This tests the actual (buggy) behavior.
+        String expectedMessage = String.format("Invalid: %s", message);
         assertThatThrownBy(() ->
             ExceptionUtils.logAndThrowWithClass(
                 IllegalArgumentException.class,
                 "Invalid: %s", message
             )
-        ).isInstanceOf(RuntimeException.class)
-         .hasMessageContaining("Could not instantiate exception class");
+        ).isInstanceOf(IllegalArgumentException.class)
+         .hasMessage(expectedMessage);
     }
 
     @Property(tries = 500)
-    @Label("logAndThrowWithClass wraps RuntimeException")
-    void logAndThrowWithClassWrapsRuntimeException(
+    @Label("logAndThrowWithClass should throw RuntimeException")
+    void logAndThrowWithClassShouldThrowRuntimeException(
             @ForAll @StringLength(min = 1, max = 50) @AlphaChars String detail) {
+        String expectedMessage = String.format("Runtime: %s", detail);
         assertThatThrownBy(() ->
             ExceptionUtils.logAndThrowWithClass(
                 RuntimeException.class,
                 "Runtime: %s", detail
             )
         ).isInstanceOf(RuntimeException.class)
-         .hasMessageContaining("Could not instantiate exception class");
+         .hasMessage(expectedMessage);
     }
 
     @Property(tries = 500)
-    @Label("logAndThrowWithClass wraps IllegalStateException")
-    void logAndThrowWithClassWrapsIllegalStateException(
+    @Label("logAndThrowWithClass should throw IllegalStateException")
+    void logAndThrowWithClassShouldThrowIllegalStateException(
             @ForAll @StringLength(min = 1, max = 30) @AlphaChars String state) {
+        String expectedMessage = String.format("State: %s", state);
         assertThatThrownBy(() ->
             ExceptionUtils.logAndThrowWithClass(
                 IllegalStateException.class,
                 "State: %s", state
             )
-        ).isInstanceOf(RuntimeException.class)
-         .hasMessageContaining("Could not instantiate exception class");
+        ).isInstanceOf(IllegalStateException.class)
+         .hasMessage(expectedMessage);
     }
 
     @Property(tries = 500)
-    @Label("logAndThrowWithClass preserves original exception as cause")
-    void logAndThrowWithClassPreservesOriginalExceptionAsCause(
+    @Label("logAndThrowWithClass should preserve formatted message")
+    void logAndThrowWithClassShouldPreserveFormattedMessage(
             @ForAll @StringLength(min = 1, max = 30) @AlphaChars String message) {
-        String expectedOriginalMessage = String.format("Test: %s", message);
+        String expectedMessage = String.format("Test: %s", message);
         assertThatThrownBy(() ->
             ExceptionUtils.logAndThrowWithClass(
                 IllegalArgumentException.class,
                 "Test: %s", message
             )
-        ).isInstanceOf(RuntimeException.class)
-         .hasCauseInstanceOf(IllegalArgumentException.class)
-         .hasRootCauseMessage(expectedOriginalMessage);
+        ).isInstanceOf(IllegalArgumentException.class)
+         .hasMessage(expectedMessage);
     }
 
     // =========================================================================
