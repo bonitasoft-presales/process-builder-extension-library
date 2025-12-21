@@ -100,31 +100,24 @@ class ExceptionUtilsTest {
 
     /**
      * Tests the reflection-based method with a standard IllegalArgumentException (happy path).
-     * This verifies the method correctly finds and invokes the String constructor.
+     * This verifies the method correctly finds and invokes the String constructor,
+     * and throws the exception directly without wrapping.
      */
     @Test
-    void logAndThrowWithClass_should_throw_formatted_message() { 
+    void logAndThrowWithClass_should_throw_formatted_message() {
         // GIVEN format and arguments
         final String format = "Reflection test failed for parameter: %s.";
         final String param = "token-123";
-        final String expectedMessage = String.format(format, param); 
+        final String expectedMessage = String.format(format, param);
 
-        // WHEN the method is called, we now EXPECT the wrapping RuntimeException
-        Exception thrownWrapperException = assertThrows(RuntimeException.class, () -> { // ⚠️ CAMBIO 1: Esperamos RuntimeException
-            ExceptionUtils.logAndThrowWithClass(IllegalArgumentException.class, format, param); 
+        // WHEN the method is called, it should throw IllegalArgumentException directly
+        IllegalArgumentException thrownException = assertThrows(IllegalArgumentException.class, () -> {
+            ExceptionUtils.logAndThrowWithClass(IllegalArgumentException.class, format, param);
         });
 
-        // THEN: The wrapper exception's cause must be the expected IllegalArgumentException
-        Throwable thrownCause = thrownWrapperException.getCause();
-        assertTrue(thrownCause instanceof IllegalArgumentException, "The CAUSE must be IllegalArgumentException, not the wrapper RuntimeException."); // ⚠️ CAMBIO 2
-
-        // THEN: The message of the CAUSE must be the expected formatted message
-        assertEquals(expectedMessage, thrownCause.getMessage(), 
-                     "The CAUSE's message must contain the full formatted message.");
-        
-        // Ensure the wrapper message indicates a general failure
-        assertTrue(thrownWrapperException.getMessage().contains("Could not instantiate exception class: "),
-                   "The wrapper exception message must indicate a general instantiation failure."); // ⚠️ CAMBIO 3: Nueva aserción
+        // THEN: The thrown exception's message must be the expected formatted message
+        assertEquals(expectedMessage, thrownException.getMessage(),
+                     "The thrown exception must contain the full formatted message.");
     }
     
     /**
