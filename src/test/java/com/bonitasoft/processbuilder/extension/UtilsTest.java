@@ -499,4 +499,205 @@ class UtilsTest {
         assertTrue(elapsed >= elapsedMs - 100 && elapsed <= elapsedMs + 100,
             "Elapsed time should be approximately " + elapsedMs + "ms");
     }
+
+    // -------------------------------------------------------------------------
+    // extractMinutes Tests
+    // -------------------------------------------------------------------------
+
+    @Test
+    @DisplayName("extractMinutes should return 0 for less than 1 minute")
+    void extractMinutes_should_return_zero_for_less_than_one_minute() {
+        assertEquals(0L, Utils.extractMinutes(59999L)); // 59.999 seconds
+        assertEquals(0L, Utils.extractMinutes(0L));
+        assertEquals(0L, Utils.extractMinutes(30000L)); // 30 seconds
+    }
+
+    @Test
+    @DisplayName("extractMinutes should return 1 for exactly 1 minute")
+    void extractMinutes_should_return_one_for_one_minute() {
+        assertEquals(1L, Utils.extractMinutes(60000L)); // 60 seconds = 1 minute
+    }
+
+    @Test
+    @DisplayName("extractMinutes should return correct value for multiple minutes")
+    void extractMinutes_should_return_correct_for_multiple_minutes() {
+        assertEquals(2L, Utils.extractMinutes(120000L)); // 2 minutes
+        assertEquals(5L, Utils.extractMinutes(300000L)); // 5 minutes
+        assertEquals(10L, Utils.extractMinutes(600000L)); // 10 minutes
+    }
+
+    @Test
+    @DisplayName("extractMinutes should ignore seconds and milliseconds")
+    void extractMinutes_should_ignore_seconds_and_milliseconds() {
+        // 2 minutes + 30 seconds + 500 milliseconds = 150500 ms
+        assertEquals(2L, Utils.extractMinutes(150500L));
+        // 3 minutes + 59 seconds + 999 milliseconds = 239999 ms
+        assertEquals(3L, Utils.extractMinutes(239999L));
+    }
+
+    // -------------------------------------------------------------------------
+    // extractSeconds Tests - Critical for killing % 60 mutation
+    // -------------------------------------------------------------------------
+
+    @Test
+    @DisplayName("extractSeconds should return 0 for exactly 1 minute")
+    void extractSeconds_should_return_zero_for_exactly_one_minute() {
+        // 60000 ms = 1 minute exactly, seconds component should be 0
+        assertEquals(0L, Utils.extractSeconds(60000L));
+    }
+
+    @Test
+    @DisplayName("extractSeconds should return 1 for 1 minute and 1 second")
+    void extractSeconds_should_return_one_for_one_minute_one_second() {
+        // 61000 ms = 1 minute + 1 second
+        // If mutation changes % 60 to * 60, this would return 61 * 60 = 3660 instead of 1
+        assertEquals(1L, Utils.extractSeconds(61000L));
+    }
+
+    @Test
+    @DisplayName("extractSeconds should return 59 for 59 seconds")
+    void extractSeconds_should_return_59_for_59_seconds() {
+        assertEquals(59L, Utils.extractSeconds(59000L));
+    }
+
+    @Test
+    @DisplayName("extractSeconds should return 59 for 1 minute 59 seconds")
+    void extractSeconds_should_return_59_for_one_minute_59_seconds() {
+        // 119000 ms = 1 minute + 59 seconds
+        assertEquals(59L, Utils.extractSeconds(119000L));
+    }
+
+    @Test
+    @DisplayName("extractSeconds should handle 2 minutes 30 seconds")
+    void extractSeconds_should_handle_two_minutes_30_seconds() {
+        // 150000 ms = 2 minutes + 30 seconds
+        // toSeconds = 150, then % 60 = 30
+        assertEquals(30L, Utils.extractSeconds(150000L));
+    }
+
+    @Test
+    @DisplayName("extractSeconds should return 0 for 0 milliseconds")
+    void extractSeconds_should_return_zero_for_zero() {
+        assertEquals(0L, Utils.extractSeconds(0L));
+    }
+
+    @Test
+    @DisplayName("extractSeconds should correctly use modulo to wrap around")
+    void extractSeconds_should_use_modulo_correctly() {
+        // 121000 ms = 2 minutes + 1 second = 121 total seconds
+        // 121 % 60 = 1
+        assertEquals(1L, Utils.extractSeconds(121000L));
+
+        // 185000 ms = 3 minutes + 5 seconds = 185 total seconds
+        // 185 % 60 = 5
+        assertEquals(5L, Utils.extractSeconds(185000L));
+    }
+
+    // -------------------------------------------------------------------------
+    // extractMilliseconds Tests - Critical for killing % 1000 mutation
+    // -------------------------------------------------------------------------
+
+    @Test
+    @DisplayName("extractMilliseconds should return 0 for exactly 1 second")
+    void extractMilliseconds_should_return_zero_for_exactly_one_second() {
+        assertEquals(0L, Utils.extractMilliseconds(1000L));
+    }
+
+    @Test
+    @DisplayName("extractMilliseconds should return 1 for 1001 milliseconds")
+    void extractMilliseconds_should_return_one_for_1001_ms() {
+        // If mutation changes % 1000 to * 1000, this would return 1001 * 1000 = 1001000 instead of 1
+        assertEquals(1L, Utils.extractMilliseconds(1001L));
+    }
+
+    @Test
+    @DisplayName("extractMilliseconds should return 999 for 999 ms")
+    void extractMilliseconds_should_return_999_for_999_ms() {
+        assertEquals(999L, Utils.extractMilliseconds(999L));
+    }
+
+    @Test
+    @DisplayName("extractMilliseconds should return 500 for 1500 ms")
+    void extractMilliseconds_should_return_500_for_1500_ms() {
+        // 1500 % 1000 = 500
+        assertEquals(500L, Utils.extractMilliseconds(1500L));
+    }
+
+    @Test
+    @DisplayName("extractMilliseconds should return 0 for 0 ms")
+    void extractMilliseconds_should_return_zero_for_zero() {
+        assertEquals(0L, Utils.extractMilliseconds(0L));
+    }
+
+    @Test
+    @DisplayName("extractMilliseconds should correctly use modulo to wrap around")
+    void extractMilliseconds_should_use_modulo_correctly() {
+        // 5001 ms = 5 seconds + 1 millisecond
+        // 5001 % 1000 = 1
+        assertEquals(1L, Utils.extractMilliseconds(5001L));
+
+        // 125250 ms = 2 minutes + 5 seconds + 250 milliseconds
+        // 125250 % 1000 = 250
+        assertEquals(250L, Utils.extractMilliseconds(125250L));
+    }
+
+    @Test
+    @DisplayName("extractMilliseconds should handle exact minute boundaries")
+    void extractMilliseconds_should_handle_minute_boundaries() {
+        // 60000 ms = 1 minute exactly
+        assertEquals(0L, Utils.extractMilliseconds(60000L));
+
+        // 60001 ms = 1 minute + 1 millisecond
+        assertEquals(1L, Utils.extractMilliseconds(60001L));
+    }
+
+    // -------------------------------------------------------------------------
+    // formatElapsedTime Tests
+    // -------------------------------------------------------------------------
+
+    @Test
+    @DisplayName("formatElapsedTime should format 0 milliseconds correctly")
+    void formatElapsedTime_should_format_zero() {
+        assertEquals("0m 0s 0ms", Utils.formatElapsedTime(0L));
+    }
+
+    @Test
+    @DisplayName("formatElapsedTime should format 1 second correctly")
+    void formatElapsedTime_should_format_one_second() {
+        assertEquals("0m 1s 0ms", Utils.formatElapsedTime(1000L));
+    }
+
+    @Test
+    @DisplayName("formatElapsedTime should format 1 minute correctly")
+    void formatElapsedTime_should_format_one_minute() {
+        assertEquals("1m 0s 0ms", Utils.formatElapsedTime(60000L));
+    }
+
+    @Test
+    @DisplayName("formatElapsedTime should format complex time correctly")
+    void formatElapsedTime_should_format_complex_time() {
+        // 2 minutes + 30 seconds + 500 milliseconds = 150500 ms
+        assertEquals("2m 30s 500ms", Utils.formatElapsedTime(150500L));
+    }
+
+    @Test
+    @DisplayName("formatElapsedTime should format 1 minute 1 second 1 millisecond")
+    void formatElapsedTime_should_format_1m_1s_1ms() {
+        // 61001 ms = 1 minute + 1 second + 1 millisecond
+        assertEquals("1m 1s 1ms", Utils.formatElapsedTime(61001L));
+    }
+
+    @Test
+    @DisplayName("formatElapsedTime should format maximum seconds and milliseconds")
+    void formatElapsedTime_should_format_max_seconds_and_ms() {
+        // 59999 ms = 0 minutes + 59 seconds + 999 milliseconds
+        assertEquals("0m 59s 999ms", Utils.formatElapsedTime(59999L));
+    }
+
+    @Test
+    @DisplayName("formatElapsedTime should format 5 minutes 45 seconds 123 milliseconds")
+    void formatElapsedTime_should_format_5m_45s_123ms() {
+        // 5 * 60000 + 45 * 1000 + 123 = 345123 ms
+        assertEquals("5m 45s 123ms", Utils.formatElapsedTime(345123L));
+    }
 }

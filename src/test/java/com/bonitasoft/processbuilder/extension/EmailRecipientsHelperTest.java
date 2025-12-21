@@ -934,6 +934,311 @@ class EmailRecipientsHelperTest {
     }
 
     // =========================================================================
+    // MUTATION TESTING - ADDITIONAL TESTS TO KILL SURVIVING MUTATIONS
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Mutation Killing Tests - Conditional Verifications")
+    class MutationKillingTests {
+
+        // --- getEmailByUserId mutations ---
+
+        @Test
+        @DisplayName("getEmailByUserId should NOT call getUserContactData for invalid userId")
+        void getEmailByUserId_should_not_call_api_for_invalid_userId() throws Exception {
+            // When calling with null userId
+            EmailRecipientsHelper.getEmailByUserId(identityAPI, null);
+
+            // Then API should never be called (conditional short-circuits)
+            verify(identityAPI, never()).getUserContactData(anyLong(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("getEmailByUserId should NOT call getUserContactData for zero userId")
+        void getEmailByUserId_should_not_call_api_for_zero_userId() throws Exception {
+            // When calling with 0 userId
+            EmailRecipientsHelper.getEmailByUserId(identityAPI, 0L);
+
+            // Then API should never be called
+            verify(identityAPI, never()).getUserContactData(anyLong(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("getEmailByUserId should call getUserContactData for valid userId")
+        void getEmailByUserId_should_call_api_for_valid_userId() throws Exception {
+            when(identityAPI.getUserContactData(1L, false)).thenReturn(contactData);
+            when(contactData.getEmail()).thenReturn("test@test.com");
+
+            // When calling with valid userId
+            EmailRecipientsHelper.getEmailByUserId(identityAPI, 1L);
+
+            // Then API should be called
+            verify(identityAPI, times(1)).getUserContactData(1L, false);
+        }
+
+        // --- getManagerEmailByUserId mutations ---
+
+        @Test
+        @DisplayName("getManagerEmailByUserId should NOT call getUser for invalid userId")
+        void getManagerEmailByUserId_should_not_call_api_for_invalid_userId() throws Exception {
+            // When calling with null userId
+            EmailRecipientsHelper.getManagerEmailByUserId(identityAPI, null);
+
+            // Then API should never be called
+            verify(identityAPI, never()).getUser(anyLong());
+        }
+
+        @Test
+        @DisplayName("getManagerEmailByUserId boundary: managerId=0 returns empty")
+        void getManagerEmailByUserId_boundary_manager_id_zero() throws Exception {
+            when(identityAPI.getUser(1L)).thenReturn(user);
+            when(user.getManagerUserId()).thenReturn(0L);  // Boundary: exactly 0
+
+            Optional<String> result = EmailRecipientsHelper.getManagerEmailByUserId(identityAPI, 1L);
+
+            assertTrue(result.isEmpty());
+            // Should NOT try to get email for manager ID 0
+            verify(identityAPI, never()).getUserContactData(eq(0L), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("getManagerEmailByUserId boundary: managerId=1 returns email")
+        void getManagerEmailByUserId_boundary_manager_id_one() throws Exception {
+            when(identityAPI.getUser(1L)).thenReturn(user);
+            when(user.getManagerUserId()).thenReturn(1L);  // Boundary: smallest valid
+            when(identityAPI.getUserContactData(1L, false)).thenReturn(contactData);
+            when(contactData.getEmail()).thenReturn("mgr@test.com");
+
+            Optional<String> result = EmailRecipientsHelper.getManagerEmailByUserId(identityAPI, 1L);
+
+            assertTrue(result.isPresent());
+            assertEquals("mgr@test.com", result.get());
+        }
+
+        // --- getEmailsByUserIds mutations ---
+
+        @Test
+        @DisplayName("getEmailsByUserIds should NOT call API for null collection")
+        void getEmailsByUserIds_should_not_call_api_for_null() throws Exception {
+            Set<String> result = EmailRecipientsHelper.getEmailsByUserIds(identityAPI, null);
+
+            assertTrue(result.isEmpty());
+            verify(identityAPI, never()).getUserContactData(anyLong(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("getEmailsByUserIds should NOT call API for empty collection")
+        void getEmailsByUserIds_should_not_call_api_for_empty() throws Exception {
+            Set<String> result = EmailRecipientsHelper.getEmailsByUserIds(identityAPI, Collections.emptySet());
+
+            assertTrue(result.isEmpty());
+            verify(identityAPI, never()).getUserContactData(anyLong(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("getEmailsByUserIds should call API for valid collection")
+        void getEmailsByUserIds_should_call_api_for_valid() throws Exception {
+            when(identityAPI.getUserContactData(1L, false)).thenReturn(contactData);
+            when(contactData.getEmail()).thenReturn("test@test.com");
+
+            Set<String> result = EmailRecipientsHelper.getEmailsByUserIds(identityAPI, Set.of(1L));
+
+            assertFalse(result.isEmpty());
+            verify(identityAPI, times(1)).getUserContactData(1L, false);
+        }
+
+        // --- processStepBasedRecipients mutations ---
+
+        @Test
+        @DisplayName("processStepBasedRecipients should NOT call API for null steps")
+        void processStepBasedRecipients_should_not_call_api_for_null_steps() throws Exception {
+            Set<String> result = EmailRecipientsHelper.processStepBasedRecipients(
+                    identityAPI, null, step -> 1L, false);
+
+            assertTrue(result.isEmpty());
+            verify(identityAPI, never()).getUserContactData(anyLong(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("processStepBasedRecipients should NOT call API for empty steps")
+        void processStepBasedRecipients_should_not_call_api_for_empty_steps() throws Exception {
+            Set<String> result = EmailRecipientsHelper.processStepBasedRecipients(
+                    identityAPI, Collections.emptyList(), step -> 1L, false);
+
+            assertTrue(result.isEmpty());
+            verify(identityAPI, never()).getUserContactData(anyLong(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("processStepBasedRecipients should NOT call API when userId invalid")
+        void processStepBasedRecipients_should_not_call_api_for_invalid_userId() throws Exception {
+            List<TestStep> steps = List.of(new TestStep(null));
+
+            Set<String> result = EmailRecipientsHelper.processStepBasedRecipients(
+                    identityAPI, steps, TestStep::getUserId, false);
+
+            assertTrue(result.isEmpty());
+            verify(identityAPI, never()).getUserContactData(anyLong(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("processStepBasedRecipients should call API for valid step user")
+        void processStepBasedRecipients_should_call_api_for_valid_step() throws Exception {
+            List<TestStep> steps = List.of(new TestStep(1L));
+            when(identityAPI.getUserContactData(1L, false)).thenReturn(contactData);
+            when(contactData.getEmail()).thenReturn("user@test.com");
+
+            Set<String> result = EmailRecipientsHelper.processStepBasedRecipients(
+                    identityAPI, steps, TestStep::getUserId, false);
+
+            assertFalse(result.isEmpty());
+            verify(identityAPI, times(1)).getUserContactData(1L, false);
+        }
+
+        @Test
+        @DisplayName("processStepBasedRecipients fetchManager=true should call getUser then getContactData")
+        void processStepBasedRecipients_manager_path() throws Exception {
+            List<TestStep> steps = List.of(new TestStep(1L));
+            when(identityAPI.getUser(1L)).thenReturn(user);
+            when(user.getManagerUserId()).thenReturn(2L);
+            when(identityAPI.getUserContactData(2L, false)).thenReturn(contactData);
+            when(contactData.getEmail()).thenReturn("manager@test.com");
+
+            Set<String> result = EmailRecipientsHelper.processStepBasedRecipients(
+                    identityAPI, steps, TestStep::getUserId, true);
+
+            assertFalse(result.isEmpty());
+            verify(identityAPI, times(1)).getUser(1L);
+            verify(identityAPI, times(1)).getUserContactData(2L, false);
+        }
+
+        // --- processMembershipBasedRecipients mutations ---
+
+        @Test
+        @DisplayName("processMembershipBasedRecipients should NOT call API for null collection")
+        void processMembershipBasedRecipients_should_not_call_api_for_null() throws Exception {
+            Set<String> result = EmailRecipientsHelper.processMembershipBasedRecipients(
+                    identityAPI, null, u -> 1L);
+
+            assertTrue(result.isEmpty());
+            verify(identityAPI, never()).getUserContactData(anyLong(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("processMembershipBasedRecipients should NOT call API for empty collection")
+        void processMembershipBasedRecipients_should_not_call_api_for_empty() throws Exception {
+            Set<String> result = EmailRecipientsHelper.processMembershipBasedRecipients(
+                    identityAPI, Collections.emptyList(), u -> 1L);
+
+            assertTrue(result.isEmpty());
+            verify(identityAPI, never()).getUserContactData(anyLong(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("processMembershipBasedRecipients should call API for valid collection")
+        void processMembershipBasedRecipients_should_call_api_for_valid() throws Exception {
+            List<TestUserList> userLists = List.of(new TestUserList(1L));
+            when(identityAPI.getUserContactData(1L, false)).thenReturn(contactData);
+            when(contactData.getEmail()).thenReturn("test@test.com");
+
+            Set<String> result = EmailRecipientsHelper.processMembershipBasedRecipients(
+                    identityAPI, userLists, TestUserList::getUserId);
+
+            assertFalse(result.isEmpty());
+            verify(identityAPI, times(1)).getUserContactData(1L, false);
+        }
+
+        // --- extractUserIdsFromMembershipResults mutations ---
+
+        @Test
+        @DisplayName("extractUserIdsFromMembershipResults should return empty for null")
+        void extractUserIdsFromMembershipResults_returns_empty_for_null() {
+            Set<Long> result = EmailRecipientsHelper.extractUserIdsFromMembershipResults(
+                    null, u -> 1L);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("extractUserIdsFromMembershipResults should return empty for empty")
+        void extractUserIdsFromMembershipResults_returns_empty_for_empty() {
+            Set<Long> result = EmailRecipientsHelper.extractUserIdsFromMembershipResults(
+                    Collections.emptyList(), u -> 1L);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("extractUserIdsFromMembershipResults should return non-empty for valid")
+        void extractUserIdsFromMembershipResults_returns_non_empty_for_valid() {
+            List<TestUserList> userLists = List.of(new TestUserList(42L));
+
+            Set<Long> result = EmailRecipientsHelper.extractUserIdsFromMembershipResults(
+                    userLists, TestUserList::getUserId);
+
+            assertFalse(result.isEmpty());
+            assertTrue(result.contains(42L));
+        }
+
+        // --- extractEmail mutations (private but tested through public methods) ---
+
+        @Test
+        @DisplayName("getEmailByUserId with null contactData returns empty")
+        void extractEmail_null_contactData() throws Exception {
+            when(identityAPI.getUserContactData(1L, false)).thenReturn(null);
+
+            Optional<String> result = EmailRecipientsHelper.getEmailByUserId(identityAPI, 1L);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("getEmailByUserId with blank email returns empty")
+        void extractEmail_blank_email() throws Exception {
+            when(identityAPI.getUserContactData(1L, false)).thenReturn(contactData);
+            when(contactData.getEmail()).thenReturn("");
+
+            Optional<String> result = EmailRecipientsHelper.getEmailByUserId(identityAPI, 1L);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("getEmailByUserId with whitespace email returns empty")
+        void extractEmail_whitespace_email() throws Exception {
+            when(identityAPI.getUserContactData(1L, false)).thenReturn(contactData);
+            when(contactData.getEmail()).thenReturn("   ");
+
+            Optional<String> result = EmailRecipientsHelper.getEmailByUserId(identityAPI, 1L);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("getEmailByUserId with null email returns empty")
+        void extractEmail_null_email() throws Exception {
+            when(identityAPI.getUserContactData(1L, false)).thenReturn(contactData);
+            when(contactData.getEmail()).thenReturn(null);
+
+            Optional<String> result = EmailRecipientsHelper.getEmailByUserId(identityAPI, 1L);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("getEmailByUserId with valid email returns email")
+        void extractEmail_valid_email() throws Exception {
+            when(identityAPI.getUserContactData(1L, false)).thenReturn(contactData);
+            when(contactData.getEmail()).thenReturn("valid@test.com");
+
+            Optional<String> result = EmailRecipientsHelper.getEmailByUserId(identityAPI, 1L);
+
+            assertTrue(result.isPresent());
+            assertEquals("valid@test.com", result.get());
+        }
+    }
+
+    // =========================================================================
     // TEST HELPER CLASSES
     // =========================================================================
 

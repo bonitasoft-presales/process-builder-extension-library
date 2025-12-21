@@ -25,10 +25,11 @@ jobs:
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
 
+      # Build and test to ensure code quality before release
       - name: Build and test
         run: |
           chmod +x mvnw
-          ./mvnw clean verify
+          ./mvnw clean verify -Pci
 
       - name: Force a hard reset to remove all local changes
         run: git reset --hard
@@ -99,12 +100,13 @@ jobs:
         with:
           ref: ${{ steps.previous-tag.outputs.tag }}
 
+      # Build and test the tagged version (no site reports needed)
       - name: Build and Test
         id: build-and-test
         run: |
           echo "build ${{ steps.previous-tag.outputs.tag }}"
           chmod +x mvnw
-          ./mvnw clean verify
+          ./mvnw clean verify -Pci
 
       - name: Get version from pom
         id: get-version

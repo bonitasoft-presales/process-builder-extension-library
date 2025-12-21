@@ -455,4 +455,193 @@ class PasswordCryptoTest {
             assertThat(exception.getMessage()).contains("too short");
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Direct Password Tests (using package-private methods for CI testing)
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("Direct Password Tests (CI-safe)")
+    class DirectPasswordTests {
+
+        private static final String TEST_MASTER_PASSWORD = "TestMasterPassword123!";
+
+        @Test
+        @DisplayName("Should encrypt and decrypt with direct password")
+        void should_encrypt_and_decrypt_with_direct_password() {
+            String original = "mySecretPassword123";
+
+            String encrypted = PasswordCrypto.encryptWithPassword(original, TEST_MASTER_PASSWORD);
+            String decrypted = PasswordCrypto.decryptWithPassword(encrypted, TEST_MASTER_PASSWORD);
+
+            assertThat(decrypted).isEqualTo(original);
+            assertThat(encrypted).isNotEqualTo(original);
+            assertThat(PasswordCrypto.isEncrypted(encrypted)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Should handle empty string with direct password")
+        void should_handle_empty_string_with_direct_password() {
+            String encrypted = PasswordCrypto.encryptWithPassword("", TEST_MASTER_PASSWORD);
+            String decrypted = PasswordCrypto.decryptWithPassword(encrypted, TEST_MASTER_PASSWORD);
+
+            assertThat(decrypted).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should produce different ciphertext each time with same password")
+        void should_produce_different_ciphertext_with_direct_password() {
+            String original = "samePassword";
+
+            String encrypted1 = PasswordCrypto.encryptWithPassword(original, TEST_MASTER_PASSWORD);
+            String encrypted2 = PasswordCrypto.encryptWithPassword(original, TEST_MASTER_PASSWORD);
+
+            assertThat(encrypted1).isNotEqualTo(encrypted2);
+            assertThat(PasswordCrypto.decryptWithPassword(encrypted1, TEST_MASTER_PASSWORD)).isEqualTo(original);
+            assertThat(PasswordCrypto.decryptWithPassword(encrypted2, TEST_MASTER_PASSWORD)).isEqualTo(original);
+        }
+
+        @Test
+        @DisplayName("Should handle special characters with direct password")
+        void should_handle_special_characters_with_direct_password() {
+            String original = "P@$$w0rd!#%^&*()_+-=áéíóú日本語🔐";
+
+            String encrypted = PasswordCrypto.encryptWithPassword(original, TEST_MASTER_PASSWORD);
+            String decrypted = PasswordCrypto.decryptWithPassword(encrypted, TEST_MASTER_PASSWORD);
+
+            assertThat(decrypted).isEqualTo(original);
+        }
+
+        @Test
+        @DisplayName("Should handle long password with direct password")
+        void should_handle_long_password_with_direct_password() {
+            String original = "A".repeat(10000);
+
+            String encrypted = PasswordCrypto.encryptWithPassword(original, TEST_MASTER_PASSWORD);
+            String decrypted = PasswordCrypto.decryptWithPassword(encrypted, TEST_MASTER_PASSWORD);
+
+            assertThat(decrypted).isEqualTo(original);
+        }
+
+        @Test
+        @DisplayName("Should fail decryption with wrong master password")
+        void should_fail_with_wrong_master_password() {
+            String original = "mySecretPassword123";
+            String encrypted = PasswordCrypto.encryptWithPassword(original, TEST_MASTER_PASSWORD);
+
+            PasswordCrypto.CryptoException exception = assertThrows(
+                PasswordCrypto.CryptoException.class,
+                () -> PasswordCrypto.decryptWithPassword(encrypted, "WrongPassword!")
+            );
+            assertThat(exception.getMessage()).contains("wrong master password");
+        }
+
+        @Test
+        @DisplayName("Should throw for null plaintext with direct password")
+        void should_throw_for_null_plaintext_with_direct_password() {
+            IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> PasswordCrypto.encryptWithPassword(null, TEST_MASTER_PASSWORD)
+            );
+            assertThat(exception.getMessage()).contains("cannot be null");
+        }
+
+        @Test
+        @DisplayName("Should throw for null encrypted text with direct password")
+        void should_throw_for_null_encrypted_with_direct_password() {
+            IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> PasswordCrypto.decryptWithPassword(null, TEST_MASTER_PASSWORD)
+            );
+            assertThat(exception.getMessage()).contains("cannot be null or empty");
+        }
+
+        @Test
+        @DisplayName("Should throw for empty encrypted text with direct password")
+        void should_throw_for_empty_encrypted_with_direct_password() {
+            IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> PasswordCrypto.decryptWithPassword("", TEST_MASTER_PASSWORD)
+            );
+            assertThat(exception.getMessage()).contains("cannot be null or empty");
+        }
+
+        @Test
+        @DisplayName("Should throw for blank encrypted text with direct password")
+        void should_throw_for_blank_encrypted_with_direct_password() {
+            IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> PasswordCrypto.decryptWithPassword("   ", TEST_MASTER_PASSWORD)
+            );
+            assertThat(exception.getMessage()).contains("cannot be null or empty");
+        }
+
+        @Test
+        @DisplayName("Should throw for invalid Base64 with direct password")
+        void should_throw_for_invalid_base64_with_direct_password() {
+            PasswordCrypto.CryptoException exception = assertThrows(
+                PasswordCrypto.CryptoException.class,
+                () -> PasswordCrypto.decryptWithPassword("not-valid-base64!!!", TEST_MASTER_PASSWORD)
+            );
+            assertThat(exception.getMessage()).contains("Invalid Base64");
+        }
+
+        @Test
+        @DisplayName("Should throw for too short data with direct password")
+        void should_throw_for_short_data_with_direct_password() {
+            String tooShort = java.util.Base64.getEncoder().encodeToString(new byte[10]);
+
+            PasswordCrypto.CryptoException exception = assertThrows(
+                PasswordCrypto.CryptoException.class,
+                () -> PasswordCrypto.decryptWithPassword(tooShort, TEST_MASTER_PASSWORD)
+            );
+            assertThat(exception.getMessage()).contains("too short");
+        }
+
+        @Test
+        @DisplayName("Should handle whitespace-only passwords")
+        void should_handle_whitespace_content() {
+            String original = "   \t\n   ";
+
+            String encrypted = PasswordCrypto.encryptWithPassword(original, TEST_MASTER_PASSWORD);
+            String decrypted = PasswordCrypto.decryptWithPassword(encrypted, TEST_MASTER_PASSWORD);
+
+            assertThat(decrypted).isEqualTo(original);
+        }
+
+        @Test
+        @DisplayName("Should handle unicode in password content")
+        void should_handle_unicode_content() {
+            String original = "Contraseña с паролем 密码 🔑🔒";
+
+            String encrypted = PasswordCrypto.encryptWithPassword(original, TEST_MASTER_PASSWORD);
+            String decrypted = PasswordCrypto.decryptWithPassword(encrypted, TEST_MASTER_PASSWORD);
+
+            assertThat(decrypted).isEqualTo(original);
+        }
+
+        @Test
+        @DisplayName("Should work with different master passwords")
+        void should_work_with_different_master_passwords() {
+            String original = "testPassword";
+            String masterPwd1 = "MasterPassword1!";
+            String masterPwd2 = "MasterPassword2!";
+
+            String encrypted1 = PasswordCrypto.encryptWithPassword(original, masterPwd1);
+            String encrypted2 = PasswordCrypto.encryptWithPassword(original, masterPwd2);
+
+            // Different master passwords should produce different encrypted outputs
+            assertThat(encrypted1).isNotEqualTo(encrypted2);
+
+            // Each should decrypt correctly with its own password
+            assertThat(PasswordCrypto.decryptWithPassword(encrypted1, masterPwd1)).isEqualTo(original);
+            assertThat(PasswordCrypto.decryptWithPassword(encrypted2, masterPwd2)).isEqualTo(original);
+
+            // Cross-decryption should fail
+            assertThrows(PasswordCrypto.CryptoException.class,
+                () -> PasswordCrypto.decryptWithPassword(encrypted1, masterPwd2));
+            assertThrows(PasswordCrypto.CryptoException.class,
+                () -> PasswordCrypto.decryptWithPassword(encrypted2, masterPwd1));
+        }
+    }
 }

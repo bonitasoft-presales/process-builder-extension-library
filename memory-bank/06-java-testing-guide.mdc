@@ -1,0 +1,629 @@
+# 06-java-testing-guide.mdc: Comprehensive Java Testing Standards
+
+## 1. Core Testing Philosophy
+
+### 1.1. Mandatory Requirements
+* **Coverage Goal:** **100% test coverage** for all Java classes - NO EXCEPTIONS
+* **Assertion Library:** **AssertJ ONLY** - NEVER use JUnit native assertions
+* **Framework:** JUnit 5 (Jupiter) with Mockito for mocking
+* **Property Testing:** jqwik for invariant verification
+* **Mutation Testing:** PIT for test quality validation
+
+### 1.2. Test Class Structure
+Every class requires corresponding test classes:
+* `{ClassName}Test.java` - Unit tests with Mockito
+* `{ClassName}PropertyTest.java` - Property-based tests (for DTOs/Records/Enums)
+
+---
+
+## 2. AssertJ Assertions (MANDATORY)
+
+### 2.1. NEVER Use JUnit Assertions
+```java
+// CORRECT - AssertJ
+assertThat(result).isNotNull();
+assertThat(result.getValue()).isEqualTo(expected);
+assertThat(list).hasSize(3).contains("a", "b");
+assertThatThrownBy(() -> method()).isInstanceOf(Exception.class);
+assertThatCode(() -> method()).doesNotThrowAnyException();
+
+// FORBIDDEN - JUnit assertions
+assertEquals(expected, result);      // NEVER
+assertTrue(condition);               // NEVER
+assertNotNull(result);               // NEVER
+assertThrows(Exception.class, ...);  // Use assertThatThrownBy instead
+```
+
+### 2.2. AssertJ Patterns
+```java
+// Collections
+assertThat(list).isEmpty();
+assertThat(list).hasSize(5);
+assertThat(list).containsExactly("a", "b", "c");
+assertThat(list).containsExactlyInAnyOrder("c", "a", "b");
+assertThat(list).doesNotContain("x");
+
+// Strings
+assertThat(str).isNotBlank();
+assertThat(str).startsWith("prefix");
+assertThat(str).containsIgnoringCase("expected");
+
+// Objects
+assertThat(result).isInstanceOf(MyClass.class);
+assertThat(result).extracting("name", "age").containsExactly("John", 30);
+
+// Exceptions
+assertThatThrownBy(() -> service.method(null))
+    .isInstanceOf(IllegalArgumentException.class)
+    .hasMessageContaining("must not be null");
+
+// Optional
+assertThat(optional).isPresent().contains(expectedValue);
+assertThat(optional).isEmpty();
+```
+
+---
+
+## 3. Test Class Template
+
+### 3.1. Standard Unit Test Class
+```java
+package com.bonitasoft.processbuilder;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@DisplayName("{ClassName} Unit Tests")
+class MyClassTest {
+
+    // =========================================================================
+    // CONSTANTS
+    // =========================================================================
+
+    private static final Long TEST_ID = 1L;
+    private static final String TEST_NAME = "TestValue";
+
+    // =========================================================================
+    // MOCKS AND TEST SUBJECT
+    // =========================================================================
+
+    @Mock
+    private DependencyClass dependency;
+
+    @InjectMocks
+    private MyClass underTest;
+
+    // =========================================================================
+    // CONSTRUCTOR TESTS (for utility classes)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Constructor Tests")
+    class ConstructorTests {
+
+        @Test
+        @DisplayName("Private constructor should prevent instantiation")
+        void constructor_should_be_private() throws Exception {
+            var constructor = MyUtilClass.class.getDeclaredConstructor();
+            assertThat(java.lang.reflect.Modifier.isPrivate(constructor.getModifiers())).isTrue();
+
+            constructor.setAccessible(true);
+            assertThatCode(() -> constructor.newInstance()).doesNotThrowAnyException();
+        }
+    }
+
+    // =========================================================================
+    // METHOD TESTS (grouped by method)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("methodName Tests")
+    class MethodNameTests {
+
+        @Test
+        @DisplayName("should return expected result when valid input")
+        void should_return_expected_when_valid_input() {
+            // Arrange (Given)
+            when(dependency.getData()).thenReturn("data");
+
+            // Act (When)
+            var result = underTest.methodName(TEST_ID);
+
+            // Assert (Then)
+            assertThat(result).isNotNull();
+            assertThat(result.getValue()).isEqualTo("expected");
+            verify(dependency).getData();
+        }
+
+        @Test
+        @DisplayName("should handle null input gracefully")
+        void should_handle_null_input() {
+            var result = underTest.methodName(null);
+            assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("should throw exception when invalid state")
+        void should_throw_when_invalid() {
+            assertThatThrownBy(() -> underTest.methodName(-1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid");
+        }
+    }
+}
+```
+
+---
+
+## 4. Naming Conventions
+
+### 4.1. Test Method Names
+```java
+// Pattern: should_expectedBehavior_when_condition
+void should_return_empty_list_when_no_data_found() { }
+void should_throw_exception_when_input_is_null() { }
+void should_calculate_total_when_valid_items() { }
+
+// For edge cases
+void should_handle_empty_string_input() { }
+void should_handle_whitespace_only_input() { }
+void should_handle_max_value_boundary() { }
+```
+
+### 4.2. @DisplayName Usage
+```java
+@Test
+@DisplayName("should return empty list when repository has no records")
+void should_return_empty_list_when_no_records() { }
+
+@Nested
+@DisplayName("findById Method Tests")
+class FindByIdTests { }
+```
+
+---
+
+## 5. Coverage Requirements Checklist
+
+### 5.1. For EVERY Public Method Test:
+- [ ] Happy path (valid input returns expected output)
+- [ ] Null input handling
+- [ ] Empty input handling (empty string, empty list, empty map)
+- [ ] Whitespace-only input (for strings)
+- [ ] Boundary values (0, -1, MAX_VALUE, MIN_VALUE)
+- [ ] Exception scenarios
+- [ ] All if/else branches
+- [ ] All switch cases
+- [ ] All ternary operator paths
+
+### 5.2. For Utility Classes:
+- [ ] Private constructor test (verify it's private + coverage)
+- [ ] All static methods
+- [ ] All overloaded method variants
+
+### 5.3. For Enums:
+- [ ] values() length verification
+- [ ] Each constant existence (name())
+- [ ] Each constant's getKey() and getDescription()
+- [ ] isValid() with valid, invalid, null, empty, whitespace inputs
+- [ ] getAllData() returns correct map size and keys
+- [ ] getAllKeysList() returns correct list size and values
+- [ ] Unmodifiable collections (assertThrows on modification)
+
+### 5.4. For Collections Returned:
+- [ ] Verify immutability (assertThrows on add/remove/clear)
+- [ ] Verify correct size
+- [ ] Verify content presence
+
+---
+
+## 6. Mockito Best Practices
+
+### 6.1. Setup Patterns
+```java
+// Basic mocking
+when(repository.findById(TEST_ID)).thenReturn(Optional.of(entity));
+when(repository.findById(INVALID_ID)).thenReturn(Optional.empty());
+
+// Argument matchers
+when(repository.findById(anyLong())).thenReturn(Optional.of(entity));
+when(service.process(any(Request.class))).thenReturn(response);
+
+// Throwing exceptions
+when(service.riskyMethod()).thenThrow(new RuntimeException("Error"));
+doThrow(new IOException()).when(service).voidMethod();
+
+// Answer for complex behavior
+when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+```
+
+### 6.2. Verification Patterns
+```java
+// Verify called
+verify(repository).findById(TEST_ID);
+verify(repository, times(2)).save(any());
+verify(repository, atLeastOnce()).delete(any());
+
+// Verify never called
+verify(repository, never()).delete(any());
+verifyNoInteractions(repository);
+verifyNoMoreInteractions(repository);
+
+// Argument capturing
+ArgumentCaptor<Entity> captor = ArgumentCaptor.forClass(Entity.class);
+verify(repository).save(captor.capture());
+assertThat(captor.getValue().getName()).isEqualTo("expected");
+```
+
+### 6.3. Static Method Mocking
+```java
+@Test
+void should_handle_static_method() {
+    try (MockedStatic<UtilClass> mocked = mockStatic(UtilClass.class)) {
+        mocked.when(() -> UtilClass.staticMethod(any()))
+              .thenReturn("mocked");
+
+        var result = underTest.methodThatUsesStatic();
+
+        assertThat(result).isEqualTo("expected");
+    }
+}
+```
+
+---
+
+## 7. Testing Specific Scenarios
+
+### 7.1. Testing Catch Blocks
+```java
+@Test
+@DisplayName("should handle exception gracefully")
+void should_handle_exception() {
+    when(dependency.riskyMethod()).thenThrow(new RuntimeException("Test"));
+
+    // Verify catch block behavior
+    var result = underTest.methodWithTryCatch();
+
+    assertThat(result).isEqualTo(fallbackValue);
+    // OR
+    assertThatCode(() -> underTest.methodWithTryCatch())
+        .doesNotThrowAnyException();
+}
+```
+
+### 7.2. Testing Logging
+```java
+// Focus on behavior, not log output
+@Test
+void should_log_and_return_empty_when_error() {
+    when(dependency.fetch()).thenThrow(new IOException());
+
+    var result = underTest.fetchData();
+
+    assertThat(result).isEmpty();
+    // Log verification is implicit through code coverage
+}
+```
+
+### 7.3. Testing Optional Returns
+```java
+@Test
+void should_return_empty_optional_when_not_found() {
+    when(repository.findById(anyLong())).thenReturn(Optional.empty());
+
+    var result = underTest.findById(TEST_ID);
+
+    assertThat(result).isEmpty();
+}
+
+@Test
+void should_return_present_optional_when_found() {
+    when(repository.findById(TEST_ID)).thenReturn(Optional.of(entity));
+
+    var result = underTest.findById(TEST_ID);
+
+    assertThat(result).isPresent().contains(entity);
+}
+```
+
+### 7.4. Testing Streams and Lambdas
+```java
+@Test
+void should_filter_and_map_correctly() {
+    var input = List.of(
+        new Item(1L, "valid"),
+        new Item(null, "invalid"),
+        new Item(2L, "valid2")
+    );
+
+    var result = underTest.processItems(input);
+
+    assertThat(result)
+        .hasSize(2)
+        .extracting(Item::getId)
+        .containsExactly(1L, 2L);
+}
+```
+
+---
+
+## 8. Property-Based Testing with jqwik
+
+### 8.1. When to Use
+* DTOs, Records, Value Objects
+* Methods with mathematical properties
+* Parsers and validators
+* Any code with invariants
+
+### 8.2. Property Test Template
+```java
+package com.bonitasoft.processbuilder;
+
+import net.jqwik.api.*;
+import net.jqwik.api.constraints.*;
+import org.junit.jupiter.api.DisplayName;
+
+import static org.assertj.core.api.Assertions.*;
+
+@DisplayName("{ClassName} Property Tests")
+class MyClassPropertyTest {
+
+    // =========================================================================
+    // EQUALITY PROPERTIES
+    // =========================================================================
+
+    @Property(tries = 1000)
+    @DisplayName("Equality should be reflexive: x.equals(x)")
+    void equalityShouldBeReflexive(@ForAll @From("validInstances") MyClass instance) {
+        assertThat(instance).isEqualTo(instance);
+    }
+
+    @Property(tries = 1000)
+    @DisplayName("Equality should be symmetric: x.equals(y) == y.equals(x)")
+    void equalityShouldBeSymmetric(
+            @ForAll @From("validInstances") MyClass a,
+            @ForAll @From("validInstances") MyClass b) {
+        assertThat(a.equals(b)).isEqualTo(b.equals(a));
+    }
+
+    @Property(tries = 1000)
+    @DisplayName("HashCode should be consistent with equals")
+    void hashCodeConsistentWithEquals(
+            @ForAll @From("validInstances") MyClass a,
+            @ForAll @From("validInstances") MyClass b) {
+        if (a.equals(b)) {
+            assertThat(a.hashCode()).isEqualTo(b.hashCode());
+        }
+    }
+
+    // =========================================================================
+    // NULL SAFETY PROPERTIES
+    // =========================================================================
+
+    @Property(tries = 500)
+    @DisplayName("toString should never throw")
+    void toStringShouldNeverThrow(@ForAll @From("instancesWithNulls") MyClass instance) {
+        assertThatCode(() -> instance.toString()).doesNotThrowAnyException();
+    }
+
+    @Property(tries = 500)
+    @DisplayName("equals(null) should return false")
+    void equalsNullShouldReturnFalse(@ForAll @From("validInstances") MyClass instance) {
+        assertThat(instance.equals(null)).isFalse();
+    }
+
+    // =========================================================================
+    // ARBITRARIES (DATA GENERATORS)
+    // =========================================================================
+
+    @Provide
+    Arbitrary<MyClass> validInstances() {
+        return Combinators.combine(
+            Arbitraries.longs().greaterOrEqual(1L),
+            Arbitraries.strings().alpha().ofMinLength(1).ofMaxLength(100)
+        ).as(MyClass::new);
+    }
+
+    @Provide
+    Arbitrary<MyClass> instancesWithNulls() {
+        return Combinators.combine(
+            Arbitraries.longs().greaterOrEqual(1L).injectNull(0.3),
+            Arbitraries.strings().alpha().ofMaxLength(100).injectNull(0.3)
+        ).as(MyClass::new);
+    }
+}
+```
+
+### 8.3. Common Arbitraries
+```java
+// Numbers
+Arbitraries.integers()
+Arbitraries.longs().greaterOrEqual(1L)
+Arbitraries.doubles().between(0.0, 100.0)
+
+// Strings
+Arbitraries.strings().alpha()
+Arbitraries.strings().numeric()
+Arbitraries.strings().ofMinLength(1).ofMaxLength(50)
+
+// Collections
+Arbitraries.of("A", "B", "C")
+Arbitraries.oneOf(arb1, arb2)
+arbitrary.injectNull(0.2)  // 20% null chance
+
+// Annotations
+@ForAll @IntRange(min = 0, max = 100) int value
+@ForAll @LongRange(min = 1) Long id
+@ForAll @StringLength(min = 1, max = 50) String name
+```
+
+---
+
+## 9. QA Best Practices
+
+### 9.1. Test Independence
+* Each test must be independent - no shared mutable state
+* Use `@BeforeEach` for common setup, not shared fields
+* Never rely on test execution order
+
+### 9.2. Test Data Management
+```java
+// Use constants for repeated values
+private static final Long TEST_USER_ID = 1L;
+private static final String TEST_EMAIL = "test@example.com";
+
+// Use builder patterns for complex objects
+private User createTestUser(Long id, String email) {
+    return User.builder()
+        .id(id)
+        .email(email)
+        .build();
+}
+```
+
+### 9.3. Test Readability
+* One assertion concept per test (but multiple assertThat calls are OK)
+* Clear test names that describe the scenario
+* AAA pattern: Arrange, Act, Assert (with blank lines between)
+* Comments only for non-obvious setup
+
+### 9.4. Boundary Testing
+```java
+// Always test boundaries
+@Test void should_handle_zero() { }
+@Test void should_handle_negative_one() { }
+@Test void should_handle_max_value() { }
+@Test void should_handle_min_value() { }
+@Test void should_handle_empty_collection() { }
+@Test void should_handle_single_element_collection() { }
+```
+
+### 9.5. Error Message Assertions
+```java
+// Verify exception messages are helpful
+assertThatThrownBy(() -> service.process(null))
+    .isInstanceOf(IllegalArgumentException.class)
+    .hasMessageContaining("input")
+    .hasMessageContaining("null");
+```
+
+---
+
+## 10. Maven Commands
+
+### 10.1. Standard Execution
+```bash
+# Full build with all reports
+mvn clean install site
+
+# Compile only (quick check)
+mvn clean compile
+
+# Tests only
+mvn clean test
+
+# Tests with coverage report
+mvn clean test jacoco:report
+```
+
+### 10.2. Specific Tests
+```bash
+# Single test class
+mvn test -Dtest=MyClassTest
+
+# Property tests only
+mvn test -Dtest=*PropertyTest
+
+# Pattern matching
+mvn test -Dtest=*Utils*Test
+```
+
+### 10.3. Reports Location
+| Report | Location |
+|--------|----------|
+| JaCoCo Coverage | `target/jacoco-report/index.html` |
+| PIT Mutation | `target/pit-reports/index.html` |
+| Surefire Tests | `target/surefire-reports/` |
+
+---
+
+## 11. Pre-Commit Checklist
+
+Before committing any code:
+
+- [ ] All tests pass: `mvn clean test`
+- [ ] Coverage is 100%: Check JaCoCo report
+- [ ] No PMD violations: Check site report
+- [ ] No CPD duplications: Check site report
+- [ ] All public methods have @DisplayName tests
+- [ ] AssertJ used exclusively (no JUnit assertions)
+- [ ] Naming convention followed: `should_X_when_Y`
+- [ ] All branches covered (if/else/switch/ternary)
+- [ ] All catch blocks tested
+- [ ] Null/empty/boundary cases tested
+- [ ] Full build passes: `mvn clean install site`
+
+---
+
+## 12. Common Mistakes to Avoid
+
+### 12.1. Testing Anti-Patterns
+```java
+// BAD: Testing implementation details
+verify(repository, times(3)).save(any()); // Brittle
+
+// GOOD: Test behavior
+assertThat(result.getItems()).hasSize(3);
+
+// BAD: Over-mocking
+when(entity.getId()).thenReturn(1L);
+when(entity.getName()).thenReturn("test");
+// ... 20 more when() calls
+
+// GOOD: Use real objects when simple
+var entity = new Entity(1L, "test");
+
+// BAD: No assertions
+@Test void should_not_throw() {
+    underTest.method(); // Where's the assertion?
+}
+
+// GOOD: Explicit assertion
+@Test void should_not_throw() {
+    assertThatCode(() -> underTest.method()).doesNotThrowAnyException();
+}
+```
+
+### 12.2. Coverage Pitfalls
+```java
+// BAD: False coverage (code runs but not verified)
+@Test void should_process() {
+    underTest.process(input);
+    // No assertion - code runs but behavior not verified
+}
+
+// GOOD: Meaningful coverage
+@Test void should_process() {
+    var result = underTest.process(input);
+    assertThat(result.isProcessed()).isTrue();
+    assertThat(result.getOutput()).isEqualTo(expected);
+}
+```
+
+---
+
+**Version:** 3.0
+**Last Updated:** 2025-12-19
+**Scope:** Java unit testing, property-based testing, mutation testing

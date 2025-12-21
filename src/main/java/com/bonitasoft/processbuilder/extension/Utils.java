@@ -90,15 +90,63 @@ public final class Utils {
 	 * and only needs to be logged with a descriptive name.
 	 *
 	 * @param elapsedTime The pre-calculated elapsed time in milliseconds.
-	 * @param name        A descriptive identifier or name of the operation/task 
+	 * @param name        A descriptive identifier or name of the operation/task
 	 *                    for which the time was measured (used within the log message).
 	 */
 	public static void logElapsedTimeByElapsedTime(long elapsedTime, String name) {
-		long minutes = TimeUnit.MILLISECONDS.toMinutes(elapsedTime);
-		long seconds = TimeUnit.MILLISECONDS.toSeconds(elapsedTime) % 60;
-		long milliseconds = elapsedTime % 1000;
-		
-		LOGGER.info("Elapsed time - {}: {}m {}s {}ms", name, minutes, seconds, milliseconds);
+		String formattedTime = formatElapsedTime(elapsedTime);
+		LOGGER.info("Elapsed time - {}: {}", name, formattedTime);
+	}
+
+	/**
+	 * Formats elapsed time as a human-readable string with minutes, seconds, and milliseconds.
+	 * <p>
+	 * This method extracts the time components and formats them in a consistent pattern.
+	 *
+	 * @param elapsedTime The elapsed time in milliseconds.
+	 * @return A formatted string in the pattern "Xm Ys Zms".
+	 */
+	public static String formatElapsedTime(long elapsedTime) {
+		long minutes = extractMinutes(elapsedTime);
+		long seconds = extractSeconds(elapsedTime);
+		long milliseconds = extractMilliseconds(elapsedTime);
+		return String.format("%dm %ds %dms", minutes, seconds, milliseconds);
+	}
+
+	/**
+	 * Extracts the minutes component from an elapsed time in milliseconds.
+	 *
+	 * @param elapsedTimeMillis The elapsed time in milliseconds.
+	 * @return The number of complete minutes.
+	 */
+	public static long extractMinutes(long elapsedTimeMillis) {
+		return TimeUnit.MILLISECONDS.toMinutes(elapsedTimeMillis);
+	}
+
+	/**
+	 * Extracts the seconds component (0-59) from an elapsed time in milliseconds.
+	 * <p>
+	 * This returns only the seconds portion after extracting complete minutes,
+	 * using modulo 60 to ensure the result is within the 0-59 range.
+	 *
+	 * @param elapsedTimeMillis The elapsed time in milliseconds.
+	 * @return The seconds component (0-59).
+	 */
+	public static long extractSeconds(long elapsedTimeMillis) {
+		return TimeUnit.MILLISECONDS.toSeconds(elapsedTimeMillis) % 60;
+	}
+
+	/**
+	 * Extracts the milliseconds component (0-999) from an elapsed time.
+	 * <p>
+	 * This returns only the milliseconds portion after extracting complete seconds,
+	 * using modulo 1000 to ensure the result is within the 0-999 range.
+	 *
+	 * @param elapsedTimeMillis The elapsed time in milliseconds.
+	 * @return The milliseconds component (0-999).
+	 */
+	public static long extractMilliseconds(long elapsedTimeMillis) {
+		return elapsedTimeMillis % 1000;
 	}
 
 	/**

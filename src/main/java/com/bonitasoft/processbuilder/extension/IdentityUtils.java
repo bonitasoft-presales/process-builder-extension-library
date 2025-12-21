@@ -219,7 +219,7 @@ public final class IdentityUtils {
      * @param methodName The name of the getter method to invoke (e.g., "getGroupId")
      * @return The Long value returned by the method, or {@code null} if not found or on error
      */
-    private static Long extractLongValue(Object obj, String methodName) {
+    static Long extractLongValue(Object obj, String methodName) {
         if (obj == null) {
             return null;
         }

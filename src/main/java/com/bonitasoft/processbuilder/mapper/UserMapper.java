@@ -28,7 +28,12 @@ public final class UserMapper {
      * Returns an empty list if the input list is null or empty.
      */
     public static List<Long> toLongIds(List<User> users) {
-        if (users == null || users.isEmpty()) {
+        // Separated null and empty checks to ensure mutation testing
+        // can properly verify each condition is necessary
+        if (users == null) {
+            return List.of(); // Handles null input safely
+        }
+        if (users.isEmpty()) {
             return List.of(); // Returns an empty immutable list (Java 9+)
         }
 

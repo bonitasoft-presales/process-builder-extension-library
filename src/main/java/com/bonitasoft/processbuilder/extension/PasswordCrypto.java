@@ -83,8 +83,25 @@ public final class PasswordCrypto {
         if (plainText == null) {
             throw new IllegalArgumentException("Plain text cannot be null");
         }
+        return encryptWithPassword(plainText, getMasterPassword());
+    }
 
-        String masterPassword = getMasterPassword();
+    /**
+     * Encrypts the given text using the provided master password.
+     * <p>
+     * Package-private for testing purposes.
+     * </p>
+     *
+     * @param plainText the text to encrypt (must not be null)
+     * @param masterPassword the master password to use for encryption
+     * @return the encrypted text as Base64 string
+     * @throws IllegalArgumentException if plainText is null
+     * @throws CryptoException if encryption fails
+     */
+    static String encryptWithPassword(String plainText, String masterPassword) {
+        if (plainText == null) {
+            throw new IllegalArgumentException("Plain text cannot be null");
+        }
 
         try {
             byte[] salt = generateRandomBytes(SALT_LENGTH_BYTES);
@@ -120,8 +137,25 @@ public final class PasswordCrypto {
         if (encryptedText == null || encryptedText.isBlank()) {
             throw new IllegalArgumentException("Encrypted text cannot be null or empty");
         }
+        return decryptWithPassword(encryptedText, getMasterPassword());
+    }
 
-        String masterPassword = getMasterPassword();
+    /**
+     * Decrypts the given encrypted text using the provided master password.
+     * <p>
+     * Package-private for testing purposes.
+     * </p>
+     *
+     * @param encryptedText the Base64 encrypted text to decrypt
+     * @param masterPassword the master password to use for decryption
+     * @return the decrypted plain text
+     * @throws IllegalArgumentException if encryptedText is null or empty
+     * @throws CryptoException if decryption fails
+     */
+    static String decryptWithPassword(String encryptedText, String masterPassword) {
+        if (encryptedText == null || encryptedText.isBlank()) {
+            throw new IllegalArgumentException("Encrypted text cannot be null or empty");
+        }
 
         try {
             byte[] decoded = Base64.getDecoder().decode(encryptedText);
