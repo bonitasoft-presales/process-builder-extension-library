@@ -2,14 +2,24 @@ package com.bonitasoft.processbuilder.mapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import org.bonitasoft.engine.identity.User; // Importación específica de Bonita
+import org.bonitasoft.engine.identity.User;
 
 /**
- * Utility class (Mapper) dedicated to converting and mapping lists of User entities
- * to common primitive or identifier lists. This class is designed to be extensible 
- * by adding more list mapping methods over time.
- * * It is marked as final as it contains only static utility methods and should not be instantiated 
- * or subclassed.
+ * Utility class for converting and mapping collections of Bonita User entities
+ * to various data structures such as identifier lists.
+ * <p>
+ * This mapper provides type-safe conversion methods that follow the Stream API
+ * patterns for efficient and readable data transformations. It is designed to be
+ * extensible by adding more mapping methods as needed.
+ * </p>
+ * <p>
+ * This class is marked as {@code final} and contains only static utility methods,
+ * following the utility class pattern. It should not be instantiated or subclassed.
+ * </p>
+ *
+ * @author Bonitasoft
+ * @since 1.0
+ * @see org.bonitasoft.engine.identity.User
  */
 public final class UserMapper {
 

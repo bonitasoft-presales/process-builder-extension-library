@@ -222,14 +222,14 @@ public enum BDMObjectType {
      * @throws IllegalArgumentException if no enum constant with the specified key is found.
      */
     public static BDMObjectType fromKey(String key) {
-        for (BDMObjectType type : BDMObjectType.values()) {
+        for (BDMObjectType type : values()) {
             if (type.getKey().equalsIgnoreCase(key)) {
                 return type;
             }
         }
         throw new IllegalArgumentException(
-            String.format("No BDMObjectType found for key: '%s'. Valid keys are: %s", 
-                key, 
+            String.format("No BDMObjectType found for key: '%s'. Valid keys are: %s",
+                key,
                 getAllKeysList())
         );
     }
