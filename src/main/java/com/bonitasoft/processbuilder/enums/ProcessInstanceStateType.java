@@ -29,7 +29,17 @@ public enum ProcessInstanceStateType {
     PAUSED("Paused", "The process instance has been manually suspended."),
     
     /** Future state: The instance is moved to historical records for dashboard performance. */
-    ARCHIVED("Archived", "The process instance is marked as historical and hidden from active views.");
+    ARCHIVED("Archived", "The process instance is marked as historical and hidden from active views."),
+
+    /**
+     * The process instance is orphaned because its parent Bonita process definition was deleted.
+     * <p>
+     * This state indicates that the process instance can no longer be managed through standard
+     * Bonita workflows because the underlying process definition no longer exists. These instances
+     * typically require manual intervention or cleanup procedures.
+     * </p>
+     */
+    ORPHAN("ORPHAN", "Orphan case – Bonita process deleted");
 
     private final String key;
     private final String description;

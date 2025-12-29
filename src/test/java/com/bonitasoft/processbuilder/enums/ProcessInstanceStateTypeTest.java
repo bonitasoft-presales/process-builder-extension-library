@@ -17,13 +17,22 @@ class ProcessInstanceStateTypeTest {
         assertEquals("Completed", state.getKey());
         assertTrue(state.getDescription().contains("finished successfully"));
     }
-    
+
+    @Test
+    void getAttributes_shouldReturnCorrectValuesForOrphan() {
+        ProcessInstanceStateType state = ProcessInstanceStateType.ORPHAN;
+        assertEquals("ORPHAN", state.getKey());
+        assertTrue(state.getDescription().contains("Bonita process deleted"));
+    }
+
     @Test
     void isValid_shouldReturnTrueForValidNamesCaseInsensitive() {
         assertTrue(ProcessInstanceStateType.isValid("rUnning"));
         assertTrue(ProcessInstanceStateType.isValid("COMPLETED"));
         assertTrue(ProcessInstanceStateType.isValid("failed"));
         assertTrue(ProcessInstanceStateType.isValid("  Archived  "));
+        assertTrue(ProcessInstanceStateType.isValid("orphan"));
+        assertTrue(ProcessInstanceStateType.isValid("ORPHAN"));
     }
 
     @Test
@@ -35,16 +44,18 @@ class ProcessInstanceStateTypeTest {
     @Test
     void getAllStatesData_shouldReturnCorrectMap() {
         Map<String, String> data = ProcessInstanceStateType.getAllData();
-        assertEquals(6, data.size());
+        assertEquals(7, data.size());
         assertTrue(data.containsKey("Canceled"));
+        assertTrue(data.containsKey("ORPHAN"));
         assertThrows(UnsupportedOperationException.class, () -> data.clear());
     }
 
     @Test
     void getAllKeysList_shouldReturnCorrectList() {
         List<String> keys = ProcessInstanceStateType.getAllKeysList();
-        assertEquals(6, keys.size());
+        assertEquals(7, keys.size());
         assertTrue(keys.contains("Paused"));
+        assertTrue(keys.contains("ORPHAN"));
         assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }
