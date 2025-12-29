@@ -104,6 +104,8 @@ class JsonNodeUtilsTest {
             assertEquals(">=", JsonNodeUtils.OP_GREATER_OR_EQUAL_SYMBOL);
             assertEquals("lessorequal", JsonNodeUtils.OP_LESS_OR_EQUAL);
             assertEquals("<=", JsonNodeUtils.OP_LESS_OR_EQUAL_SYMBOL);
+            assertEquals("is_empty", JsonNodeUtils.OP_IS_EMPTY);
+            assertEquals("is_not_empty", JsonNodeUtils.OP_IS_NOT_EMPTY);
         }
     }
 
@@ -999,6 +1001,162 @@ class JsonNodeUtilsTest {
             @DisplayName("lessorequal should return false for non-comparable values")
             void lessorequal_should_return_false_for_non_comparable() {
                 assertFalse(JsonNodeUtils.evaluateCondition(new Object(), "<=", new Object()));
+            }
+        }
+
+        // Is Empty tests
+        @Nested
+        @DisplayName("Is Empty Operator Tests")
+        class IsEmptyOperatorTests {
+
+            @Test
+            @DisplayName("is_empty should return true for null value")
+            void is_empty_should_return_true_for_null() {
+                assertTrue(JsonNodeUtils.evaluateCondition(null, "is_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_empty should return true for empty string")
+            void is_empty_should_return_true_for_empty_string() {
+                assertTrue(JsonNodeUtils.evaluateCondition("", "is_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_empty should return true for blank string (whitespace only)")
+            void is_empty_should_return_true_for_blank_string() {
+                assertTrue(JsonNodeUtils.evaluateCondition("   ", "is_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_empty should return true for tab and newline whitespace")
+            void is_empty_should_return_true_for_whitespace_characters() {
+                assertTrue(JsonNodeUtils.evaluateCondition("\t\n  ", "is_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_empty should return false for non-empty string")
+            void is_empty_should_return_false_for_non_empty_string() {
+                assertFalse(JsonNodeUtils.evaluateCondition("test", "is_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_empty should return false for string with content")
+            void is_empty_should_return_false_for_string_with_content() {
+                assertFalse(JsonNodeUtils.evaluateCondition("  hello  ", "is_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_empty should return false for number")
+            void is_empty_should_return_false_for_number() {
+                assertFalse(JsonNodeUtils.evaluateCondition(123, "is_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_empty should return false for zero")
+            void is_empty_should_return_false_for_zero() {
+                assertFalse(JsonNodeUtils.evaluateCondition(0, "is_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_empty should return false for boolean true")
+            void is_empty_should_return_false_for_boolean_true() {
+                assertFalse(JsonNodeUtils.evaluateCondition(true, "is_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_empty should return false for boolean false")
+            void is_empty_should_return_false_for_boolean_false() {
+                assertFalse(JsonNodeUtils.evaluateCondition(false, "is_empty", null));
+            }
+
+            @Test
+            @DisplayName("IS_EMPTY (uppercase) should work case-insensitively")
+            void is_empty_should_work_case_insensitively() {
+                assertTrue(JsonNodeUtils.evaluateCondition(null, "IS_EMPTY", null));
+            }
+        }
+
+        // Is Not Empty tests
+        @Nested
+        @DisplayName("Is Not Empty Operator Tests")
+        class IsNotEmptyOperatorTests {
+
+            @Test
+            @DisplayName("is_not_empty should return false for null value")
+            void is_not_empty_should_return_false_for_null() {
+                assertFalse(JsonNodeUtils.evaluateCondition(null, "is_not_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_not_empty should return false for empty string")
+            void is_not_empty_should_return_false_for_empty_string() {
+                assertFalse(JsonNodeUtils.evaluateCondition("", "is_not_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_not_empty should return false for blank string (whitespace only)")
+            void is_not_empty_should_return_false_for_blank_string() {
+                assertFalse(JsonNodeUtils.evaluateCondition("   ", "is_not_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_not_empty should return false for tab and newline whitespace")
+            void is_not_empty_should_return_false_for_whitespace_characters() {
+                assertFalse(JsonNodeUtils.evaluateCondition("\t\n  ", "is_not_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_not_empty should return true for non-empty string")
+            void is_not_empty_should_return_true_for_non_empty_string() {
+                assertTrue(JsonNodeUtils.evaluateCondition("test", "is_not_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_not_empty should return true for string with content")
+            void is_not_empty_should_return_true_for_string_with_content() {
+                assertTrue(JsonNodeUtils.evaluateCondition("  hello  ", "is_not_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_not_empty should return true for number")
+            void is_not_empty_should_return_true_for_number() {
+                assertTrue(JsonNodeUtils.evaluateCondition(123, "is_not_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_not_empty should return true for zero")
+            void is_not_empty_should_return_true_for_zero() {
+                assertTrue(JsonNodeUtils.evaluateCondition(0, "is_not_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_not_empty should return true for boolean true")
+            void is_not_empty_should_return_true_for_boolean_true() {
+                assertTrue(JsonNodeUtils.evaluateCondition(true, "is_not_empty", null));
+            }
+
+            @Test
+            @DisplayName("is_not_empty should return true for boolean false")
+            void is_not_empty_should_return_true_for_boolean_false() {
+                assertTrue(JsonNodeUtils.evaluateCondition(false, "is_not_empty", null));
+            }
+
+            @Test
+            @DisplayName("IS_NOT_EMPTY (uppercase) should work case-insensitively")
+            void is_not_empty_should_work_case_insensitively() {
+                assertTrue(JsonNodeUtils.evaluateCondition("value", "IS_NOT_EMPTY", null));
+            }
+
+            @Test
+            @DisplayName("is_not_empty should be opposite of is_empty")
+            void is_not_empty_should_be_opposite_of_is_empty() {
+                String[] testValues = {"", "   ", "test", null};
+                for (int i = 0; i < testValues.length; i++) {
+                    String value = testValues[i];
+                    boolean isEmpty = JsonNodeUtils.evaluateCondition(value, "is_empty", null);
+                    boolean isNotEmpty = JsonNodeUtils.evaluateCondition(value, "is_not_empty", null);
+                    assertThat(isEmpty).isNotEqualTo(isNotEmpty);
+                }
             }
         }
     }

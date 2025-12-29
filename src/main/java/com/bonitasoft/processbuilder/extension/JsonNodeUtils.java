@@ -98,6 +98,24 @@ public final class JsonNodeUtils {
     public static final String OP_LESS_OR_EQUAL_SYMBOL = "<=";
 
     /**
+     * Operator constant for is empty check.
+     * <p>
+     * Evaluates to {@code true} if the value is null, an empty string,
+     * or a string containing only whitespace characters.
+     * </p>
+     */
+    public static final String OP_IS_EMPTY = "is_empty";
+
+    /**
+     * Operator constant for is not empty check.
+     * <p>
+     * Evaluates to {@code true} if the value is not null, not an empty string,
+     * and not a string containing only whitespace characters.
+     * </p>
+     */
+    public static final String OP_IS_NOT_EMPTY = "is_not_empty";
+
+    /**
      * Private constructor to prevent instantiation of this utility class.
      *
      * @throws UnsupportedOperationException always, to enforce the utility pattern
@@ -325,6 +343,8 @@ public final class JsonNodeUtils {
                 evaluateComparisonOrEqual(currentValue, expectedValue, 1);
             case OP_LESS_OR_EQUAL, OP_LESS_OR_EQUAL_SYMBOL ->
                 evaluateComparisonOrEqual(currentValue, expectedValue, -1);
+            case OP_IS_EMPTY -> evaluateIsEmpty(currentValue);
+            case OP_IS_NOT_EMPTY -> evaluateIsNotEmpty(currentValue);
             default -> {
                 LOGGER.warn("Unknown operator: {}. Defaulting to false.", operator);
                 yield false;
@@ -538,6 +558,42 @@ public final class JsonNodeUtils {
         String currentStr = currentValue.toString();
         String expectedStr = expectedValue != null ? expectedValue.toString() : "";
         return currentStr.contains(expectedStr);
+    }
+
+    /**
+     * Evaluates if the current value is empty.
+     * <p>
+     * A value is considered empty if it is:
+     * </p>
+     * <ul>
+     * <li>{@code null}</li>
+     * <li>An empty string ({@code ""})</li>
+     * <li>A string containing only whitespace characters</li>
+     * </ul>
+     *
+     * @param currentValue the current value to check
+     * @return {@code true} if the value is null, empty, or blank; {@code false} otherwise
+     */
+    private static boolean evaluateIsEmpty(Object currentValue) {
+        if (currentValue == null) {
+            return true;
+        }
+        String strValue = currentValue.toString();
+        return strValue.isBlank();
+    }
+
+    /**
+     * Evaluates if the current value is not empty.
+     * <p>
+     * A value is considered not empty if it is not null and contains
+     * at least one non-whitespace character.
+     * </p>
+     *
+     * @param currentValue the current value to check
+     * @return {@code true} if the value is not null and not blank; {@code false} otherwise
+     */
+    private static boolean evaluateIsNotEmpty(Object currentValue) {
+        return !evaluateIsEmpty(currentValue);
     }
 
     /**

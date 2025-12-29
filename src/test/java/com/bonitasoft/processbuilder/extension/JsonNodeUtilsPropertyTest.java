@@ -54,6 +54,8 @@ class JsonNodeUtilsPropertyTest {
         assertThat(JsonNodeUtils.OP_GREATER_OR_EQUAL_SYMBOL).isNotNull().isNotBlank();
         assertThat(JsonNodeUtils.OP_LESS_OR_EQUAL).isNotNull().isNotBlank();
         assertThat(JsonNodeUtils.OP_LESS_OR_EQUAL_SYMBOL).isNotNull().isNotBlank();
+        assertThat(JsonNodeUtils.OP_IS_EMPTY).isNotNull().isNotBlank();
+        assertThat(JsonNodeUtils.OP_IS_NOT_EMPTY).isNotNull().isNotBlank();
     }
 
     // =========================================================================
@@ -295,5 +297,88 @@ class JsonNodeUtilsPropertyTest {
     @Label("getTargetStep should return null for null")
     void getTargetStepShouldReturnNullForNull() {
         assertThat(JsonNodeUtils.getTargetStep(null)).isNull();
+    }
+
+    // =========================================================================
+    // is_empty / is_not_empty PROPERTIES
+    // =========================================================================
+
+    @Property(tries = 100)
+    @Label("is_empty should return true for null")
+    void isEmptyShouldReturnTrueForNull() {
+        assertThat(JsonNodeUtils.evaluateCondition(null, "is_empty", null)).isTrue();
+    }
+
+    @Property(tries = 100)
+    @Label("is_empty should return true for empty string")
+    void isEmptyShouldReturnTrueForEmptyString() {
+        assertThat(JsonNodeUtils.evaluateCondition("", "is_empty", null)).isTrue();
+    }
+
+    @Property(tries = 200)
+    @Label("is_empty should return true for whitespace-only strings")
+    void isEmptyShouldReturnTrueForWhitespaceStrings(
+            @ForAll @IntRange(min = 1, max = 20) int spaces) {
+        String whitespace = " ".repeat(spaces);
+        assertThat(JsonNodeUtils.evaluateCondition(whitespace, "is_empty", null)).isTrue();
+    }
+
+    @Property(tries = 200)
+    @Label("is_empty should return false for non-blank strings")
+    void isEmptyShouldReturnFalseForNonBlankStrings(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String value) {
+        assertThat(JsonNodeUtils.evaluateCondition(value, "is_empty", null)).isFalse();
+    }
+
+    @Property(tries = 200)
+    @Label("is_not_empty should return true for non-blank strings")
+    void isNotEmptyShouldReturnTrueForNonBlankStrings(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String value) {
+        assertThat(JsonNodeUtils.evaluateCondition(value, "is_not_empty", null)).isTrue();
+    }
+
+    @Property(tries = 100)
+    @Label("is_not_empty should return false for null")
+    void isNotEmptyShouldReturnFalseForNull() {
+        assertThat(JsonNodeUtils.evaluateCondition(null, "is_not_empty", null)).isFalse();
+    }
+
+    @Property(tries = 200)
+    @Label("is_empty and is_not_empty should be opposites")
+    void isEmptyAndIsNotEmptyShouldBeOpposites(
+            @ForAll @StringLength(min = 0, max = 50) String value) {
+        boolean isEmpty = JsonNodeUtils.evaluateCondition(value, "is_empty", null);
+        boolean isNotEmpty = JsonNodeUtils.evaluateCondition(value, "is_not_empty", null);
+        assertThat(isEmpty).isNotEqualTo(isNotEmpty);
+    }
+
+    @Property(tries = 200)
+    @Label("is_empty should return false for numbers")
+    void isEmptyShouldReturnFalseForNumbers(
+            @ForAll @IntRange(min = -1000, max = 1000) Integer value) {
+        assertThat(JsonNodeUtils.evaluateCondition(value, "is_empty", null)).isFalse();
+    }
+
+    @Property(tries = 200)
+    @Label("is_not_empty should return true for numbers")
+    void isNotEmptyShouldReturnTrueForNumbers(
+            @ForAll @IntRange(min = -1000, max = 1000) Integer value) {
+        assertThat(JsonNodeUtils.evaluateCondition(value, "is_not_empty", null)).isTrue();
+    }
+
+    @Property(tries = 100)
+    @Label("is_empty should be case-insensitive")
+    void isEmptyShouldBeCaseInsensitive() {
+        assertThat(JsonNodeUtils.evaluateCondition(null, "IS_EMPTY", null)).isTrue();
+        assertThat(JsonNodeUtils.evaluateCondition(null, "Is_Empty", null)).isTrue();
+        assertThat(JsonNodeUtils.evaluateCondition(null, "is_empty", null)).isTrue();
+    }
+
+    @Property(tries = 100)
+    @Label("is_not_empty should be case-insensitive")
+    void isNotEmptyShouldBeCaseInsensitive() {
+        assertThat(JsonNodeUtils.evaluateCondition("value", "IS_NOT_EMPTY", null)).isTrue();
+        assertThat(JsonNodeUtils.evaluateCondition("value", "Is_Not_Empty", null)).isTrue();
+        assertThat(JsonNodeUtils.evaluateCondition("value", "is_not_empty", null)).isTrue();
     }
 }
