@@ -570,8 +570,13 @@ public final class JsonNodeUtils {
      * <li>An empty string ({@code ""})</li>
      * <li>A string containing only whitespace characters</li>
      * </ul>
+     * <p>
+     * <b>Note:</b> Primitive types ({@code long}, {@code int}, {@code boolean}, etc.) are
+     * automatically boxed by Java when passed to this method. Their string representation
+     * (e.g., "123", "true", "false") is never blank, so they always return {@code false}.
+     * </p>
      *
-     * @param currentValue the current value to check
+     * @param currentValue the current value to check (primitives are auto-boxed)
      * @return {@code true} if the value is null, empty, or blank; {@code false} otherwise
      */
     private static boolean evaluateIsEmpty(Object currentValue) {
@@ -588,8 +593,13 @@ public final class JsonNodeUtils {
      * A value is considered not empty if it is not null and contains
      * at least one non-whitespace character.
      * </p>
+     * <p>
+     * <b>Note:</b> Primitive types ({@code long}, {@code int}, {@code boolean}, etc.) are
+     * automatically boxed by Java when passed to this method. Their string representation
+     * is never blank, so they always return {@code true}.
+     * </p>
      *
-     * @param currentValue the current value to check
+     * @param currentValue the current value to check (primitives are auto-boxed)
      * @return {@code true} if the value is not null and not blank; {@code false} otherwise
      */
     private static boolean evaluateIsNotEmpty(Object currentValue) {
