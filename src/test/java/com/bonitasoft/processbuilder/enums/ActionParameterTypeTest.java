@@ -23,12 +23,12 @@ class ActionParameterTypeTest {
     // -------------------------------------------------------------------------
 
     /**
-     * Tests that the enum contains exactly ten constants.
+     * Tests that the enum contains exactly fourteen constants.
      */
     @Test
-    @DisplayName("Should contain exactly ten action parameter constants")
-    void should_contain_ten_constants() {
-        assertEquals(10, ActionParameterType.values().length);
+    @DisplayName("Should contain exactly fourteen action parameter constants")
+    void should_contain_fourteen_constants() {
+        assertEquals(14, ActionParameterType.values().length);
     }
 
     // -------------------------------------------------------------------------
@@ -123,6 +123,42 @@ class ActionParameterTypeTest {
     @DisplayName("RECIPIENTS_MEMBERSHIP_IDS constant should be defined")
     void should_define_RECIPIENTS_MEMBERSHIP_IDS_constant() {
         assertEquals("RECIPIENTS_MEMBERSHIP_IDS", ActionParameterType.RECIPIENTS_MEMBERSHIP_IDS.name());
+    }
+
+    /**
+     * Tests the existence and name of the ENABLED constant.
+     */
+    @Test
+    @DisplayName("ENABLED constant should be defined")
+    void should_define_ENABLED_constant() {
+        assertEquals("ENABLED", ActionParameterType.ENABLED.name());
+    }
+
+    /**
+     * Tests the existence and name of the OBJECT constant.
+     */
+    @Test
+    @DisplayName("OBJECT constant should be defined")
+    void should_define_OBJECT_constant() {
+        assertEquals("OBJECT", ActionParameterType.OBJECT.name());
+    }
+
+    /**
+     * Tests the existence and name of the DAYS constant.
+     */
+    @Test
+    @DisplayName("DAYS constant should be defined")
+    void should_define_DAYS_constant() {
+        assertEquals("DAYS", ActionParameterType.DAYS.name());
+    }
+
+    /**
+     * Tests the existence and name of the HOURS constant.
+     */
+    @Test
+    @DisplayName("HOURS constant should be defined")
+    void should_define_HOURS_constant() {
+        assertEquals("HOURS", ActionParameterType.HOURS.name());
     }
 
     // -------------------------------------------------------------------------
@@ -229,6 +265,46 @@ class ActionParameterTypeTest {
         assertTrue(ActionParameterType.RECIPIENTS_MEMBERSHIP_IDS.getDescription().contains("membership"));
     }
 
+    /**
+     * Tests the key and description of the ENABLED constant.
+     */
+    @Test
+    @DisplayName("ENABLED should have correct key and description")
+    void enabled_should_have_correct_key_and_description() {
+        assertEquals("enabled", ActionParameterType.ENABLED.getKey());
+        assertTrue(ActionParameterType.ENABLED.getDescription().contains("enabled"));
+    }
+
+    /**
+     * Tests the key and description of the OBJECT constant.
+     */
+    @Test
+    @DisplayName("OBJECT should have correct key and description")
+    void object_should_have_correct_key_and_description() {
+        assertEquals("object", ActionParameterType.OBJECT.getKey());
+        assertTrue(ActionParameterType.OBJECT.getDescription().contains("object"));
+    }
+
+    /**
+     * Tests the key and description of the DAYS constant.
+     */
+    @Test
+    @DisplayName("DAYS should have correct key and description")
+    void days_should_have_correct_key_and_description() {
+        assertEquals("days", ActionParameterType.DAYS.getKey());
+        assertTrue(ActionParameterType.DAYS.getDescription().contains("days"));
+    }
+
+    /**
+     * Tests the key and description of the HOURS constant.
+     */
+    @Test
+    @DisplayName("HOURS should have correct key and description")
+    void hours_should_have_correct_key_and_description() {
+        assertEquals("hours", ActionParameterType.HOURS.getKey());
+        assertTrue(ActionParameterType.HOURS.getDescription().contains("hours"));
+    }
+
     // -------------------------------------------------------------------------
     // isValid Method Tests
     // -------------------------------------------------------------------------
@@ -317,13 +393,13 @@ class ActionParameterTypeTest {
     // -------------------------------------------------------------------------
 
     /**
-     * Tests that getAllData returns a map with all ten constants.
+     * Tests that getAllData returns a map with all fourteen constants.
      */
     @Test
-    @DisplayName("getAllData should return map with all ten constants")
+    @DisplayName("getAllData should return map with all fourteen constants")
     void getAllData_shouldReturnCorrectMap() {
         Map<String, String> data = ActionParameterType.getAllData();
-        assertEquals(10, data.size());
+        assertEquals(14, data.size());
         assertTrue(data.containsKey("name"));
         assertTrue(data.containsKey("targetStep"));
         assertTrue(data.containsKey("recipients"));
@@ -334,6 +410,10 @@ class ActionParameterTypeTest {
         assertTrue(data.containsKey("recipients.specificEmails"));
         assertTrue(data.containsKey("recipients.userIds"));
         assertTrue(data.containsKey("recipients.membershipIds"));
+        assertTrue(data.containsKey("enabled"));
+        assertTrue(data.containsKey("object"));
+        assertTrue(data.containsKey("days"));
+        assertTrue(data.containsKey("hours"));
     }
 
     /**
@@ -352,13 +432,13 @@ class ActionParameterTypeTest {
     // -------------------------------------------------------------------------
 
     /**
-     * Tests that getAllKeysList returns a list with all ten keys.
+     * Tests that getAllKeysList returns a list with all fourteen keys.
      */
     @Test
-    @DisplayName("getAllKeysList should return list with all ten keys")
+    @DisplayName("getAllKeysList should return list with all fourteen keys")
     void getAllKeysList_shouldReturnCorrectList() {
         List<String> keys = ActionParameterType.getAllKeysList();
-        assertEquals(10, keys.size());
+        assertEquals(14, keys.size());
         assertTrue(keys.contains("name"));
         assertTrue(keys.contains("targetStep"));
         assertTrue(keys.contains("recipients"));
@@ -369,6 +449,10 @@ class ActionParameterTypeTest {
         assertTrue(keys.contains("recipients.specificEmails"));
         assertTrue(keys.contains("recipients.userIds"));
         assertTrue(keys.contains("recipients.membershipIds"));
+        assertTrue(keys.contains("enabled"));
+        assertTrue(keys.contains("object"));
+        assertTrue(keys.contains("days"));
+        assertTrue(keys.contains("hours"));
     }
 
     /**

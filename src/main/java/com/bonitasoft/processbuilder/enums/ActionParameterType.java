@@ -66,7 +66,39 @@ public enum ActionParameterType {
      * The list of membership identifiers for notification recipients.
      */
     RECIPIENTS_MEMBERSHIP_IDS("recipients.membershipIds",
-            "The list of membership identifiers (group/role combinations) to resolve as notification recipients.");
+            "The list of membership identifiers (group/role combinations) to resolve as notification recipients."),
+
+    /**
+     * The enabled flag for action parameters.
+     * <p>
+     * Used to indicate whether an action or feature is enabled or disabled.
+     * </p>
+     */
+    ENABLED("enabled", "Flag indicating whether the action or feature is enabled."),
+
+    /**
+     * The object parameter for action configuration.
+     * <p>
+     * Used to reference a generic object or entity associated with the action.
+     * </p>
+     */
+    OBJECT("object", "The object reference or entity associated with the action."),
+
+    /**
+     * The number of days parameter for delay or scheduling actions.
+     * <p>
+     * Used to specify a duration in days for time-based actions.
+     * </p>
+     */
+    DAYS("days", "The number of days for delay or scheduling actions."),
+
+    /**
+     * The number of hours parameter for delay or scheduling actions.
+     * <p>
+     * Used to specify a duration in hours for time-based actions.
+     * </p>
+     */
+    HOURS("hours", "The number of hours for delay or scheduling actions.");
 
     private final String key;
     private final String description;
@@ -107,7 +139,11 @@ public enum ActionParameterType {
      * @return {@code true} if the string is a valid enum constant name, {@code false} otherwise.
      */
     public static boolean isValid(String input) {
-        if (input == null || input.trim().isEmpty()) {
+        // Separate null and empty checks for mutation testing coverage
+        if (input == null) {
+            return false;
+        }
+        if (input.trim().isEmpty()) {
             return false;
         }
         try {
@@ -122,18 +158,13 @@ public enum ActionParameterType {
      * Retrieves all action parameters as a read-only Map where the key is the technical key
      * and the value is the description.
      *
-     * @return An unmodifiable map containing all parameter data (Key -> Description).
+     * @return An unmodifiable map containing all parameter data (Key -&gt; Description).
      */
     public static Map<String, String> getAllData() {
-        Map<String, String> data =
-            Arrays.stream(values())
-                .collect(Collectors.toMap(
-                    ActionParameterType::getKey,
-                    ActionParameterType::getDescription,
-                    (oldValue, newValue) -> oldValue,
-                    LinkedHashMap::new
-                ));
-
+        Map<String, String> data = new LinkedHashMap<>();
+        for (ActionParameterType type : values()) {
+            data.put(type.getKey(), type.getDescription());
+        }
         return Collections.unmodifiableMap(data);
     }
 

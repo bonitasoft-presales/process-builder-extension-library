@@ -9,14 +9,14 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Property-based tests for {@link ActionParameterType} enum.
+ * Property-based tests for {@link FormContentType} enum.
  * Tests invariants that must hold for any valid input.
  *
  * @author Bonitasoft
  * @since 1.0
  */
-@Label("ActionParameterType Property-Based Tests")
-class ActionParameterTypePropertyTest {
+@Label("FormContentType Property-Based Tests")
+class FormContentTypePropertyTest {
 
     // =========================================================================
     // ENUM INVARIANT PROPERTIES
@@ -24,28 +24,34 @@ class ActionParameterTypePropertyTest {
 
     @Property(tries = 100)
     @Label("All enum constants should have non-null key")
-    void allConstantsShouldHaveNonNullKey(@ForAll @From("actionParameterTypes") ActionParameterType type) {
+    void allConstantsShouldHaveNonNullKey(@ForAll @From("formContentTypes") FormContentType type) {
         assertThat(type.getKey()).isNotNull().isNotBlank();
     }
 
     @Property(tries = 100)
     @Label("All enum constants should have non-null description")
-    void allConstantsShouldHaveNonNullDescription(@ForAll @From("actionParameterTypes") ActionParameterType type) {
+    void allConstantsShouldHaveNonNullDescription(@ForAll @From("formContentTypes") FormContentType type) {
         assertThat(type.getDescription()).isNotNull().isNotBlank();
     }
 
     @Property(tries = 100)
     @Label("Enum ordinal() should be valid index")
-    void enumOrdinalShouldBeValidIndex(@ForAll @From("actionParameterTypes") ActionParameterType type) {
+    void enumOrdinalShouldBeValidIndex(@ForAll @From("formContentTypes") FormContentType type) {
         assertThat(type.ordinal())
             .isGreaterThanOrEqualTo(0)
-            .isLessThan(ActionParameterType.values().length);
+            .isLessThan(FormContentType.values().length);
     }
 
     @Property(tries = 100)
     @Label("Each constant should be retrievable by name")
-    void eachConstantShouldBeRetrievableByName(@ForAll @From("actionParameterTypes") ActionParameterType type) {
-        assertThat(ActionParameterType.valueOf(type.name())).isEqualTo(type);
+    void eachConstantShouldBeRetrievableByName(@ForAll @From("formContentTypes") FormContentType type) {
+        assertThat(FormContentType.valueOf(type.name())).isEqualTo(type);
+    }
+
+    @Property(tries = 100)
+    @Label("Key should be lowercase version of name")
+    void keyShouldBeLowercaseVersionOfName(@ForAll @From("formContentTypes") FormContentType type) {
+        assertThat(type.getKey()).isEqualTo(type.name().toLowerCase());
     }
 
     // =========================================================================
@@ -54,45 +60,45 @@ class ActionParameterTypePropertyTest {
 
     @Property(tries = 100)
     @Label("isValid should return true for valid enum names (case-insensitive)")
-    void isValidShouldReturnTrueForValidEnumNames(@ForAll @From("actionParameterTypes") ActionParameterType type) {
-        assertThat(ActionParameterType.isValid(type.name())).isTrue();
-        assertThat(ActionParameterType.isValid(type.name().toLowerCase())).isTrue();
-        assertThat(ActionParameterType.isValid(type.name().toUpperCase())).isTrue();
+    void isValidShouldReturnTrueForValidEnumNames(@ForAll @From("formContentTypes") FormContentType type) {
+        assertThat(FormContentType.isValid(type.name())).isTrue();
+        assertThat(FormContentType.isValid(type.name().toLowerCase())).isTrue();
+        assertThat(FormContentType.isValid(type.name().toUpperCase())).isTrue();
     }
 
     @Property(tries = 100)
     @Label("isValid should handle spaces around valid names")
-    void isValidShouldHandleSpacesAroundValidNames(@ForAll @From("actionParameterTypes") ActionParameterType type) {
-        assertThat(ActionParameterType.isValid("  " + type.name() + "  ")).isTrue();
+    void isValidShouldHandleSpacesAroundValidNames(@ForAll @From("formContentTypes") FormContentType type) {
+        assertThat(FormContentType.isValid("  " + type.name() + "  ")).isTrue();
     }
 
     @Property(tries = 500)
     @Label("isValid should return false for random invalid strings")
     void isValidShouldReturnFalseForInvalidStrings(
-            @ForAll @StringLength(min = 20, max = 35) @AlphaChars String input) {
+            @ForAll @StringLength(min = 15, max = 30) @AlphaChars String input) {
         boolean isValidName = false;
-        for (ActionParameterType type : ActionParameterType.values()) {
+        for (FormContentType type : FormContentType.values()) {
             if (type.name().equalsIgnoreCase(input.trim())) {
                 isValidName = true;
                 break;
             }
         }
         if (!isValidName) {
-            assertThat(ActionParameterType.isValid(input)).isFalse();
+            assertThat(FormContentType.isValid(input)).isFalse();
         }
     }
 
     @Property(tries = 100)
     @Label("isValid should return false for null")
     void isValidShouldReturnFalseForNull() {
-        assertThat(ActionParameterType.isValid(null)).isFalse();
+        assertThat(FormContentType.isValid(null)).isFalse();
     }
 
     @Property(tries = 100)
     @Label("isValid should return false for empty string")
     void isValidShouldReturnFalseForEmpty() {
-        assertThat(ActionParameterType.isValid("")).isFalse();
-        assertThat(ActionParameterType.isValid("   ")).isFalse();
+        assertThat(FormContentType.isValid("")).isFalse();
+        assertThat(FormContentType.isValid("   ")).isFalse();
     }
 
     // =========================================================================
@@ -102,9 +108,9 @@ class ActionParameterTypePropertyTest {
     @Property(tries = 100)
     @Label("getAllData should map keys to descriptions correctly")
     void getAllDataShouldMapKeysToDescriptions() {
-        Map<String, String> data = ActionParameterType.getAllData();
+        Map<String, String> data = FormContentType.getAllData();
 
-        for (ActionParameterType type : ActionParameterType.values()) {
+        for (FormContentType type : FormContentType.values()) {
             assertThat(data.get(type.getKey())).isEqualTo(type.getDescription());
         }
     }
@@ -112,19 +118,19 @@ class ActionParameterTypePropertyTest {
     @Property(tries = 100)
     @Label("getAllData size should match enum values count")
     void getAllDataSizeShouldMatchEnumCount() {
-        Map<String, String> data = ActionParameterType.getAllData();
+        Map<String, String> data = FormContentType.getAllData();
 
-        assertThat(data).hasSize(ActionParameterType.values().length);
-        assertThat(data.size()).isEqualTo(14); // Explicit count kills mutations
+        assertThat(data).hasSize(FormContentType.values().length);
+        assertThat(data.size()).isEqualTo(4); // Explicit count kills mutations
     }
 
     @Property(tries = 100)
     @Label("getAllKeysList should preserve enum declaration order")
     void getAllKeysListShouldPreserveOrder() {
-        List<String> keys = ActionParameterType.getAllKeysList();
+        List<String> keys = FormContentType.getAllKeysList();
 
         int index = 0;
-        for (ActionParameterType type : ActionParameterType.values()) {
+        for (FormContentType type : FormContentType.values()) {
             assertThat(keys.get(index)).isEqualTo(type.getKey());
             index++;
         }
@@ -133,17 +139,17 @@ class ActionParameterTypePropertyTest {
     @Property(tries = 100)
     @Label("getAllKeysList size should match enum values count")
     void getAllKeysListSizeShouldMatchEnumCount() {
-        List<String> keys = ActionParameterType.getAllKeysList();
+        List<String> keys = FormContentType.getAllKeysList();
 
-        assertThat(keys).hasSize(ActionParameterType.values().length);
-        assertThat(keys.size()).isEqualTo(14); // Explicit count kills mutations
+        assertThat(keys).hasSize(FormContentType.values().length);
+        assertThat(keys.size()).isEqualTo(4); // Explicit count kills mutations
     }
 
     @Property(tries = 100)
     @Label("Collections should be unmodifiable")
     void collectionsShouldBeUnmodifiable() {
-        Map<String, String> data = ActionParameterType.getAllData();
-        List<String> keys = ActionParameterType.getAllKeysList();
+        Map<String, String> data = FormContentType.getAllData();
+        List<String> keys = FormContentType.getAllKeysList();
 
         assertThatThrownBy(() -> data.put("new", "value"))
             .isInstanceOf(UnsupportedOperationException.class);
@@ -154,8 +160,8 @@ class ActionParameterTypePropertyTest {
     @Property(tries = 100)
     @Label("getAllData and getAllKeysList should have matching keys")
     void getAllDataAndKeysListShouldMatch() {
-        Map<String, String> data = ActionParameterType.getAllData();
-        List<String> keys = ActionParameterType.getAllKeysList();
+        Map<String, String> data = FormContentType.getAllData();
+        List<String> keys = FormContentType.getAllKeysList();
 
         // Keys from map should match keys from list
         assertThat(data.keySet()).containsExactlyInAnyOrderElementsOf(keys);
@@ -164,10 +170,38 @@ class ActionParameterTypePropertyTest {
     @Property(tries = 100)
     @Label("Each enum constant key should be unique")
     void enumConstantKeysShouldBeUnique() {
-        List<String> keys = ActionParameterType.getAllKeysList();
+        List<String> keys = FormContentType.getAllKeysList();
 
         // No duplicates
         assertThat(keys).doesNotHaveDuplicates();
+    }
+
+    // =========================================================================
+    // SPECIFIC VALUE PROPERTIES
+    // =========================================================================
+
+    @Property(tries = 100)
+    @Label("NOTIFICATIONS should have notifications key")
+    void notificationsShouldHaveCorrectKey() {
+        assertThat(FormContentType.NOTIFICATIONS.getKey()).isEqualTo("notifications");
+    }
+
+    @Property(tries = 100)
+    @Label("DELAY should have delay key")
+    void delayShouldHaveCorrectKey() {
+        assertThat(FormContentType.DELAY.getKey()).isEqualTo("delay");
+    }
+
+    @Property(tries = 100)
+    @Label("ALERT should have alert key")
+    void alertShouldHaveCorrectKey() {
+        assertThat(FormContentType.ALERT.getKey()).isEqualTo("alert");
+    }
+
+    @Property(tries = 100)
+    @Label("MESSAGE should have message key")
+    void messageShouldHaveCorrectKey() {
+        assertThat(FormContentType.MESSAGE.getKey()).isEqualTo("message");
     }
 
     // =========================================================================
@@ -175,7 +209,7 @@ class ActionParameterTypePropertyTest {
     // =========================================================================
 
     @Provide
-    Arbitrary<ActionParameterType> actionParameterTypes() {
-        return Arbitraries.of(ActionParameterType.values());
+    Arbitrary<FormContentType> formContentTypes() {
+        return Arbitraries.of(FormContentType.values());
     }
 }
