@@ -26,8 +26,10 @@ public final class PBStringUtils {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(PBStringUtils.class);
 
-    /** 
-     * Regex pattern to capture variables in the format {{refStep:dataName}}. 
+    /**
+     * Regex pattern to capture variables in formats:
+     * - {{refStep:dataName}} - with prefix (refStep in group 1, dataName in group 2)
+     * - {{dataName}} - without prefix (group 1 is null, dataName in group 2)
      */
     private static final Pattern VARIABLE_PATTERN;
 
@@ -37,7 +39,14 @@ public final class PBStringUtils {
     static {
         Pattern p;
         try {
-            p = Pattern.compile("\\{\\{(\\w+):(\\w+)\\}\\}");
+            // Pattern explanation:
+            // \\{\\{ - matches opening {{
+            // (?:([^:}]+):)? - optional non-capturing group for prefix:
+            //   ([^:}]+) - captures refStep (any char except : and })
+            //   : - matches the colon separator
+            // ([^}]+) - captures dataName (any char except })
+            // \\}\\} - matches closing }}
+            p = Pattern.compile("\\{\\{(?:([^:}]+):)?([^}]+)\\}\\}");
         } catch (PatternSyntaxException e) {
             LOGGER.error("Fatal Error: Could not compile template variable regex.", e);
             p = null;

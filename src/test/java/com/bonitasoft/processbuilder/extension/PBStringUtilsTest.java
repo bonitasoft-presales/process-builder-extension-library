@@ -326,4 +326,142 @@ class PBStringUtilsTest {
         });
         assertEquals("Hello Alice, your ID is VAR_NOT_RESOLVED", result);
     }
+
+    // -------------------------------------------------------------------------
+    // resolveTemplateVariables Tests - NEW FORMAT (without refStep prefix)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with simple variable without prefix.
+     * Format: {{dataName}} - refStep will be null
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should resolve simple variable without prefix")
+    void resolveTemplateVariables_should_resolve_simple_variable_without_prefix() {
+        String template = "Click here: {{task_link}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> {
+            assertNull(refStep, "refStep should be null for simple variable");
+            assertEquals("task_link", dataName);
+            return "https://example.com/task/123";
+        });
+        assertEquals("Click here: https://example.com/task/123", result);
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with multiple simple variables.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should resolve multiple simple variables without prefix")
+    void resolveTemplateVariables_should_resolve_multiple_simple_variables() {
+        String template = "Hello {{recipient_firstname}} {{recipient_lastname}}!";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> {
+            assertNull(refStep, "refStep should be null for simple variables");
+            if ("recipient_firstname".equals(dataName)) {
+                return "John";
+            }
+            if ("recipient_lastname".equals(dataName)) {
+                return "Doe";
+            }
+            return null;
+        });
+        assertEquals("Hello John Doe!", result);
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with mixed format (with and without prefix).
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should handle mixed format variables")
+    void resolveTemplateVariables_should_handle_mixed_format_variables() {
+        String template = "User {{step_123:step_user_name}} - Email: {{recipient_email}} - Link: {{task_link}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> {
+            if ("step_123".equals(refStep) && "step_user_name".equals(dataName)) {
+                return "Alice";
+            }
+            if (refStep == null && "recipient_email".equals(dataName)) {
+                return "alice@example.com";
+            }
+            if (refStep == null && "task_link".equals(dataName)) {
+                return "https://example.com/task";
+            }
+            return null;
+        });
+        assertEquals("User Alice - Email: alice@example.com - Link: https://example.com/task", result);
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} with variable containing numbers and underscores.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should handle variables with numbers and underscores")
+    void resolveTemplateVariables_should_handle_complex_variable_names() {
+        String template = "Step: {{step_456:data_field_1}}, Status: {{step_status}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> {
+            if ("step_456".equals(refStep) && "data_field_1".equals(dataName)) {
+                return "Approved";
+            }
+            if (refStep == null && "step_status".equals(dataName)) {
+                return "Completed";
+            }
+            return null;
+        });
+        assertEquals("Step: Approved, Status: Completed", result);
+    }
+
+    /**
+     * Test case for {@code resolveTemplateVariables} when simple variable resolver returns null.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should use default when simple variable returns null")
+    void resolveTemplateVariables_should_use_default_for_simple_variable_null() {
+        String template = "Link: {{unknown_variable}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> null);
+        assertEquals("Link: VAR_NOT_RESOLVED", result);
+    }
+
+    /**
+     * Test case for all DataResolverType values as simple variables.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should resolve all DataResolverType simple variables")
+    void resolveTemplateVariables_should_resolve_all_data_resolver_types() {
+        String template = "{{recipient_firstname}} {{recipient_lastname}} ({{recipient_email}}) - Task: {{task_link}} - By: {{step_user_name}} - Status: {{step_status}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> {
+            assertNull(refStep, "All should be simple variables without prefix");
+            return switch (dataName) {
+                case "recipient_firstname" -> "Jane";
+                case "recipient_lastname" -> "Smith";
+                case "recipient_email" -> "jane@test.com";
+                case "task_link" -> "http://task/1";
+                case "step_user_name" -> "Admin";
+                case "step_status" -> "Done";
+                default -> null;
+            };
+        });
+        assertEquals("Jane Smith (jane@test.com) - Task: http://task/1 - By: Admin - Status: Done", result);
+    }
+
+    /**
+     * Test case for variable with special characters in replacement value.
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should handle special characters in replacement")
+    void resolveTemplateVariables_should_handle_special_chars_in_replacement() {
+        String template = "Link: {{task_link}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) ->
+            "https://example.com/task?id=123&type=email"
+        );
+        assertEquals("Link: https://example.com/task?id=123&type=email", result);
+    }
+
+    /**
+     * Test case for variable with dollar sign in replacement (regex special char).
+     */
+    @Test
+    @DisplayName("resolveTemplateVariables should handle dollar sign in replacement")
+    void resolveTemplateVariables_should_handle_dollar_sign_in_replacement() {
+        String template = "Price: {{price}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (refStep, dataName) -> "$100.00");
+        assertEquals("Price: $100.00", result);
+    }
 }

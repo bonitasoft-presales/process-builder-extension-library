@@ -40,13 +40,25 @@ public enum ConfigurationType {
 
     /**
      * Represents the classification key for **Theme Configuration** definitions.
-     * This type is used to identify and retrieve master data records that 
-     * define the visual appearance and branding of the application 
+     * This type is used to identify and retrieve master data records that
+     * define the visual appearance and branding of the application
      * (e.g., colors, logos, fonts, styles).
      */
     THEME("Theme",
             "Defines the visual theme configuration for the application, including primary and secondary colors, "
-                    + "logo, typography, and other branding elements.");
+                    + "logo, typography, and other branding elements."),
+
+    /**
+     * Represents the classification key for **Generic Configuration** definitions.
+     * <p>
+     * This type is used to identify and retrieve master data records that define
+     * system-wide generic settings such as language preferences and application host URL.
+     * Generic configurations are stored in PBConfiguration and referenced by {@link GenericType}.
+     * </p>
+     */
+    GENERIC("Generic",
+            "Defines generic system-wide configuration settings such as language preferences (lang) "
+                    + "and application host URL (host) for notifications and external links.");
 
     private final String key;
     private final String description;
@@ -82,11 +94,15 @@ public enum ConfigurationType {
 
     /**
      * Checks if a given string corresponds to a valid enum constant, ignoring case and leading/trailing spaces.
+     *
      * @param input The string to validate.
      * @return {@code true} if the string is a valid enum constant, {@code false} otherwise.
      */
     public static boolean isValid(String input) {
-        if (input == null || input.trim().isEmpty()) {
+        if (input == null) {
+            return false;
+        }
+        if (input.trim().isEmpty()) {
             return false;
         }
         try {
@@ -96,23 +112,19 @@ public enum ConfigurationType {
             return false;
         }
     }
-    
+
     /**
-     * Retrieves all process instance states as a read-only Map where the key is the technical key 
+     * Retrieves all configuration types as a read-only Map where the key is the technical key
      * and the value is the description.
-     * @return A map containing all process state data (Key -> Description).
+     *
+     * @return An unmodifiable map containing all configuration type data (Key -&gt; Description).
      */
     public static Map<String, String> getAllData() {
-        Map<String, String> stateData = 
-            Arrays.stream(values())
-            .collect(Collectors.toMap(
-                ConfigurationType::getKey, 
-                ConfigurationType::getDescription, 
-                (oldValue, newValue) -> oldValue, 
-                LinkedHashMap::new 
-            ));
-        
-        return Collections.unmodifiableMap(stateData);
+        Map<String, String> data = new LinkedHashMap<>();
+        for (ConfigurationType type : values()) {
+            data.put(type.getKey(), type.getDescription());
+        }
+        return Collections.unmodifiableMap(data);
     }
     
     /**

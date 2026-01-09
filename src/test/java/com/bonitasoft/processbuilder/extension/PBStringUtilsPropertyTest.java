@@ -204,13 +204,114 @@ class PBStringUtilsPropertyTest {
     }
 
     @Property(tries = 500)
-    @Label("resolveTemplateVariables should replace valid variable patterns")
-    void resolveTemplateVariablesShouldReplaceValidPatterns(
+    @Label("resolveTemplateVariables should replace valid variable patterns with prefix")
+    void resolveTemplateVariablesShouldReplaceValidPatternsWithPrefix(
             @ForAll @StringLength(min = 1, max = 10) @AlphaChars String refStep,
             @ForAll @StringLength(min = 1, max = 10) @AlphaChars String dataName,
             @ForAll @StringLength(min = 1, max = 20) @AlphaChars String replacement) {
         String template = "Hello {{" + refStep + ":" + dataName + "}} world";
         String result = PBStringUtils.resolveTemplateVariables(template, (r, d) -> replacement);
         assertThat(result).isEqualTo("Hello " + replacement + " world");
+    }
+
+    // =========================================================================
+    // resolveTemplateVariables() - NEW FORMAT (without refStep prefix)
+    // =========================================================================
+
+    @Property(tries = 500)
+    @Label("resolveTemplateVariables should replace simple variable patterns without prefix")
+    void resolveTemplateVariablesShouldReplaceSimplePatterns(
+            @ForAll @StringLength(min = 1, max = 20) @AlphaChars String dataName,
+            @ForAll @StringLength(min = 1, max = 20) @AlphaChars String replacement) {
+        String template = "Value: {{" + dataName + "}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (r, d) -> {
+            assertThat(r).isNull();
+            assertThat(d).isEqualTo(dataName);
+            return replacement;
+        });
+        assertThat(result).isEqualTo("Value: " + replacement);
+    }
+
+    @Property(tries = 500)
+    @Label("resolveTemplateVariables should handle mixed format patterns")
+    void resolveTemplateVariablesShouldHandleMixedPatterns(
+            @ForAll @StringLength(min = 1, max = 10) @AlphaChars String refStep,
+            @ForAll @StringLength(min = 1, max = 10) @AlphaChars String dataName1,
+            @ForAll @StringLength(min = 1, max = 10) @AlphaChars String dataName2) {
+        String template = "{{" + refStep + ":" + dataName1 + "}} and {{" + dataName2 + "}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (r, d) -> {
+            if (r != null) {
+                return "prefixed";
+            }
+            return "simple";
+        });
+        assertThat(result).isEqualTo("prefixed and simple");
+    }
+
+    @Property(tries = 500)
+    @Label("resolveTemplateVariables should capture refStep correctly when prefix present")
+    void resolveTemplateVariablesShouldCaptureRefStepCorrectly(
+            @ForAll @StringLength(min = 1, max = 15) @AlphaChars String refStep,
+            @ForAll @StringLength(min = 1, max = 15) @AlphaChars String dataName) {
+        String template = "{{" + refStep + ":" + dataName + "}}";
+        PBStringUtils.resolveTemplateVariables(template, (r, d) -> {
+            assertThat(r).isNotNull().isEqualTo(refStep);
+            assertThat(d).isEqualTo(dataName);
+            return "resolved";
+        });
+    }
+
+    @Property(tries = 500)
+    @Label("resolveTemplateVariables should have null refStep when no prefix")
+    void resolveTemplateVariablesShouldHaveNullRefStepWithoutPrefix(
+            @ForAll @StringLength(min = 1, max = 20) @AlphaChars String dataName) {
+        String template = "{{" + dataName + "}}";
+        PBStringUtils.resolveTemplateVariables(template, (r, d) -> {
+            assertThat(r).isNull();
+            assertThat(d).isEqualTo(dataName);
+            return "resolved";
+        });
+    }
+
+    @Property(tries = 300)
+    @Label("resolveTemplateVariables should handle variable names with underscores")
+    void resolveTemplateVariablesShouldHandleUnderscoreNames(
+            @ForAll @StringLength(min = 1, max = 10) @AlphaChars String part1,
+            @ForAll @StringLength(min = 1, max = 10) @AlphaChars String part2) {
+        String dataName = part1.toLowerCase() + "_" + part2.toLowerCase();
+        String template = "{{" + dataName + "}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (r, d) -> {
+            assertThat(r).isNull();
+            assertThat(d).isEqualTo(dataName);
+            return "value";
+        });
+        assertThat(result).isEqualTo("value");
+    }
+
+    @Property(tries = 300)
+    @Label("resolveTemplateVariables result should not contain unresolved pattern markers")
+    void resolveTemplateVariablesResultShouldNotContainPatternMarkers(
+            @ForAll @StringLength(min = 1, max = 10) @AlphaChars String dataName,
+            @ForAll @StringLength(min = 1, max = 15) @AlphaChars String replacement) {
+        // Ensure replacement doesn't contain pattern markers
+        Assume.that(!replacement.contains("{{") && !replacement.contains("}}"));
+
+        String template = "Before {{" + dataName + "}} After";
+        String result = PBStringUtils.resolveTemplateVariables(template, (r, d) -> replacement);
+        assertThat(result).doesNotContain("{{").doesNotContain("}}");
+    }
+
+    @Property(tries = 300)
+    @Label("resolveTemplateVariables should handle multiple simple variables")
+    void resolveTemplateVariablesShouldHandleMultipleSimpleVariables(
+            @ForAll @StringLength(min = 1, max = 8) @AlphaChars String var1,
+            @ForAll @StringLength(min = 1, max = 8) @AlphaChars String var2,
+            @ForAll @StringLength(min = 1, max = 8) @AlphaChars String var3) {
+        // Ensure unique variable names
+        Assume.that(!var1.equals(var2) && !var2.equals(var3) && !var1.equals(var3));
+
+        String template = "{{" + var1 + "}} {{" + var2 + "}} {{" + var3 + "}}";
+        String result = PBStringUtils.resolveTemplateVariables(template, (r, d) -> d.toUpperCase());
+        assertThat(result).isEqualTo(var1.toUpperCase() + " " + var2.toUpperCase() + " " + var3.toUpperCase());
     }
 }

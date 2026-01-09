@@ -179,8 +179,14 @@ class EmailRecipientsHelperPropertyTest {
 
         String result = EmailRecipientsHelper.joinEmails(emails);
 
-        // Result should contain comma-space separator if multiple emails
-        if (emails.size() > 1) {
+        // Count distinct valid emails (joinEmails filters and deduplicates)
+        long distinctValidCount = emails.stream()
+                .filter(e -> e != null && !e.isBlank())
+                .distinct()
+                .count();
+
+        // Result should contain comma-space separator only if multiple distinct valid emails
+        if (distinctValidCount > 1) {
             assertThat(result).contains(", ");
         }
     }
