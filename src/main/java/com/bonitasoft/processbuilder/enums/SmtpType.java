@@ -57,7 +57,25 @@ public enum SmtpType {
     /**
      * The password for SMTP server authentication.
      */
-    PASSWORD("Password", "The password or app-specific password used for SMTP server authentication.");
+    PASSWORD("Password", "The password or app-specific password used for SMTP server authentication."),
+
+    /**
+     * The HTML template for email body content.
+     * <p>
+     * This type stores the email template that wraps the actual email content.
+     * The template must contain a {@code {{content}}} placeholder where the
+     * email body will be inserted. Example template:
+     * </p>
+     * <pre>{@code
+     * <p style="text-align: center;">
+     *   <img src="logo-url" style="width: 300px;">
+     * </p>
+     * <p>{{content}}</p>
+     * }</pre>
+     */
+    EMAIL_TEMPLATE("EmailTemplate",
+            "The HTML template for email notifications. Must contain {{content}} placeholder "
+                    + "where the email body content will be inserted.");
 
     private final String key;
     private final String description;
