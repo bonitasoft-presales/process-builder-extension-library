@@ -173,7 +173,7 @@ class PBHtmlUtilsPropertyTest {
     // =========================================================================
 
     @Property(tries = 500)
-    @Label("prepareEmailContent should combine conversion and template application")
+    @Label("prepareEmailContent should combine conversion and template application for valid templates")
     void prepareEmailContent_shouldCombineConversionAndTemplate(
             @ForAll @StringLength(min = 1, max = 100) @AlphaChars String text) {
 
@@ -188,19 +188,111 @@ class PBHtmlUtilsPropertyTest {
     }
 
     @Property(tries = 200)
-    @Label("prepareEmailContent should handle null inputs gracefully")
-    void prepareEmailContent_shouldHandleNullInputs() {
-        // Null text with valid template
+    @Label("prepareEmailContent should return original content when template is invalid")
+    void prepareEmailContent_shouldReturnOriginalContentWhenTemplateInvalid(
+            @ForAll @StringLength(min = 1, max = 100) @AlphaChars String text) {
+
+        String contentWithNewline = text + "\n" + text;
+
+        // Null template - should return original content without HTML conversion
+        String resultNullTemplate = PBHtmlUtils.prepareEmailContent(contentWithNewline, null);
+        assertThat(resultNullTemplate)
+                .isEqualTo(contentWithNewline)
+                .contains("\n")
+                .doesNotContain("<br/>");
+
+        // Empty template - should return original content without HTML conversion
+        String resultEmptyTemplate = PBHtmlUtils.prepareEmailContent(contentWithNewline, "");
+        assertThat(resultEmptyTemplate)
+                .isEqualTo(contentWithNewline)
+                .contains("\n")
+                .doesNotContain("<br/>");
+
+        // Template without placeholder - should return original content without HTML conversion
+        String resultNoPlaceholder = PBHtmlUtils.prepareEmailContent(contentWithNewline, "No placeholder here");
+        assertThat(resultNoPlaceholder)
+                .isEqualTo(contentWithNewline)
+                .contains("\n")
+                .doesNotContain("<br/>");
+    }
+
+    @Property(tries = 200)
+    @Label("prepareEmailContent should handle null text content with valid template")
+    void prepareEmailContent_shouldHandleNullTextContentWithValidTemplate() {
         String resultNullText = PBHtmlUtils.prepareEmailContent(null, TEMPLATE_WITH_PLACEHOLDER);
         assertThat(resultNullText).isEqualTo(TEMPLATE_WITH_PLACEHOLDER);
+    }
 
-        // Valid text with null template
-        String resultNullTemplate = PBHtmlUtils.prepareEmailContent("Test", null);
-        assertThat(resultNullTemplate).isEqualTo("Test");
-
-        // Both null
+    @Property(tries = 200)
+    @Label("prepareEmailContent should handle both null inputs")
+    void prepareEmailContent_shouldHandleBothNullInputs() {
         String resultBothNull = PBHtmlUtils.prepareEmailContent(null, null);
         assertThat(resultBothNull).isNull();
+    }
+
+    // =========================================================================
+    // isValidTemplate PROPERTIES
+    // =========================================================================
+
+    @Property(tries = 200)
+    @Label("isValidTemplate should return false for null or empty templates")
+    void isValidTemplate_shouldReturnFalseForNullOrEmpty() {
+        assertThat(PBHtmlUtils.isValidTemplate(null)).isFalse();
+        assertThat(PBHtmlUtils.isValidTemplate("")).isFalse();
+    }
+
+    @Property(tries = 500)
+    @Label("isValidTemplate should return true for templates with placeholder")
+    void isValidTemplate_shouldReturnTrueForTemplatesWithPlaceholder(
+            @ForAll @StringLength(min = 0, max = 50) @AlphaChars String prefix,
+            @ForAll @StringLength(min = 0, max = 50) @AlphaChars String suffix) {
+
+        String template = prefix + "{{content}}" + suffix;
+        assertThat(PBHtmlUtils.isValidTemplate(template)).isTrue();
+    }
+
+    @Property(tries = 500)
+    @Label("isValidTemplate should return true for templates with spaced placeholder")
+    void isValidTemplate_shouldReturnTrueForSpacedPlaceholder(
+            @ForAll @StringLength(min = 0, max = 50) @AlphaChars String prefix,
+            @ForAll @StringLength(min = 0, max = 50) @AlphaChars String suffix,
+            @ForAll @IntRange(min = 0, max = 5) int spaces) {
+
+        String spacePadding = " ".repeat(spaces);
+        String template = prefix + "{{" + spacePadding + "content" + spacePadding + "}}" + suffix;
+        assertThat(PBHtmlUtils.isValidTemplate(template)).isTrue();
+    }
+
+    @Property(tries = 500)
+    @Label("isValidTemplate should return false for templates without placeholder")
+    void isValidTemplate_shouldReturnFalseForTemplatesWithoutPlaceholder(
+            @ForAll @StringLength(min = 1, max = 100) @AlphaChars String template) {
+
+        // Template without {{content}} should be invalid
+        assertThat(PBHtmlUtils.isValidTemplate(template)).isFalse();
+    }
+
+    @Property(tries = 200)
+    @Label("isValidTemplate result should be consistent with prepareEmailContent behavior")
+    void isValidTemplate_shouldBeConsistentWithPrepareEmailContent(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text,
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String templateText) {
+
+        String contentWithNewline = text + "\n" + text;
+
+        // If template is valid, prepareEmailContent should convert HTML
+        String validTemplate = templateText + "{{content}}" + templateText;
+        if (PBHtmlUtils.isValidTemplate(validTemplate)) {
+            String result = PBHtmlUtils.prepareEmailContent(contentWithNewline, validTemplate);
+            assertThat(result).contains("<br/>");
+        }
+
+        // If template is invalid, prepareEmailContent should return original content
+        String invalidTemplate = templateText;
+        if (!PBHtmlUtils.isValidTemplate(invalidTemplate)) {
+            String result = PBHtmlUtils.prepareEmailContent(contentWithNewline, invalidTemplate);
+            assertThat(result).isEqualTo(contentWithNewline);
+        }
     }
 
     // =========================================================================

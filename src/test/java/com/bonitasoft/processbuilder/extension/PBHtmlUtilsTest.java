@@ -314,7 +314,7 @@ class PBHtmlUtilsTest {
     class PrepareEmailContentTests {
 
         @Test
-        @DisplayName("should convert text and apply template")
+        @DisplayName("should convert text and apply template when template is valid")
         void should_convert_text_and_apply_template() {
             String textContent = "Line 1\nLine 2";
 
@@ -327,25 +327,61 @@ class PBHtmlUtilsTest {
         }
 
         @Test
-        @DisplayName("should handle null text content")
-        void should_handle_null_text_content() {
+        @DisplayName("should return original content when template is null")
+        void should_return_original_content_when_template_null() {
+            String textContent = "Test content\nWith newline";
+
+            String result = PBHtmlUtils.prepareEmailContent(textContent, null);
+
+            assertThat(result).isEqualTo("Test content\nWith newline");
+        }
+
+        @Test
+        @DisplayName("should return original content when template is empty")
+        void should_return_original_content_when_template_empty() {
+            String textContent = "Test content\nWith newline";
+
+            String result = PBHtmlUtils.prepareEmailContent(textContent, "");
+
+            assertThat(result).isEqualTo("Test content\nWith newline");
+        }
+
+        @Test
+        @DisplayName("should return original content when template has no placeholder")
+        void should_return_original_content_when_template_no_placeholder() {
+            String textContent = "Test content\nWith newline";
+
+            String result = PBHtmlUtils.prepareEmailContent(textContent, TEMPLATE_WITHOUT_PLACEHOLDER);
+
+            assertThat(result).isEqualTo("Test content\nWith newline");
+        }
+
+        @Test
+        @DisplayName("should return null when both content and template are null")
+        void should_return_null_when_both_null() {
+            String result = PBHtmlUtils.prepareEmailContent(null, null);
+
+            assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("should return null content when template is invalid and content is null")
+        void should_return_null_when_template_invalid_and_content_null() {
+            String result = PBHtmlUtils.prepareEmailContent(null, "");
+
+            assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("should handle null text content with valid template")
+        void should_handle_null_text_content_with_valid_template() {
             String result = PBHtmlUtils.prepareEmailContent(null, SIMPLE_TEMPLATE);
 
             assertThat(result).isEqualTo(SIMPLE_TEMPLATE);
         }
 
         @Test
-        @DisplayName("should handle null template")
-        void should_handle_null_template() {
-            String textContent = "Test content";
-
-            String result = PBHtmlUtils.prepareEmailContent(textContent, null);
-
-            assertThat(result).isEqualTo("Test content");
-        }
-
-        @Test
-        @DisplayName("should escape HTML and convert newlines before applying template")
+        @DisplayName("should escape HTML and convert newlines before applying valid template")
         void should_escape_and_convert_before_applying() {
             String textContent = "Hello <World>\nNew line with & ampersand";
 
@@ -356,6 +392,94 @@ class PBHtmlUtilsTest {
                     .contains("<br/>")
                     .contains("&amp;")
                     .doesNotContain("{{content}}");
+        }
+
+        @Test
+        @DisplayName("should not convert HTML when template has no placeholder")
+        void should_not_convert_html_when_template_invalid() {
+            String textContent = "Hello <World>\nNew line";
+
+            String result = PBHtmlUtils.prepareEmailContent(textContent, TEMPLATE_WITHOUT_PLACEHOLDER);
+
+            // Should return original content without HTML conversion
+            assertThat(result)
+                    .contains("<World>")
+                    .contains("\n")
+                    .doesNotContain("<br/>")
+                    .doesNotContain("&lt;");
+        }
+
+        @Test
+        @DisplayName("should handle template with spaces in placeholder")
+        void should_handle_template_with_spaces_in_placeholder() {
+            String textContent = "Test\nContent";
+
+            String result = PBHtmlUtils.prepareEmailContent(textContent, TEMPLATE_WITH_SPACES);
+
+            assertThat(result)
+                    .contains("<br/>")
+                    .startsWith("<html><body>")
+                    .endsWith("</body></html>");
+        }
+    }
+
+    // =========================================================================
+    // isValidTemplate TESTS (Package-private)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("isValidTemplate Method Tests")
+    class IsValidTemplateTests {
+
+        @Test
+        @DisplayName("should return false for null template")
+        void should_return_false_for_null() {
+            assertThat(PBHtmlUtils.isValidTemplate(null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("should return false for empty template")
+        void should_return_false_for_empty() {
+            assertThat(PBHtmlUtils.isValidTemplate("")).isFalse();
+        }
+
+        @Test
+        @DisplayName("should return false for template without placeholder")
+        void should_return_false_for_template_without_placeholder() {
+            assertThat(PBHtmlUtils.isValidTemplate(TEMPLATE_WITHOUT_PLACEHOLDER)).isFalse();
+        }
+
+        @Test
+        @DisplayName("should return true for template with placeholder")
+        void should_return_true_for_template_with_placeholder() {
+            assertThat(PBHtmlUtils.isValidTemplate(SIMPLE_TEMPLATE)).isTrue();
+        }
+
+        @Test
+        @DisplayName("should return true for template with spaced placeholder")
+        void should_return_true_for_template_with_spaced_placeholder() {
+            assertThat(PBHtmlUtils.isValidTemplate(TEMPLATE_WITH_SPACES)).isTrue();
+        }
+
+        @Test
+        @DisplayName("should return true for minimal template with placeholder only")
+        void should_return_true_for_minimal_template() {
+            assertThat(PBHtmlUtils.isValidTemplate("{{content}}")).isTrue();
+        }
+
+        @Test
+        @DisplayName("should return false for template with partial placeholder")
+        void should_return_false_for_partial_placeholder() {
+            assertThat(PBHtmlUtils.isValidTemplate("{{content")).isFalse();
+            assertThat(PBHtmlUtils.isValidTemplate("content}}")).isFalse();
+            assertThat(PBHtmlUtils.isValidTemplate("{content}")).isFalse();
+        }
+
+        @Test
+        @DisplayName("should return false for whitespace-only template")
+        void should_return_false_for_whitespace_only() {
+            assertThat(PBHtmlUtils.isValidTemplate("   ")).isFalse();
+            assertThat(PBHtmlUtils.isValidTemplate("\t\n")).isFalse();
         }
     }
 

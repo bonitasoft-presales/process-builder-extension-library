@@ -155,6 +155,11 @@ public final class PBHtmlUtils {
      * {@link #applyEmailTemplate(String, String)} in a single call.
      * </p>
      * <p>
+     * <strong>Important:</strong> If the email template is null, empty, or does not contain
+     * the {@code {{content}}} placeholder, this method returns the original text content
+     * without any HTML conversion or template application.
+     * </p>
+     * <p>
      * <strong>Usage from Bonita Groovy script:</strong>
      * </p>
      * <pre>{@code
@@ -174,14 +179,38 @@ public final class PBHtmlUtils {
      *
      * @param textContent The plain text content to be included in the email.
      * @param emailTemplate The HTML email template containing {{content}} placeholder.
-     * @return The complete email HTML ready to be sent.
+     * @return The complete email HTML ready to be sent, or the original textContent
+     *         if the template is invalid (null, empty, or missing placeholder).
      */
     public static String prepareEmailContent(String textContent, String emailTemplate) {
+        // If template is null, empty, or doesn't contain the placeholder, return content as-is
+        if (!isValidTemplate(emailTemplate)) {
+            LOGGER.warn("Email template is invalid (null, empty, or missing {{content}} placeholder). "
+                    + "Returning original content without HTML conversion.");
+            return textContent;
+        }
+
         // Convert text content to HTML format
         String htmlContent = convertTextToHtml(textContent);
 
         // Apply the email template
         return applyEmailTemplate(emailTemplate, htmlContent);
+    }
+
+    /**
+     * Checks if the given template is valid for email content processing.
+     * <p>
+     * A valid template must be non-null, non-empty, and contain the {@code {{content}}} placeholder.
+     * </p>
+     *
+     * @param template The template to validate.
+     * @return {@code true} if the template is valid, {@code false} otherwise.
+     */
+    static boolean isValidTemplate(String template) {
+        if (template == null || template.isEmpty()) {
+            return false;
+        }
+        return CONTENT_PLACEHOLDER_PATTERN.matcher(template).find();
     }
 
     /**
