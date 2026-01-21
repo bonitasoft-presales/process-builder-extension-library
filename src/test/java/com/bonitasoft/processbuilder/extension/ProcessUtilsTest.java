@@ -829,7 +829,187 @@ class ProcessUtilsTest {
     }
 
     // =========================================================================
-    // SECTION 8: findMostRecentStepInstance TESTS
+    // SECTION 8: searchByStringKey TESTS
+    // =========================================================================
+
+    @Test
+    @DisplayName("searchByStringKey should return object when searchKey is valid")
+    void searchByStringKey_should_return_object_on_valid_search_key() {
+        // Given
+        String searchKey = "ACTION_REF_001";
+        MockBDM expectedObject = new MockBDM(PERSISTENCE_ID);
+        Function<String, MockBDM> stringSearchFunction = key -> expectedObject;
+
+        // When
+        MockBDM result = ProcessUtils.searchByStringKey(searchKey, stringSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertSame(expectedObject, result);
+    }
+
+    @Test
+    @DisplayName("searchByStringKey should return null when searchKey is null")
+    void searchByStringKey_should_return_null_on_null_search_key() {
+        // Given
+        Function<String, MockBDM> stringSearchFunction = key -> new MockBDM(PERSISTENCE_ID);
+
+        // When
+        MockBDM result = ProcessUtils.searchByStringKey(null, stringSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("searchByStringKey should return null when searchKey is empty string")
+    void searchByStringKey_should_return_null_on_empty_search_key() {
+        // Given
+        Function<String, MockBDM> stringSearchFunction = key -> new MockBDM(PERSISTENCE_ID);
+
+        // When
+        MockBDM result = ProcessUtils.searchByStringKey("", stringSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("searchByStringKey should return null when searchKey is blank string")
+    void searchByStringKey_should_return_null_on_blank_search_key() {
+        // Given
+        Function<String, MockBDM> stringSearchFunction = key -> new MockBDM(PERSISTENCE_ID);
+
+        // When
+        MockBDM result = ProcessUtils.searchByStringKey("   ", stringSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("searchByStringKey should return null when search function returns null")
+    void searchByStringKey_should_return_null_when_search_function_returns_null() {
+        // Given
+        String searchKey = "NON_EXISTENT_KEY";
+        Function<String, MockBDM> stringSearchFunction = key -> null;
+
+        // When
+        MockBDM result = ProcessUtils.searchByStringKey(searchKey, stringSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("searchByStringKey should handle searchKey with leading/trailing spaces")
+    void searchByStringKey_should_trim_search_key() {
+        // Given
+        String searchKeyWithSpaces = "  ACTION_REF_001  ";
+        String expectedTrimmedKey = "ACTION_REF_001";
+        MockBDM expectedObject = new MockBDM(PERSISTENCE_ID);
+        final String[] capturedKey = new String[1];
+        Function<String, MockBDM> stringSearchFunction = key -> {
+            capturedKey[0] = key;
+            return expectedObject;
+        };
+
+        // When
+        MockBDM result = ProcessUtils.searchByStringKey(searchKeyWithSpaces, stringSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertSame(expectedObject, result);
+        assertEquals(expectedTrimmedKey, capturedKey[0]);
+    }
+
+    @Test
+    @DisplayName("searchByStringKey should return null when search function throws exception")
+    void searchByStringKey_should_return_null_when_search_function_throws_exception() {
+        // Given
+        String searchKey = "ACTION_REF_001";
+        Function<String, MockBDM> stringSearchFunction = key -> {
+            throw new RuntimeException("Database error");
+        };
+
+        // When
+        MockBDM result = ProcessUtils.searchByStringKey(searchKey, stringSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("searchByStringKey should work with different generic types")
+    void searchByStringKey_should_work_with_different_generic_types() {
+        // Given
+        Function<String, String> stringSearchFunction = key -> "Found: " + key;
+
+        // When
+        String result = ProcessUtils.searchByStringKey("MY_KEY", stringSearchFunction, "StringObject");
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Found: MY_KEY", result);
+    }
+
+    @Test
+    @DisplayName("searchByStringKey should pass correct key to search function")
+    void searchByStringKey_should_pass_correct_key_to_search_function() {
+        // Given
+        String expectedKey = "ACTION_REF_002";
+        final String[] capturedKey = new String[1];
+        Function<String, MockBDM> stringSearchFunction = key -> {
+            capturedKey[0] = key;
+            return new MockBDM(PERSISTENCE_ID);
+        };
+
+        // When
+        ProcessUtils.searchByStringKey(expectedKey, stringSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertEquals(expectedKey, capturedKey[0]);
+    }
+
+    @Test
+    @DisplayName("searchByStringKey should handle special characters in key")
+    void searchByStringKey_should_handle_special_characters_in_key() {
+        // Given
+        String keyWithSpecialChars = "ACTION-REF_001/v2.0";
+        MockBDM expectedObject = new MockBDM(PERSISTENCE_ID);
+        Function<String, MockBDM> stringSearchFunction = key -> expectedObject;
+
+        // When
+        MockBDM result = ProcessUtils.searchByStringKey(keyWithSpecialChars, stringSearchFunction, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result);
+        assertSame(expectedObject, result);
+    }
+
+    @Test
+    @DisplayName("searchByStringKey should handle multiple consecutive calls independently")
+    void searchByStringKey_should_handle_multiple_consecutive_calls() {
+        // Given
+        MockBDM object1 = new MockBDM(1L);
+        MockBDM object2 = new MockBDM(2L);
+        Function<String, MockBDM> function1 = key -> object1;
+        Function<String, MockBDM> function2 = key -> object2;
+
+        // When
+        MockBDM result1 = ProcessUtils.searchByStringKey("KEY_1", function1, OBJECT_TYPE);
+        MockBDM result2 = ProcessUtils.searchByStringKey("KEY_2", function2, OBJECT_TYPE);
+
+        // Then
+        assertNotNull(result1);
+        assertNotNull(result2);
+        assertSame(object1, result1);
+        assertSame(object2, result2);
+        assertNotEquals(result1.getId(), result2.getId());
+    }
+
+    // =========================================================================
+    // SECTION 9: findMostRecentStepInstance TESTS
     // =========================================================================
 
     @Test
@@ -992,7 +1172,7 @@ class ProcessUtilsTest {
     }
 
     // =========================================================================
-    // SECTION 9: searchBDMList TESTS
+    // SECTION 10: searchBDMList TESTS
     // =========================================================================
 
     @Test

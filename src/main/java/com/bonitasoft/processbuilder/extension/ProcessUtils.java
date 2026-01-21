@@ -385,6 +385,61 @@ public final class ProcessUtils {
     }
 
     /**
+     * Searches for a BDM object by a string key or reference, handling validation and error handling.
+     * This is a convenience method for queries that use string-based identifiers (like stepActionRef)
+     * instead of numeric persistence IDs.
+     * <p>
+     * This method is particularly useful for Bonita scripts where you need to find BDM objects
+     * by their business reference strings rather than their persistence IDs.
+     * </p>
+     * <p>
+     * Example usage:
+     * </p>
+     * <pre>{@code
+     * PBAction pbAction = ProcessUtils.searchByStringKey(
+     *     stepActionRefInput,
+     *     stepActionRef -> pBActionDAO.findByStepActionRef(stepActionRef),
+     *     "PBAction"
+     * );
+     * }</pre>
+     *
+     * @param <T> The generic type of the BDM object to be retrieved.
+     * @param searchKeyInput The string key/reference used to search for the object (can be null or empty).
+     * @param searchFunction The function that performs the search. Must accept a String key and return the BDM object (or null if not found).
+     * @param objectType The name of the BDM object class (e.g., "PBAction"). Used for logging purposes.
+     * @return The BDM object if found, or {@code null} if the search key is null/empty or object not found.
+     */
+    public static <T> T searchByStringKey(
+            String searchKeyInput,
+            Function<String, T> searchFunction,
+            String objectType) {
+
+        if (searchKeyInput == null || searchKeyInput.trim().isEmpty()) {
+            LOGGER.warn("Skipping search: searchKey is null or empty for object type {}", objectType);
+            return null;
+        }
+
+        String trimmedKey = searchKeyInput.trim();
+
+        try {
+            LOGGER.debug("Searching for {} with key: {}", objectType, trimmedKey);
+            T result = searchFunction.apply(trimmedKey);
+
+            if (result != null) {
+                LOGGER.debug("Successfully retrieved {} with key: {}", objectType, trimmedKey);
+            } else {
+                LOGGER.debug("No {} found for key: {}", objectType, trimmedKey);
+            }
+
+            return result;
+        } catch (Exception e) {
+            LOGGER.error("Error searching for {} with key: {}. Message: {}",
+                        objectType, trimmedKey, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
      * Searches for a list of BDM objects by a persistence ID, handling validation and error handling.
      * This is a convenience method for queries that return collections based on a parent entity ID.
      * <p>
