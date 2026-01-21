@@ -141,15 +141,6 @@
                     <groupId>com.fasterxml.jackson.core</groupId>
                     <artifactId>jackson-databind</artifactId>
                 </exclusion>
-                <!-- Exclude javax.mail and javax.activation for 2025.2-->
-                <exclusion>
-                    <groupId>javax.mail</groupId>
-                    <artifactId>mailapi</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax.activation</groupId>
-                    <artifactId>activation</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.swagger.parser.v3/swagger-parser-v3 -->
