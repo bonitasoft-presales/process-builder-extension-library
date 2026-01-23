@@ -82,12 +82,18 @@ public final class PBHtmlUtils {
         // Step 1: Escape HTML special characters (must be done first)
         result = escapeHtmlSpecialChars(result);
 
-        // Step 2: Convert Windows line breaks (\r\n) first, then Unix (\n), then standalone (\r)
+        // Step 2: Convert literal sequences (from JSON) and real control characters
+        result = result.replace("\\r\\n", "<br/>");
+        result = result.replace("\\n", "<br/>");
+        result = result.replace("\\r", "<br/>");
+
+        // Step 2 - bis: Convert Windows line breaks (\r\n) first, then Unix (\n), then standalone (\r)
         result = result.replace("\r\n", "<br/>");
         result = result.replace("\n", "<br/>");
         result = result.replace("\r", "<br/>");
 
-        // Step 3: Convert tabs to four non-breaking spaces
+        // Step 3: Convert literal tabs (\\t) and real tabs (\t) to four non-breaking spaces
+        result = result.replace("\\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
         result = result.replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
 
         // Step 4: Convert multiple consecutive spaces to preserve formatting

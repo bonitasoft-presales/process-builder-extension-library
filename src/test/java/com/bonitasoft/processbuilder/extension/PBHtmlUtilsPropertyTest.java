@@ -108,6 +108,105 @@ class PBHtmlUtilsPropertyTest {
     }
 
     // =========================================================================
+    // convertTextToHtml LITERAL ESCAPE SEQUENCE PROPERTIES (JSON strings)
+    // =========================================================================
+
+    @Property(tries = 500)
+    @Label("convertTextToHtml should convert literal backslash-n sequences to br tags")
+    void convertTextToHtml_shouldConvertLiteralBackslashN(
+            @ForAll @StringLength(min = 1, max = 100) @AlphaChars String before,
+            @ForAll @StringLength(min = 1, max = 100) @AlphaChars String after) {
+
+        // Simulates JSON string where \n is stored as literal \\n
+        String input = before + "\\n" + after;
+        String result = PBHtmlUtils.convertTextToHtml(input);
+
+        assertThat(result)
+                .contains("<br/>")
+                .doesNotContain("\\n");
+    }
+
+    @Property(tries = 500)
+    @Label("convertTextToHtml should convert literal backslash-r-n sequences to br tags")
+    void convertTextToHtml_shouldConvertLiteralBackslashRN(
+            @ForAll @StringLength(min = 1, max = 100) @AlphaChars String before,
+            @ForAll @StringLength(min = 1, max = 100) @AlphaChars String after) {
+
+        // Simulates JSON string where \r\n is stored as literal \\r\\n
+        String input = before + "\\r\\n" + after;
+        String result = PBHtmlUtils.convertTextToHtml(input);
+
+        assertThat(result)
+                .contains("<br/>")
+                .doesNotContain("\\r\\n");
+    }
+
+    @Property(tries = 500)
+    @Label("convertTextToHtml should convert literal backslash-r sequences to br tags")
+    void convertTextToHtml_shouldConvertLiteralBackslashR(
+            @ForAll @StringLength(min = 1, max = 100) @AlphaChars String before,
+            @ForAll @StringLength(min = 1, max = 100) @AlphaChars String after) {
+
+        // Simulates JSON string where \r is stored as literal \\r
+        String input = before + "\\r" + after;
+        String result = PBHtmlUtils.convertTextToHtml(input);
+
+        assertThat(result)
+                .contains("<br/>")
+                .doesNotContain("\\r");
+    }
+
+    @Property(tries = 500)
+    @Label("convertTextToHtml should convert literal backslash-t sequences to nbsp")
+    void convertTextToHtml_shouldConvertLiteralBackslashT(
+            @ForAll @StringLength(min = 1, max = 100) @AlphaChars String before,
+            @ForAll @StringLength(min = 1, max = 100) @AlphaChars String after) {
+
+        // Simulates JSON string where \t is stored as literal \\t
+        String input = before + "\\t" + after;
+        String result = PBHtmlUtils.convertTextToHtml(input);
+
+        assertThat(result)
+                .contains("&nbsp;&nbsp;&nbsp;&nbsp;")
+                .doesNotContain("\\t");
+    }
+
+    @Property(tries = 200)
+    @Label("convertTextToHtml should handle mixed literal and real escape sequences")
+    void convertTextToHtml_shouldHandleMixedLiteralAndRealEscapes(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
+
+        // Mix of literal (from JSON) and real control characters
+        String input = text + "\\n" + text + "\n" + text;
+        String result = PBHtmlUtils.convertTextToHtml(input);
+
+        // Should not contain either the literal or real newlines
+        assertThat(result)
+                .doesNotContain("\\n")
+                .doesNotContain("\n")
+                .contains("<br/>");
+
+        // Should contain two br tags (one for each newline type)
+        long brCount = result.chars().filter(ch -> ch == '<').count();
+        assertThat(brCount).isGreaterThanOrEqualTo(2);
+    }
+
+    @Property(tries = 200)
+    @Label("convertTextToHtml result should not contain any literal escape sequences")
+    void convertTextToHtml_shouldNotContainLiteralEscapeSequences(
+            @ForAll @StringLength(max = 500) String input) {
+        String result = PBHtmlUtils.convertTextToHtml(input);
+
+        if (result != null) {
+            // After conversion, no literal escape sequences should remain
+            assertThat(result)
+                    .doesNotContain("\\n")
+                    .doesNotContain("\\r")
+                    .doesNotContain("\\t");
+        }
+    }
+
+    // =========================================================================
     // applyEmailTemplate PROPERTIES
     // =========================================================================
 

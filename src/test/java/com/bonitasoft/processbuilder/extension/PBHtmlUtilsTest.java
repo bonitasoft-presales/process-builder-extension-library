@@ -191,6 +191,105 @@ class PBHtmlUtilsTest {
 
             assertThat(result).isEqualTo("Line 1<br/>Line 2<br/>Line 3<br/>Line 4");
         }
+
+        // =====================================================================
+        // LITERAL ESCAPE SEQUENCE TESTS (JSON strings with escaped characters)
+        // =====================================================================
+
+        @Test
+        @DisplayName("should convert literal backslash-n to br tags")
+        void should_convert_literal_backslash_n_to_br() {
+            // Simulates JSON string where \n is stored as literal \\n
+            String input = "Line 1\\nLine 2\\nLine 3";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result).isEqualTo("Line 1<br/>Line 2<br/>Line 3");
+        }
+
+        @Test
+        @DisplayName("should convert literal backslash-r-n to br tags")
+        void should_convert_literal_backslash_r_n_to_br() {
+            // Simulates JSON string where \r\n is stored as literal \\r\\n
+            String input = "Line 1\\r\\nLine 2\\r\\nLine 3";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result).isEqualTo("Line 1<br/>Line 2<br/>Line 3");
+        }
+
+        @Test
+        @DisplayName("should convert literal backslash-r to br tags")
+        void should_convert_literal_backslash_r_to_br() {
+            // Simulates JSON string where \r is stored as literal \\r
+            String input = "Line 1\\rLine 2\\rLine 3";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result).isEqualTo("Line 1<br/>Line 2<br/>Line 3");
+        }
+
+        @Test
+        @DisplayName("should convert literal backslash-t to nbsp")
+        void should_convert_literal_backslash_t_to_nbsp() {
+            // Simulates JSON string where \t is stored as literal \\t
+            String input = "Column1\\tColumn2";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result).isEqualTo("Column1&nbsp;&nbsp;&nbsp;&nbsp;Column2");
+        }
+
+        @Test
+        @DisplayName("should handle mixed literal and real escape sequences")
+        void should_handle_mixed_literal_and_real_escapes() {
+            // Mix of literal (from JSON) and real control characters
+            String input = "Line 1\\nLine 2\nLine 3";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result).isEqualTo("Line 1<br/>Line 2<br/>Line 3");
+        }
+
+        @Test
+        @DisplayName("should handle literal escapes with special HTML characters")
+        void should_handle_literal_escapes_with_html_chars() {
+            String input = "Hello <World>\\nNew line with & ampersand";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .contains("&lt;World&gt;")
+                    .contains("<br/>")
+                    .contains("&amp;");
+        }
+
+        @Test
+        @DisplayName("should handle multiple literal tabs")
+        void should_handle_multiple_literal_tabs() {
+            String input = "Col1\\tCol2\\tCol3";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result).isEqualTo("Col1&nbsp;&nbsp;&nbsp;&nbsp;Col2&nbsp;&nbsp;&nbsp;&nbsp;Col3");
+        }
+
+        @Test
+        @DisplayName("should handle mixed literal and real tabs")
+        void should_handle_mixed_literal_and_real_tabs() {
+            String input = "Col1\\tCol2\tCol3";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result).isEqualTo("Col1&nbsp;&nbsp;&nbsp;&nbsp;Col2&nbsp;&nbsp;&nbsp;&nbsp;Col3");
+        }
+
+        @Test
+        @DisplayName("should handle complex JSON-like input with all escape types")
+        void should_handle_complex_json_like_input() {
+            // Simulates content that might come from a JSON field
+            String input = "Dear User,\\r\\n\\r\\nYour request has been processed.\\n\\tDetails:\\n\\t\\tID: 123";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .contains("<br/><br/>")  // Double line breaks
+                    .contains("&nbsp;&nbsp;&nbsp;&nbsp;Details")  // Tab before Details
+                    .doesNotContain("\\n")
+                    .doesNotContain("\\r")
+                    .doesNotContain("\\t");
+        }
     }
 
     // =========================================================================
