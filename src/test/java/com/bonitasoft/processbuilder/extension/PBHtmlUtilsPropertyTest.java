@@ -10,9 +10,9 @@ import static org.assertj.core.api.Assertions.*;
  * <p>
  * Tests invariants that must hold for any valid input, including:
  * <ul>
- *   <li>HTML conversion preserves text content (escaping aside)</li>
+ *   <li>HTML conversion with selective XSS protection</li>
  *   <li>Template application behaves consistently</li>
- *   <li>Security properties for HTML escaping</li>
+ *   <li>XSS sanitization removes dangerous content while preserving safe HTML</li>
  * </ul>
  * </p>
  *
@@ -65,27 +65,19 @@ class PBHtmlUtilsPropertyTest {
     }
 
     @Property(tries = 500)
-    @Label("convertTextToHtml should escape HTML special characters")
-    void convertTextToHtml_shouldEscapeSpecialChars(
+    @Label("convertTextToHtml should preserve safe HTML tags")
+    void convertTextToHtml_shouldPreserveSafeHtmlTags(
             @ForAll @StringLength(min = 1, max = 100) @AlphaChars String text) {
 
-        // Test with ampersand - the raw & should be converted to &amp;
-        String withAmpersand = text + "&" + text;
-        String result = PBHtmlUtils.convertTextToHtml(withAmpersand);
-        assertThat(result)
-                .contains("&amp;");
-        // Verify the original unescaped pattern is not present (& followed by text, not by amp;)
-        assertThat(result.replaceAll("&amp;", "")).doesNotContain("&");
+        // Safe anchor tag should be preserved
+        String withAnchor = text + " <a href=\"https://example.com\">link</a> " + text;
+        String result = PBHtmlUtils.convertTextToHtml(withAnchor);
+        assertThat(result).contains("<a href=\"https://example.com\">link</a>");
 
-        // Test with less than
-        String withLessThan = text + "<" + text;
-        assertThat(PBHtmlUtils.convertTextToHtml(withLessThan))
-                .contains("&lt;");
-
-        // Test with greater than
-        String withGreaterThan = text + ">" + text;
-        assertThat(PBHtmlUtils.convertTextToHtml(withGreaterThan))
-                .contains("&gt;");
+        // Safe paragraph tag should be preserved
+        String withParagraph = "<p>" + text + "</p>";
+        String paragraphResult = PBHtmlUtils.convertTextToHtml(withParagraph);
+        assertThat(paragraphResult).contains("<p>").contains("</p>");
     }
 
     @Property(tries = 200)
@@ -105,6 +97,98 @@ class PBHtmlUtilsPropertyTest {
     @Label("convertTextToHtml should handle empty string")
     void convertTextToHtml_shouldHandleEmptyString() {
         assertThat(PBHtmlUtils.convertTextToHtml("")).isEmpty();
+    }
+
+    // =========================================================================
+    // convertTextToHtml XSS PROTECTION PROPERTIES
+    // =========================================================================
+
+    @Property(tries = 500)
+    @Label("convertTextToHtml should remove script tags")
+    void convertTextToHtml_shouldRemoveScriptTags(
+            @ForAll @StringLength(min = 5, max = 50) @AlphaChars String text,
+            @ForAll @StringLength(min = 10, max = 50) @AlphaChars String scriptContent) {
+
+        // Use distinct content to avoid substring collisions
+        String uniqueMarker = "XYZMARKER";
+        String xssAttempt = text + uniqueMarker + "<script>" + scriptContent + "</script>" + uniqueMarker + text;
+        String result = PBHtmlUtils.convertTextToHtml(xssAttempt);
+
+        assertThat(result)
+                .doesNotContain("<script>")
+                .doesNotContain("</script>")
+                .contains(text)
+                .contains(uniqueMarker);
+
+        // Verify script content is removed (the result should be shorter than input minus script content)
+        assertThat(result.length()).isLessThan(xssAttempt.length());
+    }
+
+    @Property(tries = 500)
+    @Label("convertTextToHtml should remove onclick event handlers")
+    void convertTextToHtml_shouldRemoveOnclickHandlers(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
+
+        String xssAttempt = "<button onclick=\"alert('" + text + "')\">Click</button>";
+        String result = PBHtmlUtils.convertTextToHtml(xssAttempt);
+
+        assertThat(result)
+                .doesNotContain("onclick")
+                .doesNotContain("alert")
+                .contains("<button")
+                .contains(">Click</button>");
+    }
+
+    @Property(tries = 500)
+    @Label("convertTextToHtml should remove onload event handlers")
+    void convertTextToHtml_shouldRemoveOnloadHandlers(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
+
+        String xssAttempt = "<img src=\"test.jpg\" onload=\"evil('" + text + "')\">";
+        String result = PBHtmlUtils.convertTextToHtml(xssAttempt);
+
+        assertThat(result)
+                .doesNotContain("onload")
+                .doesNotContain("evil")
+                .contains("<img src=\"test.jpg\"");
+    }
+
+    @Property(tries = 500)
+    @Label("convertTextToHtml should remove onerror event handlers")
+    void convertTextToHtml_shouldRemoveOnerrorHandlers(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
+
+        String xssAttempt = "<img src=\"x\" onerror=\"malicious('" + text + "')\">";
+        String result = PBHtmlUtils.convertTextToHtml(xssAttempt);
+
+        assertThat(result)
+                .doesNotContain("onerror")
+                .doesNotContain("malicious");
+    }
+
+    @Property(tries = 500)
+    @Label("convertTextToHtml should replace javascript protocol in href")
+    void convertTextToHtml_shouldReplaceJavascriptProtocol(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
+
+        String xssAttempt = "<a href=\"javascript:alert('" + text + "')\">Link</a>";
+        String result = PBHtmlUtils.convertTextToHtml(xssAttempt);
+
+        assertThat(result)
+                .doesNotContain("javascript:")
+                .doesNotContain("alert")
+                .contains("href=\"#\"");
+    }
+
+    @Property(tries = 200)
+    @Label("convertTextToHtml should preserve safe href links")
+    void convertTextToHtml_shouldPreserveSafeHrefLinks(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
+
+        String safeLink = "<a href=\"https://example.com/" + text + "\">Safe Link</a>";
+        String result = PBHtmlUtils.convertTextToHtml(safeLink);
+
+        assertThat(result).contains(safeLink);
     }
 
     // =========================================================================
@@ -204,6 +288,79 @@ class PBHtmlUtilsPropertyTest {
                     .doesNotContain("\\r")
                     .doesNotContain("\\t");
         }
+    }
+
+    // =========================================================================
+    // sanitizeXss PROPERTIES
+    // =========================================================================
+
+    @Property(tries = 500)
+    @Label("sanitizeXss should never return null for non-null input")
+    void sanitizeXss_shouldNeverReturnNullForNonNullInput(
+            @ForAll @StringLength(max = 1000) String input) {
+        String result = PBHtmlUtils.sanitizeXss(input);
+        assertThat(result).isNotNull();
+    }
+
+    @Property(tries = 500)
+    @Label("sanitizeXss should return null for null input")
+    void sanitizeXss_shouldReturnNullForNullInput() {
+        assertThat(PBHtmlUtils.sanitizeXss(null)).isNull();
+    }
+
+    @Property(tries = 500)
+    @Label("sanitizeXss should not modify safe text")
+    void sanitizeXss_shouldNotModifySafeText(
+            @ForAll @StringLength(min = 1, max = 200) @AlphaChars String text) {
+        String result = PBHtmlUtils.sanitizeXss(text);
+        assertThat(result).isEqualTo(text);
+    }
+
+    @Property(tries = 500)
+    @Label("sanitizeXss should remove all script tags")
+    void sanitizeXss_shouldRemoveAllScriptTags(
+            @ForAll @StringLength(min = 5, max = 50) @AlphaChars String before,
+            @ForAll @StringLength(min = 10, max = 50) @AlphaChars String content,
+            @ForAll @StringLength(min = 5, max = 50) @AlphaChars String after) {
+
+        // Use markers to ensure distinct detection
+        String beforeMarker = "BEFORE" + before;
+        String afterMarker = after + "AFTER";
+        String input = beforeMarker + "<script>" + content + "</script>" + afterMarker;
+        String result = PBHtmlUtils.sanitizeXss(input);
+
+        assertThat(result)
+                .doesNotContain("<script>")
+                .doesNotContain("</script>")
+                .contains(beforeMarker)
+                .contains(afterMarker);
+
+        // Verify script content is removed
+        assertThat(result.length()).isLessThan(input.length());
+    }
+
+    @Property(tries = 500)
+    @Label("sanitizeXss should remove all event handlers")
+    void sanitizeXss_shouldRemoveAllEventHandlers(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
+
+        String[] events = {"onclick", "onload", "onerror", "onmouseover"};
+        for (String event : events) {
+            String input = "<div " + event + "=\"evil()\">Test</div>";
+            String result = PBHtmlUtils.sanitizeXss(input);
+            assertThat(result).doesNotContain(event);
+        }
+    }
+
+    @Property(tries = 500)
+    @Label("sanitizeXss should preserve safe anchor tags")
+    void sanitizeXss_shouldPreserveSafeAnchorTags(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
+
+        String safeAnchor = "<a href=\"https://example.com\">" + text + "</a>";
+        String result = PBHtmlUtils.sanitizeXss(safeAnchor);
+
+        assertThat(result).isEqualTo(safeAnchor);
     }
 
     // =========================================================================
@@ -329,6 +486,20 @@ class PBHtmlUtilsPropertyTest {
         assertThat(resultBothNull).isNull();
     }
 
+    @Property(tries = 200)
+    @Label("prepareEmailContent should sanitize XSS when template is valid")
+    void prepareEmailContent_shouldSanitizeXSSWhenTemplateValid(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
+
+        String xssContent = text + "<script>alert('XSS')</script>" + text;
+        String result = PBHtmlUtils.prepareEmailContent(xssContent, TEMPLATE_WITH_PLACEHOLDER);
+
+        assertThat(result)
+                .doesNotContain("<script>")
+                .doesNotContain("</script>")
+                .doesNotContain("alert");
+    }
+
     // =========================================================================
     // isValidTemplate PROPERTIES
     // =========================================================================
@@ -399,8 +570,8 @@ class PBHtmlUtilsPropertyTest {
     // =========================================================================
 
     @Property(tries = 100)
-    @Label("HTML conversion should prevent XSS attacks by escaping tags")
-    void htmlConversion_shouldPreventXSS(
+    @Label("HTML conversion should remove script tags for XSS protection")
+    void htmlConversion_shouldRemoveScriptTags(
             @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
 
         String xssAttempt = "<script>alert('" + text + "')</script>";
@@ -408,24 +579,42 @@ class PBHtmlUtilsPropertyTest {
 
         assertThat(result)
                 .doesNotContain("<script>")
-                .contains("&lt;script&gt;");
+                .doesNotContain("</script>")
+                .doesNotContain("alert");
     }
 
     @Property(tries = 100)
-    @Label("HTML conversion should escape event handlers")
-    void htmlConversion_shouldEscapeEventHandlers(
+    @Label("HTML conversion should remove event handlers for XSS protection")
+    void htmlConversion_shouldRemoveEventHandlers(
             @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
 
         String onclickAttempt = "<div onclick=\"alert('" + text + "')\">Click</div>";
         String result = PBHtmlUtils.convertTextToHtml(onclickAttempt);
 
-        // Verify that the HTML tag brackets are escaped, making the tag non-executable
+        // Verify that the onclick event handler is removed
         assertThat(result)
-                .doesNotContain("<div")
-                .contains("&lt;div")
-                .contains("&quot;")  // The quotes should be escaped
-                .doesNotContain("</div>")
-                .contains("&lt;/div&gt;");
+                .doesNotContain("onclick")
+                .doesNotContain("alert")
+                .contains("<div>")
+                .contains(">Click</div>");
+    }
+
+    @Property(tries = 100)
+    @Label("HTML conversion should preserve legitimate links while removing dangerous ones")
+    void htmlConversion_shouldDistinguishSafeFromDangerousLinks(
+            @ForAll @StringLength(min = 1, max = 50) @AlphaChars String text) {
+
+        // Safe link should be preserved
+        String safeLink = "<a href=\"https://example.com\">" + text + "</a>";
+        String safeResult = PBHtmlUtils.convertTextToHtml(safeLink);
+        assertThat(safeResult).contains("<a href=\"https://example.com\">");
+
+        // Dangerous link should have javascript: replaced
+        String dangerousLink = "<a href=\"javascript:alert('XSS')\">" + text + "</a>";
+        String dangerousResult = PBHtmlUtils.convertTextToHtml(dangerousLink);
+        assertThat(dangerousResult)
+                .doesNotContain("javascript:")
+                .contains("href=\"#\"");
     }
 
     // =========================================================================
@@ -466,22 +655,36 @@ class PBHtmlUtilsPropertyTest {
                 .isLessThan(MAX_EXECUTION_TIME_MS);
     }
 
+    @Property(tries = 20)
+    @Label("sanitizeXss should process long strings within time limits")
+    void sanitizeXss_shouldProcessLongStringsInTime(
+            @ForAll @IntRange(min = 10000, max = 50000) int length) {
+
+        String longInput = "a".repeat(length);
+        long startTime = System.currentTimeMillis();
+
+        assertThatCode(() -> PBHtmlUtils.sanitizeXss(longInput))
+                .doesNotThrowAnyException();
+
+        long executionTime = System.currentTimeMillis() - startTime;
+        assertThat(executionTime)
+                .as("Execution time should be less than %d ms", MAX_EXECUTION_TIME_MS)
+                .isLessThan(MAX_EXECUTION_TIME_MS);
+    }
+
     // =========================================================================
     // IDEMPOTENCE AND CONSISTENCY PROPERTIES
     // =========================================================================
 
     @Property(tries = 200)
-    @Label("escapeHtmlSpecialChars should be consistent with convertTextToHtml")
-    void escapeHtmlSpecialChars_shouldBeConsistent(
+    @Label("escapeHtmlSpecialChars should escape all special characters")
+    void escapeHtmlSpecialChars_shouldEscapeAllSpecialChars(
             @ForAll @StringLength(min = 1, max = 100) @AlphaChars String text) {
 
         String textWithSpecialChars = text + "&<>\"'";
 
         String escaped = PBHtmlUtils.escapeHtmlSpecialChars(textWithSpecialChars);
-        String converted = PBHtmlUtils.convertTextToHtml(textWithSpecialChars);
 
-        // The escaped version should be contained in the converted version
-        // (converted may have additional transformations like nbsp)
         assertThat(escaped)
                 .contains("&amp;")
                 .contains("&lt;")

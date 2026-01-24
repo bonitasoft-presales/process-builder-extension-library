@@ -73,7 +73,7 @@ public enum SmtpType {
      * <p>{{content}}</p>
      * }</pre>
      */
-    EMAIL_TEMPLATE("EmailTemplate",
+    EMAILTEMPLATE("EmailTemplate",
             "The HTML template for email notifications. Must contain {{content}} placeholder "
                     + "where the email body content will be inserted.");
 

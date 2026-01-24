@@ -12,12 +12,18 @@ import org.slf4j.LoggerFactory;
  * This class provides methods to:
  * </p>
  * <ul>
- *   <li>Convert plain text to HTML-safe format (handling newlines, special characters)</li>
+ *   <li>Convert plain text to HTML format with selective XSS protection</li>
  *   <li>Apply email templates by replacing content placeholders</li>
+ *   <li>Sanitize content by removing dangerous script tags and event handlers</li>
  * </ul>
  * <p>
  * This class is designed to be used from Groovy scripts in Bonita processes,
  * where the template and DAO operations are handled externally.
+ * </p>
+ * <p>
+ * <strong>Security Note:</strong> This class implements selective XSS protection
+ * that removes script tags and JavaScript event handlers while preserving
+ * legitimate HTML tags like {@code <a href="...">} links.
  * </p>
  *
  * @author Bonitasoft
@@ -37,6 +43,38 @@ public final class PBHtmlUtils {
     private static final Pattern CONTENT_PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{\\s*content\\s*\\}\\}");
 
     /**
+     * Pattern to match and remove script tags and their content.
+     * Case-insensitive to catch variations like SCRIPT, Script, etc.
+     * Matches both opening and closing tags with any attributes.
+     */
+    private static final Pattern SCRIPT_TAG_PATTERN = Pattern.compile(
+            "<script[^>]*>.*?</script>",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+    /**
+     * Pattern to match and remove self-closing script tags.
+     */
+    private static final Pattern SCRIPT_SELF_CLOSING_PATTERN = Pattern.compile(
+            "<script[^>]*/?>",
+            Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Pattern to match and remove JavaScript event handler attributes.
+     * Matches attributes like onclick, onload, onerror, onmouseover, etc.
+     * Handles both double and single quoted values.
+     */
+    private static final Pattern EVENT_HANDLER_PATTERN = Pattern.compile(
+            "\\s+on\\w+\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\\s>]*)",
+            Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Pattern to match javascript: protocol in href attributes.
+     */
+    private static final Pattern JAVASCRIPT_PROTOCOL_PATTERN = Pattern.compile(
+            "href\\s*=\\s*[\"']?\\s*javascript:[^\"'\\s>]*[\"']?",
+            Pattern.CASE_INSENSITIVE);
+
+    /**
      * Default placeholder value when template is missing the content placeholder.
      */
     private static final String DEFAULT_PLACEHOLDER = "{{content}}";
@@ -52,21 +90,27 @@ public final class PBHtmlUtils {
     }
 
     /**
-     * Converts plain text content to HTML-safe format.
+     * Converts text content to HTML format with selective XSS protection.
      * <p>
      * This method performs the following transformations:
      * </p>
      * <ul>
-     *   <li>Escapes HTML special characters ({@code &}, {@code <}, {@code >}, {@code "}, {@code '})</li>
-     *   <li>Converts Windows line breaks ({@code \r\n}) to {@code <br/>}</li>
-     *   <li>Converts Unix line breaks ({@code \n}) to {@code <br/>}</li>
-     *   <li>Converts carriage returns ({@code \r}) to {@code <br/>}</li>
-     *   <li>Converts tabs ({@code \t}) to four non-breaking spaces ({@code &nbsp;})</li>
+     *   <li>Removes script tags and their content (XSS protection)</li>
+     *   <li>Removes JavaScript event handler attributes (onclick, onload, etc.)</li>
+     *   <li>Removes javascript: protocol from href attributes</li>
+     *   <li>Converts literal escape sequences from JSON (\\n, \\r, \\t) to HTML equivalents</li>
+     *   <li>Converts real control characters (\n, \r, \t) to HTML equivalents</li>
      *   <li>Converts multiple consecutive spaces to non-breaking spaces</li>
      * </ul>
+     * <p>
+     * <strong>Security Note:</strong> This method uses selective XSS protection instead of
+     * full HTML escaping. This allows legitimate HTML tags like {@code <a href="...">} to
+     * be preserved while removing dangerous content like script tags and event handlers.
+     * </p>
      *
-     * @param text The plain text to convert to HTML format.
-     * @return The HTML-formatted text, or null if input is null, or empty string if input is empty.
+     * @param text The text to convert to HTML format.
+     * @return The HTML-formatted text with XSS protection, or null if input is null,
+     *         or empty string if input is empty.
      */
     public static String convertTextToHtml(String text) {
         if (text == null) {
@@ -79,27 +123,69 @@ public final class PBHtmlUtils {
 
         String result = text;
 
-        // Step 1: Escape HTML special characters (must be done first)
-        result = escapeHtmlSpecialChars(result);
+        // Step 1: Selective XSS protection (instead of full HTML escaping)
+        result = sanitizeXss(result);
 
-        // Step 2: Convert literal sequences (from JSON) and real control characters
+        // Step 2: Convert literal sequences (from JSON) - must be done before real control characters
         result = result.replace("\\r\\n", "<br/>");
         result = result.replace("\\n", "<br/>");
         result = result.replace("\\r", "<br/>");
 
-        // Step 2 - bis: Convert Windows line breaks (\r\n) first, then Unix (\n), then standalone (\r)
+        // Step 3: Convert real control characters
         result = result.replace("\r\n", "<br/>");
         result = result.replace("\n", "<br/>");
         result = result.replace("\r", "<br/>");
 
-        // Step 3: Convert literal tabs (\\t) and real tabs (\t) to four non-breaking spaces
+        // Step 4: Convert literal tabs (\\t) and real tabs (\t) to four non-breaking spaces
         result = result.replace("\\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
         result = result.replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
 
-        // Step 4: Convert multiple consecutive spaces to preserve formatting
+        // Step 5: Convert multiple consecutive spaces to preserve formatting
         result = preserveMultipleSpaces(result);
 
         LOGGER.debug("Converted text to HTML. Input length: {}, Output length: {}", text.length(), result.length());
+
+        return result;
+    }
+
+    /**
+     * Sanitizes the input string by removing XSS attack vectors.
+     * <p>
+     * This method removes:
+     * </p>
+     * <ul>
+     *   <li>Script tags and their content</li>
+     *   <li>JavaScript event handler attributes (onclick, onload, onerror, etc.)</li>
+     *   <li>javascript: protocol in href attributes</li>
+     * </ul>
+     * <p>
+     * This allows legitimate HTML tags like anchors ({@code <a href="...">}) to remain
+     * while protecting against XSS attacks.
+     * </p>
+     *
+     * @param text The text to sanitize.
+     * @return The sanitized text with XSS vectors removed.
+     */
+    static String sanitizeXss(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        String result = text;
+
+        // Remove script tags and their content
+        result = SCRIPT_TAG_PATTERN.matcher(result).replaceAll("");
+
+        // Remove self-closing or orphan script tags
+        result = SCRIPT_SELF_CLOSING_PATTERN.matcher(result).replaceAll("");
+
+        // Remove JavaScript event handlers (onclick, onload, onerror, etc.)
+        result = EVENT_HANDLER_PATTERN.matcher(result).replaceAll("");
+
+        // Remove javascript: protocol from href attributes
+        result = JAVASCRIPT_PROTOCOL_PATTERN.matcher(result).replaceAll("href=\"#\"");
+
+        LOGGER.debug("Sanitized XSS content. Input length: {}, Output length: {}", text.length(), result.length());
 
         return result;
     }
@@ -174,7 +260,7 @@ public final class PBHtmlUtils {
      *
      * // Get the email template from PBConfiguration
      * PBConfiguration pbConfiguration = pBConfigurationDAO.findByFullNameAndRefEntityTypeName(
-     *     SmtpType.EMAIL_TEMPLATE.name(),
+     *     SmtpType.EMAILTEMPLATE.name(),
      *     ConfigurationType.SMTP.name()
      * )
      * String emailTemplateString = pbConfiguration.getConfigValue()
@@ -230,6 +316,11 @@ public final class PBHtmlUtils {
      *   <li>{@code "} becomes {@code &quot;}</li>
      *   <li>{@code '} becomes {@code &#39;}</li>
      * </ul>
+     * </p>
+     * <p>
+     * <strong>Note:</strong> This method is kept for backward compatibility and for cases
+     * where full HTML escaping is needed. The main {@link #convertTextToHtml(String)} method
+     * now uses selective XSS protection instead of full escaping.
      * </p>
      *
      * @param text The text to escape.

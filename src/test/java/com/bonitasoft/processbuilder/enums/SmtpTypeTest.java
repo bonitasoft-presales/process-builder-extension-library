@@ -98,9 +98,9 @@ class SmtpTypeTest {
         }
 
         @Test
-        @DisplayName("EMAIL_TEMPLATE constant should be defined")
-        void should_define_EMAIL_TEMPLATE_constant() {
-            assertThat(SmtpType.EMAIL_TEMPLATE.name()).isEqualTo("EMAIL_TEMPLATE");
+        @DisplayName("EMAILTEMPLATE constant should be defined")
+        void should_define_EMAILTEMPLATE_constant() {
+            assertThat(SmtpType.EMAILTEMPLATE.name()).isEqualTo("EMAILTEMPLATE");
         }
     }
 
@@ -169,11 +169,11 @@ class SmtpTypeTest {
         }
 
         @Test
-        @DisplayName("EMAIL_TEMPLATE should have correct key and description")
+        @DisplayName("EMAILTEMPLATE should have correct key and description")
         void emailTemplate_should_have_correct_key_and_description() {
-            assertThat(SmtpType.EMAIL_TEMPLATE.getKey()).isEqualTo("EmailTemplate");
-            assertThat(SmtpType.EMAIL_TEMPLATE.getDescription()).contains("template");
-            assertThat(SmtpType.EMAIL_TEMPLATE.getDescription()).contains("{{content}}");
+            assertThat(SmtpType.EMAILTEMPLATE.getKey()).isEqualTo("EmailTemplate");
+            assertThat(SmtpType.EMAILTEMPLATE.getDescription()).contains("template");
+            assertThat(SmtpType.EMAILTEMPLATE.getDescription()).contains("{{content}}");
         }
     }
 
@@ -190,7 +190,7 @@ class SmtpTypeTest {
         void isValid_should_return_true_for_valid_uppercase() {
             assertThat(SmtpType.isValid("SMTP_HOST")).isTrue();
             assertThat(SmtpType.isValid("SSL")).isTrue();
-            assertThat(SmtpType.isValid("EMAIL_TEMPLATE")).isTrue();
+            assertThat(SmtpType.isValid("EMAILTEMPLATE")).isTrue();
         }
 
         @Test
@@ -198,7 +198,7 @@ class SmtpTypeTest {
         void isValid_should_return_true_for_valid_lowercase() {
             assertThat(SmtpType.isValid("smtp_port")).isTrue();
             assertThat(SmtpType.isValid("starttls")).isTrue();
-            assertThat(SmtpType.isValid("email_template")).isTrue();
+            assertThat(SmtpType.isValid("emailtemplate")).isTrue();
         }
 
         @Test
@@ -206,7 +206,7 @@ class SmtpTypeTest {
         void isValid_should_return_true_for_mixed_case() {
             assertThat(SmtpType.isValid("Trust_Certificate")).isTrue();
             assertThat(SmtpType.isValid("Username")).isTrue();
-            assertThat(SmtpType.isValid("Email_Template")).isTrue();
+            assertThat(SmtpType.isValid("EmailTemplate")).isTrue();
         }
 
         @Test
@@ -233,7 +233,7 @@ class SmtpTypeTest {
         void isValid_should_return_true_for_whitespace_padded_name() {
             assertThat(SmtpType.isValid("  SMTP_HOST  ")).isTrue();
             assertThat(SmtpType.isValid("\tSSL\t")).isTrue();
-            assertThat(SmtpType.isValid("  EMAIL_TEMPLATE  ")).isTrue();
+            assertThat(SmtpType.isValid("  EMAILTEMPLATE  ")).isTrue();
         }
 
         @Test

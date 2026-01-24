@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.*;
  * <p>
  * This class tests HTML conversion and email template application methods
  * for proper handling of various input scenarios including null, empty,
- * and special character inputs.
+ * and special character inputs. It also tests XSS protection mechanisms.
  * </p>
  *
  * @author Bonitasoft
@@ -125,62 +125,25 @@ class PBHtmlUtilsTest {
         }
 
         @Test
-        @DisplayName("should escape ampersand")
-        void should_escape_ampersand() {
-            String input = "A & B";
+        @DisplayName("should preserve legitimate anchor tags")
+        void should_preserve_anchor_tags() {
+            String input = "Click <a href=\"https://example.com\">here</a> for more info.";
             String result = PBHtmlUtils.convertTextToHtml(input);
 
-            assertThat(result).contains("&amp;");
+            assertThat(result).contains("<a href=\"https://example.com\">here</a>");
         }
 
         @Test
-        @DisplayName("should escape less than sign")
-        void should_escape_less_than() {
-            String input = "A < B";
-            String result = PBHtmlUtils.convertTextToHtml(input);
-
-            assertThat(result).contains("&lt;");
-        }
-
-        @Test
-        @DisplayName("should escape greater than sign")
-        void should_escape_greater_than() {
-            String input = "A > B";
-            String result = PBHtmlUtils.convertTextToHtml(input);
-
-            assertThat(result).contains("&gt;");
-        }
-
-        @Test
-        @DisplayName("should escape double quotes")
-        void should_escape_double_quotes() {
-            String input = "Say \"Hello\"";
-            String result = PBHtmlUtils.convertTextToHtml(input);
-
-            assertThat(result).contains("&quot;");
-        }
-
-        @Test
-        @DisplayName("should escape single quotes")
-        void should_escape_single_quotes() {
-            String input = "It's fine";
-            String result = PBHtmlUtils.convertTextToHtml(input);
-
-            assertThat(result).contains("&#39;");
-        }
-
-        @Test
-        @DisplayName("should handle all transformations together")
-        void should_handle_all_transformations() {
-            String input = "Hello & World\nSecond line with \"quotes\" and <tags>";
+        @DisplayName("should preserve legitimate HTML tags")
+        void should_preserve_legitimate_html_tags() {
+            String input = "<p>Paragraph</p><strong>Bold</strong><em>Italic</em>";
             String result = PBHtmlUtils.convertTextToHtml(input);
 
             assertThat(result)
-                    .contains("&amp;")
-                    .contains("<br/>")
-                    .contains("&quot;")
-                    .contains("&lt;")
-                    .contains("&gt;");
+                    .contains("<p>")
+                    .contains("</p>")
+                    .contains("<strong>")
+                    .contains("<em>");
         }
 
         @Test
@@ -190,6 +153,195 @@ class PBHtmlUtilsTest {
             String result = PBHtmlUtils.convertTextToHtml(input);
 
             assertThat(result).isEqualTo("Line 1<br/>Line 2<br/>Line 3<br/>Line 4");
+        }
+
+        // =====================================================================
+        // XSS PROTECTION TESTS
+        // =====================================================================
+
+        @Test
+        @DisplayName("should remove script tags with content")
+        void should_remove_script_tags() {
+            String input = "Hello <script>alert('XSS')</script> World";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("<script>")
+                    .doesNotContain("</script>")
+                    .doesNotContain("alert")
+                    .contains("Hello")
+                    .contains("World");
+        }
+
+        @Test
+        @DisplayName("should remove script tags case insensitive")
+        void should_remove_script_tags_case_insensitive() {
+            String input = "Test <SCRIPT>alert('XSS')</SCRIPT> End";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("<SCRIPT>")
+                    .doesNotContain("</SCRIPT>")
+                    .doesNotContain("alert");
+        }
+
+        @Test
+        @DisplayName("should remove script tags with attributes")
+        void should_remove_script_tags_with_attributes() {
+            String input = "<script type=\"text/javascript\" src=\"evil.js\">code</script>";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("<script")
+                    .doesNotContain("</script>")
+                    .doesNotContain("evil.js");
+        }
+
+        @Test
+        @DisplayName("should remove self-closing script tags")
+        void should_remove_self_closing_script_tags() {
+            String input = "Before <script src=\"evil.js\" /> After";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("<script")
+                    .doesNotContain("evil.js")
+                    .contains("Before")
+                    .contains("After");
+        }
+
+        @Test
+        @DisplayName("should remove onclick event handler")
+        void should_remove_onclick_handler() {
+            String input = "<button onclick=\"alert('XSS')\">Click</button>";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("onclick")
+                    .doesNotContain("alert")
+                    .contains("<button")
+                    .contains(">Click</button>");
+        }
+
+        @Test
+        @DisplayName("should remove onload event handler")
+        void should_remove_onload_handler() {
+            String input = "<img src=\"img.jpg\" onload=\"malicious()\">";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("onload")
+                    .doesNotContain("malicious")
+                    .contains("<img src=\"img.jpg\"");
+        }
+
+        @Test
+        @DisplayName("should remove onerror event handler")
+        void should_remove_onerror_handler() {
+            String input = "<img src=\"x\" onerror=\"alert('XSS')\">";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("onerror")
+                    .doesNotContain("alert");
+        }
+
+        @Test
+        @DisplayName("should remove onmouseover event handler")
+        void should_remove_onmouseover_handler() {
+            String input = "<div onmouseover=\"evil()\">Hover me</div>";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("onmouseover")
+                    .doesNotContain("evil");
+        }
+
+        @Test
+        @DisplayName("should remove multiple event handlers")
+        void should_remove_multiple_event_handlers() {
+            String input = "<div onclick=\"a()\" onmouseover=\"b()\" onload=\"c()\">Test</div>";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("onclick")
+                    .doesNotContain("onmouseover")
+                    .doesNotContain("onload");
+        }
+
+        @Test
+        @DisplayName("should remove event handlers case insensitive")
+        void should_remove_event_handlers_case_insensitive() {
+            String input = "<div ONCLICK=\"alert('XSS')\" OnMouseOver=\"evil()\">Test</div>";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("ONCLICK")
+                    .doesNotContain("OnMouseOver")
+                    .doesNotContain("alert")
+                    .doesNotContain("evil");
+        }
+
+        @Test
+        @DisplayName("should replace javascript protocol in href")
+        void should_replace_javascript_protocol() {
+            String input = "<a href=\"javascript:alert('XSS')\">Click</a>";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("javascript:")
+                    .doesNotContain("alert")
+                    .contains("href=\"#\"");
+        }
+
+        @Test
+        @DisplayName("should replace javascript protocol case insensitive")
+        void should_replace_javascript_protocol_case_insensitive() {
+            String input = "<a href=\"JAVASCRIPT:evil()\">Link</a>";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("JAVASCRIPT:")
+                    .doesNotContain("evil")
+                    .contains("href=\"#\"");
+        }
+
+        @Test
+        @DisplayName("should handle combined XSS attacks")
+        void should_handle_combined_xss_attacks() {
+            String input = "<script>alert(1)</script><img onerror=\"alert(2)\" src=\"x\">"
+                    + "<a href=\"javascript:alert(3)\">Link</a>";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("<script>")
+                    .doesNotContain("</script>")
+                    .doesNotContain("onerror")
+                    .doesNotContain("javascript:")
+                    .contains("href=\"#\"");
+        }
+
+        @Test
+        @DisplayName("should preserve normal href links")
+        void should_preserve_normal_href_links() {
+            String input = "<a href=\"https://example.com/page?param=1\">Safe Link</a>";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result).contains("<a href=\"https://example.com/page?param=1\">Safe Link</a>");
+        }
+
+        @Test
+        @DisplayName("should handle multiline script tags")
+        void should_handle_multiline_script_tags() {
+            String input = "Before<script>\n  var x = 1;\n  alert(x);\n</script>After";
+            String result = PBHtmlUtils.convertTextToHtml(input);
+
+            assertThat(result)
+                    .doesNotContain("<script>")
+                    .doesNotContain("</script>")
+                    .doesNotContain("var x")
+                    .contains("Before")
+                    .contains("After");
         }
 
         // =====================================================================
@@ -247,18 +399,6 @@ class PBHtmlUtilsTest {
         }
 
         @Test
-        @DisplayName("should handle literal escapes with special HTML characters")
-        void should_handle_literal_escapes_with_html_chars() {
-            String input = "Hello <World>\\nNew line with & ampersand";
-            String result = PBHtmlUtils.convertTextToHtml(input);
-
-            assertThat(result)
-                    .contains("&lt;World&gt;")
-                    .contains("<br/>")
-                    .contains("&amp;");
-        }
-
-        @Test
         @DisplayName("should handle multiple literal tabs")
         void should_handle_multiple_literal_tabs() {
             String input = "Col1\\tCol2\\tCol3";
@@ -289,6 +429,144 @@ class PBHtmlUtilsTest {
                     .doesNotContain("\\n")
                     .doesNotContain("\\r")
                     .doesNotContain("\\t");
+        }
+    }
+
+    // =========================================================================
+    // sanitizeXss TESTS (Package-private)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("sanitizeXss Method Tests")
+    class SanitizeXssTests {
+
+        @Test
+        @DisplayName("should return null for null input")
+        void should_return_null_for_null() {
+            assertThat(PBHtmlUtils.sanitizeXss(null)).isNull();
+        }
+
+        @Test
+        @DisplayName("should return empty for empty input")
+        void should_return_empty_for_empty() {
+            assertThat(PBHtmlUtils.sanitizeXss("")).isEmpty();
+        }
+
+        @Test
+        @DisplayName("should not modify safe text")
+        void should_not_modify_safe_text() {
+            String input = "Hello World! This is safe text.";
+            String result = PBHtmlUtils.sanitizeXss(input);
+
+            assertThat(result).isEqualTo(input);
+        }
+
+        @Test
+        @DisplayName("should remove script tags")
+        void should_remove_script_tags() {
+            String input = "Test<script>alert('XSS')</script>End";
+            String result = PBHtmlUtils.sanitizeXss(input);
+
+            assertThat(result).isEqualTo("TestEnd");
+        }
+
+        @Test
+        @DisplayName("should remove script tags with mixed case")
+        void should_remove_script_tags_mixed_case() {
+            String input = "Test<ScRiPt>evil()</ScRiPt>End";
+            String result = PBHtmlUtils.sanitizeXss(input);
+
+            assertThat(result).isEqualTo("TestEnd");
+        }
+
+        @Test
+        @DisplayName("should remove orphan script tags")
+        void should_remove_orphan_script_tags() {
+            String input = "Test<script>End";
+            String result = PBHtmlUtils.sanitizeXss(input);
+
+            assertThat(result).isEqualTo("TestEnd");
+        }
+
+        @Test
+        @DisplayName("should remove event handlers with double quotes")
+        void should_remove_event_handlers_double_quotes() {
+            String input = "<button onclick=\"evil()\">Click</button>";
+            String result = PBHtmlUtils.sanitizeXss(input);
+
+            assertThat(result)
+                    .isEqualTo("<button>Click</button>")
+                    .doesNotContain("onclick");
+        }
+
+        @Test
+        @DisplayName("should remove event handlers with single quotes")
+        void should_remove_event_handlers_single_quotes() {
+            String input = "<button onclick='evil()'>Click</button>";
+            String result = PBHtmlUtils.sanitizeXss(input);
+
+            assertThat(result)
+                    .doesNotContain("onclick")
+                    .contains("<button");
+        }
+
+        @Test
+        @DisplayName("should remove all on* event handlers")
+        void should_remove_all_on_event_handlers() {
+            String[] events = {"onclick", "onload", "onerror", "onmouseover", "onmouseout",
+                    "onfocus", "onblur", "onsubmit", "onkeydown", "onkeyup"};
+
+            for (String event : events) {
+                String input = "<div " + event + "=\"evil()\">Test</div>";
+                String result = PBHtmlUtils.sanitizeXss(input);
+
+                assertThat(result)
+                        .doesNotContain(event)
+                        .as("Should remove " + event);
+            }
+        }
+
+        @Test
+        @DisplayName("should replace javascript protocol with safe href")
+        void should_replace_javascript_protocol() {
+            String input = "<a href=\"javascript:alert('XSS')\">Link</a>";
+            String result = PBHtmlUtils.sanitizeXss(input);
+
+            assertThat(result)
+                    .doesNotContain("javascript:")
+                    .contains("href=\"#\"");
+        }
+
+        @Test
+        @DisplayName("should preserve safe anchor tags")
+        void should_preserve_safe_anchor_tags() {
+            String input = "<a href=\"https://safe.com\">Safe</a>";
+            String result = PBHtmlUtils.sanitizeXss(input);
+
+            assertThat(result).isEqualTo(input);
+        }
+
+        @Test
+        @DisplayName("should preserve safe HTML content")
+        void should_preserve_safe_html() {
+            String input = "<p><strong>Bold</strong> and <em>italic</em></p>";
+            String result = PBHtmlUtils.sanitizeXss(input);
+
+            assertThat(result).isEqualTo(input);
+        }
+
+        @Test
+        @DisplayName("should handle nested dangerous elements")
+        void should_handle_nested_dangerous_elements() {
+            String input = "<div onclick=\"a()\"><span onmouseover=\"b()\">Text</span></div>";
+            String result = PBHtmlUtils.sanitizeXss(input);
+
+            assertThat(result)
+                    .doesNotContain("onclick")
+                    .doesNotContain("onmouseover")
+                    .contains("<div>")
+                    .contains("<span>")
+                    .contains("Text");
         }
     }
 
@@ -480,16 +758,29 @@ class PBHtmlUtilsTest {
         }
 
         @Test
-        @DisplayName("should escape HTML and convert newlines before applying valid template")
-        void should_escape_and_convert_before_applying() {
-            String textContent = "Hello <World>\nNew line with & ampersand";
+        @DisplayName("should sanitize XSS and convert newlines before applying valid template")
+        void should_sanitize_xss_and_convert_before_applying() {
+            String textContent = "Hello <script>alert('XSS')</script>\nNew line";
 
             String result = PBHtmlUtils.prepareEmailContent(textContent, SIMPLE_TEMPLATE);
 
             assertThat(result)
-                    .contains("&lt;World&gt;")
+                    .doesNotContain("<script>")
+                    .doesNotContain("</script>")
+                    .doesNotContain("alert")
                     .contains("<br/>")
-                    .contains("&amp;")
+                    .doesNotContain("{{content}}");
+        }
+
+        @Test
+        @DisplayName("should preserve legitimate links when template is valid")
+        void should_preserve_legitimate_links() {
+            String textContent = "Visit <a href=\"https://example.com\">our site</a> for more info.";
+
+            String result = PBHtmlUtils.prepareEmailContent(textContent, SIMPLE_TEMPLATE);
+
+            assertThat(result)
+                    .contains("<a href=\"https://example.com\">our site</a>")
                     .doesNotContain("{{content}}");
         }
 
@@ -504,8 +795,7 @@ class PBHtmlUtilsTest {
             assertThat(result)
                     .contains("<World>")
                     .contains("\n")
-                    .doesNotContain("<br/>")
-                    .doesNotContain("&lt;");
+                    .doesNotContain("<br/>");
         }
 
         @Test
