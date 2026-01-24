@@ -4,7 +4,7 @@
 
     <groupId>com.bonitasoft.processbuilder.extension</groupId>
     <artifactId>process-builder-extension-library</artifactId>
-    <version>0.0.0.78</version>
+    <version>0.0.0.79-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Process builder extension library</name>
     <url>https://bonitasoft-presales.github.io/process-builder-extension-library/summary.html</url>
@@ -536,7 +536,7 @@
         <url>https://github.com/${github.owner}/${github.repo}</url>
         <developerConnection>scm:git:${project.scm.url}.git</developerConnection>
         <connection>scm:git:${project.scm.url}.git</connection>
-        <tag>v0.0.0.78</tag>
+        <tag>HEAD</tag>
     </scm>
     <distributionManagement>
         <snapshotRepository>
