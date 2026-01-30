@@ -16,7 +16,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -272,10 +274,7 @@ class IdentityUtilsTest {
         MockMembership membership = new MockMembership(null, null);
         List<MockMembership> memberships = Collections.singletonList(membership);
 
-        when(searchResult.getResult()).thenReturn(Collections.emptyList());
-        when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
-
-        // When getting users by memberships
+        // When getting users by memberships - no valid conditions means no search performed
         Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then empty set should be returned
@@ -322,10 +321,7 @@ class IdentityUtilsTest {
         String invalidObject = "Not a membership object";
         List<String> memberships = Collections.singletonList(invalidObject);
 
-        when(searchResult.getResult()).thenReturn(Collections.emptyList());
-        when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
-
-        // When getting users by memberships
+        // When getting users by memberships - no valid conditions means no search performed
         Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then empty set should be returned
@@ -537,10 +533,7 @@ class IdentityUtilsTest {
         MockMembership nullMembership2 = new MockMembership(null, null);
         List<MockMembership> memberships = Arrays.asList(nullMembership1, nullMembership2);
 
-        when(searchResult.getResult()).thenReturn(Collections.emptyList());
-        when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
-
-        // When getting users by memberships
+        // When getting users by memberships - no valid conditions means no search performed
         Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then empty set should be returned
@@ -562,10 +555,7 @@ class IdentityUtilsTest {
         };
         List<Object> memberships = Collections.singletonList(throwingMembership);
 
-        when(searchResult.getResult()).thenReturn(Collections.emptyList());
-        when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
-
-        // When getting users by memberships
+        // When getting users by memberships - errors are handled, no valid conditions
         Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then empty set should be returned (errors are handled gracefully)
@@ -1129,10 +1119,7 @@ class IdentityUtilsTest {
         MockMembership nullMembership = new MockMembership(null, null);
         List<MockMembership> memberships = Collections.singletonList(nullMembership);
 
-        when(searchResult.getResult()).thenReturn(Collections.emptyList());
-        when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
-
-        // When
+        // When - no valid conditions means no search performed
         Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
         // Then: empty result (membership was skipped)
@@ -1324,24 +1311,26 @@ class IdentityUtilsTest {
     }
 
     /**
-     * Verifies extractLongValue handles non-Long return type gracefully.
-     * Uses a mock that returns Integer instead of Long.
+     * Verifies extractLongValue handles Integer return type correctly.
+     * Uses a mock that returns Integer instead of Long - should be converted.
      */
     @Test
-    @DisplayName("getUsersByMemberships handles getter returning wrong type")
+    @DisplayName("getUsersByMemberships handles getter returning Integer type")
     void getUsersByMemberships_handles_wrong_return_type() throws Exception {
         // Given: object with getter that returns Integer instead of Long
-        WrongTypeMembership wrongType = new WrongTypeMembership();
-        List<WrongTypeMembership> memberships = Collections.singletonList(wrongType);
+        WrongTypeMembership intType = new WrongTypeMembership();
+        List<WrongTypeMembership> memberships = Collections.singletonList(intType);
 
-        when(searchResult.getResult()).thenReturn(Collections.emptyList());
+        User user1 = mock(User.class);
+        when(user1.getId()).thenReturn(100L);
+        when(searchResult.getResult()).thenReturn(Collections.singletonList(user1));
         when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
 
         // When
         Set<Long> result = IdentityUtils.getUsersByMemberships(memberships, identityAPI);
 
-        // Then: handled gracefully (both values null -> skipped)
-        assertThat(result).isEmpty();
+        // Then: Integer values are converted to Long and users are found
+        assertThat(result).containsExactly(100L);
     }
 
     /**
@@ -1420,20 +1409,20 @@ class IdentityUtilsTest {
     }
 
     /**
-     * Tests that extractLongValue returns null when method returns non-Long.
-     * Targets mutation: replaced Long return value with 0L (non-Long return branch)
+     * Tests that extractLongValue converts Integer to Long correctly.
+     * The method now supports Integer return types by converting to Long.
      */
     @Test
-    @DisplayName("extractLongValue should return null for non-Long return type")
-    void extractLongValue_should_return_null_for_non_long_return() {
+    @DisplayName("extractLongValue should convert Integer to Long correctly")
+    void extractLongValue_should_convert_integer_to_long() {
         // Given: object that returns Integer instead of Long
-        WrongTypeMembership wrongType = new WrongTypeMembership();
+        WrongTypeMembership intType = new WrongTypeMembership();
 
-        // When extracting value
-        Long result = IdentityUtils.extractLongValue(wrongType, "getGroupId");
+        // When extracting value (Integer 10)
+        Long result = IdentityUtils.extractLongValue(intType, "getGroupId");
 
-        // Then null should be returned, NOT 0L
-        assertThat(result).isNull();
+        // Then Integer should be converted to Long
+        assertThat(result).isEqualTo(10L);
     }
 
     /**
@@ -1492,38 +1481,50 @@ class IdentityUtilsTest {
     }
 
     /**
-     * Tests extractLongValue with value of 0L (distinguishes from mutation return).
+     * Tests extractLongValue with value of 0L returns null (0 is invalid ID).
      */
     @Test
-    @DisplayName("extractLongValue should return 0L when getter actually returns 0L")
-    void extractLongValue_should_return_zero_when_getter_returns_zero() {
-        // Given: membership with 0L value (legitimate zero)
+    @DisplayName("extractLongValue should return null when getter returns 0L (invalid ID)")
+    void extractLongValue_should_return_null_when_getter_returns_zero() {
+        // Given: membership with 0L value (invalid ID)
         MockMembership zeroMembership = new MockMembership(0L, 0L);
 
         // When extracting
         Long result = IdentityUtils.extractLongValue(zeroMembership, "getGroupId");
 
-        // Then: 0L should be returned (legitimate value)
-        assertThat(result).isEqualTo(0L);
-        assertThat(result).isNotNull();
+        // Then: null should be returned (0 is not a valid ID)
+        assertThat(result).isNull();
     }
 
     /**
      * Tests extractLongValue with various Long values including edge cases.
+     * Negative and zero values should return null (invalid IDs).
      */
     @Test
-    @DisplayName("extractLongValue should return correct Long for various values")
+    @DisplayName("extractLongValue should return correct Long for valid values only")
     void extractLongValue_various_values() {
-        // Test various Long values
-        Long[] testValues = {1L, -1L, Long.MAX_VALUE, Long.MIN_VALUE, 42L, 999999L};
+        // Test positive values (valid IDs)
+        Long[] validValues = {1L, Long.MAX_VALUE, 42L, 999999L};
 
-        for (Long expected : testValues) {
+        for (Long expected : validValues) {
             MockMembership membership = new MockMembership(expected, expected);
             Long result = IdentityUtils.extractLongValue(membership, "getGroupId");
 
             assertThat(result)
                 .as("Should return %d exactly", expected)
                 .isEqualTo(expected);
+        }
+
+        // Test invalid values (should return null)
+        Long[] invalidValues = {0L, -1L, Long.MIN_VALUE};
+
+        for (Long invalid : invalidValues) {
+            MockMembership membership = new MockMembership(invalid, invalid);
+            Long result = IdentityUtils.extractLongValue(membership, "getGroupId");
+
+            assertThat(result)
+                .as("Should return null for invalid ID %d", invalid)
+                .isNull();
         }
     }
 
@@ -1541,8 +1542,562 @@ class IdentityUtilsTest {
     }
 
     // -------------------------------------------------------------------------
-    // Mock Helper Class
+    // getUserIdFromObject Tests
     // -------------------------------------------------------------------------
+
+    /**
+     * Tests that getUserIdFromObject returns valid user ID from BDM object.
+     */
+    @Test
+    @DisplayName("getUserIdFromObject should return user ID from BDM object")
+    void getUserIdFromObject_should_return_user_id() {
+        // Given: object with valid user ID
+        MockUserObject userObject = new MockUserObject(12345L);
+
+        // When extracting user ID
+        Long result = IdentityUtils.getUserIdFromObject(userObject, "getUserId");
+
+        // Then exact value should be returned
+        assertThat(result).isEqualTo(12345L);
+    }
+
+    /**
+     * Tests that getUserIdFromObject returns null for null object.
+     */
+    @Test
+    @DisplayName("getUserIdFromObject should return null for null object")
+    void getUserIdFromObject_should_return_null_for_null_object() {
+        // When extracting from null
+        Long result = IdentityUtils.getUserIdFromObject(null, "getUserId");
+
+        // Then null should be returned
+        assertThat(result).isNull();
+    }
+
+    /**
+     * Tests that getUserIdFromObject returns null for null method name.
+     */
+    @Test
+    @DisplayName("getUserIdFromObject should return null for null method name")
+    void getUserIdFromObject_should_return_null_for_null_method_name() {
+        // Given: valid object
+        MockUserObject userObject = new MockUserObject(100L);
+
+        // When extracting with null method name
+        Long result = IdentityUtils.getUserIdFromObject(userObject, null);
+
+        // Then null should be returned
+        assertThat(result).isNull();
+    }
+
+    /**
+     * Tests that getUserIdFromObject returns null for empty method name.
+     */
+    @Test
+    @DisplayName("getUserIdFromObject should return null for empty method name")
+    void getUserIdFromObject_should_return_null_for_empty_method_name() {
+        // Given: valid object
+        MockUserObject userObject = new MockUserObject(100L);
+
+        // When extracting with empty method name
+        Long result = IdentityUtils.getUserIdFromObject(userObject, "   ");
+
+        // Then null should be returned
+        assertThat(result).isNull();
+    }
+
+    /**
+     * Tests that getUserIdFromObject returns null for zero user ID.
+     */
+    @Test
+    @DisplayName("getUserIdFromObject should return null for zero user ID")
+    void getUserIdFromObject_should_return_null_for_zero_user_id() {
+        // Given: object with zero user ID
+        MockUserObject userObject = new MockUserObject(0L);
+
+        // When extracting
+        Long result = IdentityUtils.getUserIdFromObject(userObject, "getUserId");
+
+        // Then null should be returned (0 is invalid)
+        assertThat(result).isNull();
+    }
+
+    /**
+     * Tests that getUserIdFromObject returns null for negative user ID.
+     */
+    @Test
+    @DisplayName("getUserIdFromObject should return null for negative user ID")
+    void getUserIdFromObject_should_return_null_for_negative_user_id() {
+        // Given: object with negative user ID
+        MockUserObject userObject = new MockUserObject(-1L);
+
+        // When extracting
+        Long result = IdentityUtils.getUserIdFromObject(userObject, "getUserId");
+
+        // Then null should be returned
+        assertThat(result).isNull();
+    }
+
+    /**
+     * Tests that getUserIdFromObject returns null for non-existent method.
+     */
+    @Test
+    @DisplayName("getUserIdFromObject should return null for non-existent method")
+    void getUserIdFromObject_should_return_null_for_nonexistent_method() {
+        // Given: valid object
+        MockUserObject userObject = new MockUserObject(100L);
+
+        // When extracting with wrong method name
+        Long result = IdentityUtils.getUserIdFromObject(userObject, "getNonExistent");
+
+        // Then null should be returned
+        assertThat(result).isNull();
+    }
+
+    // -------------------------------------------------------------------------
+    // buildCandidateUsers Tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * Tests that buildCandidateUsers includes step user ID.
+     */
+    @Test
+    @DisplayName("buildCandidateUsers should include step user ID")
+    void buildCandidateUsers_should_include_step_user() throws Exception {
+        // Given: valid step user ID
+        Long stepUserId = 100L;
+
+        // When building candidates without manager
+        Set<Long> result = IdentityUtils.buildCandidateUsers(stepUserId, false, null, identityAPI);
+
+        // Then step user should be included
+        assertThat(result).containsExactly(stepUserId);
+    }
+
+    /**
+     * Tests that buildCandidateUsers includes manager when requested.
+     */
+    @Test
+    @DisplayName("buildCandidateUsers should include manager when requested")
+    void buildCandidateUsers_should_include_manager() throws Exception {
+        // Given: step user with manager
+        Long stepUserId = 100L;
+        Long managerId = 200L;
+        when(identityAPI.getUser(stepUserId)).thenReturn(user);
+        when(user.getManagerUserId()).thenReturn(managerId);
+
+        // When building candidates with manager
+        Set<Long> result = IdentityUtils.buildCandidateUsers(stepUserId, true, null, identityAPI);
+
+        // Then both step user and manager should be included
+        assertThat(result).containsExactlyInAnyOrder(stepUserId, managerId);
+    }
+
+    /**
+     * Tests that buildCandidateUsers includes membership users.
+     */
+    @Test
+    @DisplayName("buildCandidateUsers should include membership users")
+    void buildCandidateUsers_should_include_membership_users() throws Exception {
+        // Given: membership list
+        MockMembership membership = new MockMembership(10L, 20L);
+        List<MockMembership> memberships = Collections.singletonList(membership);
+
+        User user1 = mock(User.class);
+        User user2 = mock(User.class);
+        when(user1.getId()).thenReturn(300L);
+        when(user2.getId()).thenReturn(400L);
+        when(searchResult.getResult()).thenReturn(Arrays.asList(user1, user2));
+        when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
+
+        // When building candidates with memberships
+        Set<Long> result = IdentityUtils.buildCandidateUsers(null, false, memberships, identityAPI);
+
+        // Then membership users should be included
+        assertThat(result).containsExactlyInAnyOrder(300L, 400L);
+    }
+
+    /**
+     * Tests that buildCandidateUsers combines all sources.
+     */
+    @Test
+    @DisplayName("buildCandidateUsers should combine step user, manager, and memberships")
+    void buildCandidateUsers_should_combine_all_sources() throws Exception {
+        // Given: step user with manager and memberships
+        Long stepUserId = 100L;
+        Long managerId = 200L;
+        when(identityAPI.getUser(stepUserId)).thenReturn(user);
+        when(user.getManagerUserId()).thenReturn(managerId);
+
+        MockMembership membership = new MockMembership(10L, 20L);
+        List<MockMembership> memberships = Collections.singletonList(membership);
+
+        User memberUser = mock(User.class);
+        when(memberUser.getId()).thenReturn(300L);
+        when(searchResult.getResult()).thenReturn(Collections.singletonList(memberUser));
+        when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
+
+        // When building candidates with all sources
+        Set<Long> result = IdentityUtils.buildCandidateUsers(stepUserId, true, memberships, identityAPI);
+
+        // Then all users should be included
+        assertThat(result).containsExactlyInAnyOrder(100L, 200L, 300L);
+    }
+
+    /**
+     * Tests that buildCandidateUsers returns empty set for null step user and no memberships.
+     */
+    @Test
+    @DisplayName("buildCandidateUsers should return empty set when no valid inputs")
+    void buildCandidateUsers_should_return_empty_for_no_inputs() {
+        // When building candidates with null inputs
+        Set<Long> result = IdentityUtils.buildCandidateUsers(null, false, null, identityAPI);
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that buildCandidateUsers handles invalid step user ID.
+     */
+    @Test
+    @DisplayName("buildCandidateUsers should ignore invalid step user ID")
+    void buildCandidateUsers_should_ignore_invalid_step_user() {
+        // When building candidates with zero step user
+        Set<Long> result = IdentityUtils.buildCandidateUsers(0L, true, null, identityAPI);
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    // -------------------------------------------------------------------------
+    // filterAssignableUsers Tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * Tests that filterAssignableUsers returns intersection of candidates and assignable.
+     */
+    @Test
+    @DisplayName("filterAssignableUsers should return intersection")
+    void filterAssignableUsers_should_return_intersection() {
+        // Given: candidates and assignable users with overlap
+        Set<Long> candidates = new HashSet<>(Arrays.asList(1L, 2L, 3L));
+        Collection<Long> assignable = Arrays.asList(2L, 3L, 4L);
+
+        // When filtering
+        Set<Long> result = IdentityUtils.filterAssignableUsers(candidates, assignable);
+
+        // Then only overlapping IDs should be returned
+        assertThat(result).containsExactlyInAnyOrder(2L, 3L);
+    }
+
+    /**
+     * Tests that filterAssignableUsers returns empty set for null candidates.
+     */
+    @Test
+    @DisplayName("filterAssignableUsers should return empty for null candidates")
+    void filterAssignableUsers_should_return_empty_for_null_candidates() {
+        // Given: null candidates
+        Collection<Long> assignable = Arrays.asList(1L, 2L);
+
+        // When filtering
+        Set<Long> result = IdentityUtils.filterAssignableUsers(null, assignable);
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that filterAssignableUsers returns empty set for empty candidates.
+     */
+    @Test
+    @DisplayName("filterAssignableUsers should return empty for empty candidates")
+    void filterAssignableUsers_should_return_empty_for_empty_candidates() {
+        // Given: empty candidates
+        Set<Long> candidates = Collections.emptySet();
+        Collection<Long> assignable = Arrays.asList(1L, 2L);
+
+        // When filtering
+        Set<Long> result = IdentityUtils.filterAssignableUsers(candidates, assignable);
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that filterAssignableUsers returns empty set for null assignable.
+     */
+    @Test
+    @DisplayName("filterAssignableUsers should return empty for null assignable")
+    void filterAssignableUsers_should_return_empty_for_null_assignable() {
+        // Given: valid candidates, null assignable
+        Set<Long> candidates = new HashSet<>(Arrays.asList(1L, 2L));
+
+        // When filtering
+        Set<Long> result = IdentityUtils.filterAssignableUsers(candidates, null);
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that filterAssignableUsers returns empty set for empty assignable.
+     */
+    @Test
+    @DisplayName("filterAssignableUsers should return empty for empty assignable")
+    void filterAssignableUsers_should_return_empty_for_empty_assignable() {
+        // Given: valid candidates, empty assignable
+        Set<Long> candidates = new HashSet<>(Arrays.asList(1L, 2L));
+        Collection<Long> assignable = Collections.emptyList();
+
+        // When filtering
+        Set<Long> result = IdentityUtils.filterAssignableUsers(candidates, assignable);
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that filterAssignableUsers returns empty set when no overlap.
+     */
+    @Test
+    @DisplayName("filterAssignableUsers should return empty when no overlap")
+    void filterAssignableUsers_should_return_empty_when_no_overlap() {
+        // Given: candidates and assignable with no overlap
+        Set<Long> candidates = new HashSet<>(Arrays.asList(1L, 2L));
+        Collection<Long> assignable = Arrays.asList(3L, 4L);
+
+        // When filtering
+        Set<Long> result = IdentityUtils.filterAssignableUsers(candidates, assignable);
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that filterAssignableUsers returns all candidates when fully contained.
+     */
+    @Test
+    @DisplayName("filterAssignableUsers should return all when fully contained")
+    void filterAssignableUsers_should_return_all_when_contained() {
+        // Given: all candidates are assignable
+        Set<Long> candidates = new HashSet<>(Arrays.asList(1L, 2L));
+        Collection<Long> assignable = Arrays.asList(1L, 2L, 3L, 4L);
+
+        // When filtering
+        Set<Long> result = IdentityUtils.filterAssignableUsers(candidates, assignable);
+
+        // Then all candidates should be returned
+        assertThat(result).containsExactlyInAnyOrder(1L, 2L);
+    }
+
+    // -------------------------------------------------------------------------
+    // getFilteredAssignableUsers Tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * Tests that getFilteredAssignableUsers combines build and filter correctly.
+     */
+    @Test
+    @DisplayName("getFilteredAssignableUsers should combine build and filter")
+    void getFilteredAssignableUsers_should_combine_operations() throws Exception {
+        // Given: step user is assignable
+        Long stepUserId = 100L;
+        Collection<Long> assignable = Arrays.asList(100L, 200L, 300L);
+
+        // When getting filtered users
+        Set<Long> result = IdentityUtils.getFilteredAssignableUsers(
+                stepUserId, false, null, assignable, identityAPI);
+
+        // Then step user should be returned (it's in assignable)
+        assertThat(result).containsExactly(100L);
+    }
+
+    /**
+     * Tests that getFilteredAssignableUsers returns empty when step user not assignable.
+     */
+    @Test
+    @DisplayName("getFilteredAssignableUsers should return empty when not assignable")
+    void getFilteredAssignableUsers_should_return_empty_when_not_assignable() {
+        // Given: step user is NOT assignable
+        Long stepUserId = 100L;
+        Collection<Long> assignable = Arrays.asList(200L, 300L);
+
+        // When getting filtered users
+        Set<Long> result = IdentityUtils.getFilteredAssignableUsers(
+                stepUserId, false, null, assignable, identityAPI);
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that getFilteredAssignableUsers includes assignable manager.
+     */
+    @Test
+    @DisplayName("getFilteredAssignableUsers should include assignable manager")
+    void getFilteredAssignableUsers_should_include_assignable_manager() throws Exception {
+        // Given: step user not assignable but manager is
+        Long stepUserId = 100L;
+        Long managerId = 200L;
+        when(identityAPI.getUser(stepUserId)).thenReturn(user);
+        when(user.getManagerUserId()).thenReturn(managerId);
+
+        Collection<Long> assignable = Arrays.asList(200L, 300L);
+
+        // When getting filtered users with manager
+        Set<Long> result = IdentityUtils.getFilteredAssignableUsers(
+                stepUserId, true, null, assignable, identityAPI);
+
+        // Then only manager should be returned
+        assertThat(result).containsExactly(200L);
+    }
+
+    // -------------------------------------------------------------------------
+    // extractUserIdsFromObjects Tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * Tests that extractUserIdsFromObjects extracts valid user IDs.
+     */
+    @Test
+    @DisplayName("extractUserIdsFromObjects should extract valid user IDs")
+    void extractUserIdsFromObjects_should_extract_ids() {
+        // Given: list of user objects
+        List<MockUserObject> userObjects = Arrays.asList(
+                new MockUserObject(100L),
+                new MockUserObject(200L),
+                new MockUserObject(300L)
+        );
+
+        // When extracting
+        Set<Long> result = IdentityUtils.extractUserIdsFromObjects(userObjects, "getUserId");
+
+        // Then all IDs should be extracted
+        assertThat(result).containsExactlyInAnyOrder(100L, 200L, 300L);
+    }
+
+    /**
+     * Tests that extractUserIdsFromObjects filters out invalid IDs.
+     */
+    @Test
+    @DisplayName("extractUserIdsFromObjects should filter out invalid IDs")
+    void extractUserIdsFromObjects_should_filter_invalid() {
+        // Given: list with valid and invalid user IDs
+        List<MockUserObject> userObjects = Arrays.asList(
+                new MockUserObject(100L),
+                new MockUserObject(0L),
+                new MockUserObject(-1L),
+                new MockUserObject(null),
+                new MockUserObject(200L)
+        );
+
+        // When extracting
+        Set<Long> result = IdentityUtils.extractUserIdsFromObjects(userObjects, "getUserId");
+
+        // Then only valid IDs should be extracted
+        assertThat(result).containsExactlyInAnyOrder(100L, 200L);
+    }
+
+    /**
+     * Tests that extractUserIdsFromObjects returns empty for null list.
+     */
+    @Test
+    @DisplayName("extractUserIdsFromObjects should return empty for null list")
+    void extractUserIdsFromObjects_should_return_empty_for_null_list() {
+        // When extracting from null
+        Set<Long> result = IdentityUtils.extractUserIdsFromObjects(null, "getUserId");
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that extractUserIdsFromObjects returns empty for empty list.
+     */
+    @Test
+    @DisplayName("extractUserIdsFromObjects should return empty for empty list")
+    void extractUserIdsFromObjects_should_return_empty_for_empty_list() {
+        // When extracting from empty list
+        Set<Long> result = IdentityUtils.extractUserIdsFromObjects(Collections.emptyList(), "getUserId");
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that extractUserIdsFromObjects returns empty for null method name.
+     */
+    @Test
+    @DisplayName("extractUserIdsFromObjects should return empty for null method name")
+    void extractUserIdsFromObjects_should_return_empty_for_null_method() {
+        // Given: valid list
+        List<MockUserObject> userObjects = Collections.singletonList(new MockUserObject(100L));
+
+        // When extracting with null method
+        Set<Long> result = IdentityUtils.extractUserIdsFromObjects(userObjects, null);
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that extractUserIdsFromObjects returns empty for empty method name.
+     */
+    @Test
+    @DisplayName("extractUserIdsFromObjects should return empty for empty method name")
+    void extractUserIdsFromObjects_should_return_empty_for_empty_method() {
+        // Given: valid list
+        List<MockUserObject> userObjects = Collections.singletonList(new MockUserObject(100L));
+
+        // When extracting with empty method
+        Set<Long> result = IdentityUtils.extractUserIdsFromObjects(userObjects, "  ");
+
+        // Then empty set should be returned
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Tests that extractUserIdsFromObjects removes duplicates.
+     */
+    @Test
+    @DisplayName("extractUserIdsFromObjects should remove duplicates")
+    void extractUserIdsFromObjects_should_remove_duplicates() {
+        // Given: list with duplicate IDs
+        List<MockUserObject> userObjects = Arrays.asList(
+                new MockUserObject(100L),
+                new MockUserObject(100L),
+                new MockUserObject(200L),
+                new MockUserObject(100L)
+        );
+
+        // When extracting
+        Set<Long> result = IdentityUtils.extractUserIdsFromObjects(userObjects, "getUserId");
+
+        // Then unique IDs should be returned
+        assertThat(result).containsExactlyInAnyOrder(100L, 200L);
+        assertThat(result).hasSize(2);
+    }
+
+    // -------------------------------------------------------------------------
+    // Mock Helper Classes
+    // -------------------------------------------------------------------------
+
+    /**
+     * Mock class to simulate a user object with getUserId() method.
+     * This class is used for testing the reflection-based extraction.
+     */
+    private static class MockUserObject {
+        private final Long userId;
+
+        public MockUserObject(Long userId) {
+            this.userId = userId;
+        }
+
+        public Long getUserId() {
+            return userId;
+        }
+    }
 
     /**
      * Mock class to simulate a membership object with getGroupId() and getRoleId() methods.
