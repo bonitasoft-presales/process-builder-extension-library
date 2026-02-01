@@ -1,16 +1,19 @@
 package com.bonitasoft.processbuilder.extension;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.bonitasoft.engine.api.IdentityAPI;
 import org.bonitasoft.engine.identity.User;
 import org.bonitasoft.engine.search.SearchOptions;
 import org.bonitasoft.engine.search.SearchResult;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -20,7 +23,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -2079,9 +2084,656 @@ class IdentityUtilsTest {
         assertThat(result).hasSize(2);
     }
 
+    // =========================================================================
+    // JSON PARSING TESTS
+    // =========================================================================
+
+    @Nested
+    @DisplayName("JSON Parsing Tests")
+    class JsonParsingTests {
+
+        @Test
+        @DisplayName("parseJson should return JsonNode for valid JSON")
+        void parseJson_should_return_node_for_valid_json() {
+            // Given
+            String json = "{\"name\":\"test\",\"value\":123}";
+
+            // When
+            Optional<JsonNode> result = IdentityUtils.parseJson(json, null);
+
+            // Then
+            assertThat(result).isPresent();
+            assertThat(result.get().get("name").asText()).isEqualTo("test");
+            assertThat(result.get().get("value").asInt()).isEqualTo(123);
+        }
+
+        @Test
+        @DisplayName("parseJson should return empty for null input")
+        void parseJson_should_return_empty_for_null() {
+            // When
+            Optional<JsonNode> result = IdentityUtils.parseJson(null, null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("parseJson should return empty for blank input")
+        void parseJson_should_return_empty_for_blank() {
+            // When
+            Optional<JsonNode> result = IdentityUtils.parseJson("   ", null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("parseJson should return empty for invalid JSON")
+        void parseJson_should_return_empty_for_invalid_json() {
+            // Given
+            String invalidJson = "{invalid json}";
+
+            // When
+            Optional<JsonNode> result = IdentityUtils.parseJson(invalidJson, null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("parseJson should use logger when provided")
+        void parseJson_should_use_logger_when_provided() {
+            // Given
+            Logger logger = mock(Logger.class);
+
+            // When
+            IdentityUtils.parseJson(null, logger);
+
+            // Then - verify logger was interacted with (varargs signature)
+            verify(logger).warn(any(String.class), any(Object[].class));
+        }
+
+        @Test
+        @DisplayName("parseJsonAndGetNode should extract node by key")
+        void parseJsonAndGetNode_should_extract_node() {
+            // Given
+            String json = "{\"data\":{\"id\":456}}";
+
+            // When
+            Optional<JsonNode> result = IdentityUtils.parseJsonAndGetNode(json, "data", null);
+
+            // Then
+            assertThat(result).isPresent();
+            assertThat(result.get().get("id").asInt()).isEqualTo(456);
+        }
+
+        @Test
+        @DisplayName("parseJsonAndGetNode should return empty for missing key")
+        void parseJsonAndGetNode_should_return_empty_for_missing_key() {
+            // Given
+            String json = "{\"name\":\"test\"}";
+
+            // When
+            Optional<JsonNode> result = IdentityUtils.parseJsonAndGetNode(json, "missing", null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getJsonNode should extract child from parent")
+        void getJsonNode_should_extract_child() {
+            // Given
+            String json = "{\"parent\":{\"child\":\"value\"}}";
+            Optional<JsonNode> parent = IdentityUtils.parseJson(json, null);
+
+            // When
+            Optional<JsonNode> result = IdentityUtils.getJsonNode(parent.get(), "parent", null);
+
+            // Then
+            assertThat(result).isPresent();
+        }
+
+        @Test
+        @DisplayName("getJsonNode should return empty for null parent")
+        void getJsonNode_should_return_empty_for_null_parent() {
+            // When
+            Optional<JsonNode> result = IdentityUtils.getJsonNode(null, "key", null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getJsonNode should return empty for null child node")
+        void getJsonNode_should_return_empty_for_null_child() {
+            // Given
+            String json = "{\"key\":null}";
+            Optional<JsonNode> parent = IdentityUtils.parseJson(json, null);
+
+            // When
+            Optional<JsonNode> result = IdentityUtils.getJsonNode(parent.get(), "key", null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getNodeText should extract text value")
+        void getNodeText_should_extract_text() {
+            // Given
+            String json = "{\"text\":\"hello world\"}";
+            Optional<JsonNode> root = IdentityUtils.parseJson(json, null);
+            JsonNode textNode = root.get().get("text");
+
+            // When
+            Optional<String> result = IdentityUtils.getNodeText(textNode, null);
+
+            // Then
+            assertThat(result).isPresent();
+            assertThat(result.get()).isEqualTo("hello world");
+        }
+
+        @Test
+        @DisplayName("getNodeText should trim whitespace")
+        void getNodeText_should_trim_whitespace() {
+            // Given
+            String json = "{\"text\":\"  trimmed  \"}";
+            Optional<JsonNode> root = IdentityUtils.parseJson(json, null);
+            JsonNode textNode = root.get().get("text");
+
+            // When
+            Optional<String> result = IdentityUtils.getNodeText(textNode, null);
+
+            // Then
+            assertThat(result).isPresent();
+            assertThat(result.get()).isEqualTo("trimmed");
+        }
+
+        @Test
+        @DisplayName("getNodeText should return empty for null node")
+        void getNodeText_should_return_empty_for_null() {
+            // When
+            Optional<String> result = IdentityUtils.getNodeText(null, null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getNodeText should return empty for blank text")
+        void getNodeText_should_return_empty_for_blank_text() {
+            // Given
+            String json = "{\"text\":\"   \"}";
+            Optional<JsonNode> root = IdentityUtils.parseJson(json, null);
+            JsonNode textNode = root.get().get("text");
+
+            // When
+            Optional<String> result = IdentityUtils.getNodeText(textNode, null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getNodeArrayAsStringList should extract string array")
+        void getNodeArrayAsStringList_should_extract_array() {
+            // Given
+            String json = "{\"items\":[\"a\",\"b\",\"c\"]}";
+            Optional<JsonNode> root = IdentityUtils.parseJson(json, null);
+            JsonNode arrayNode = root.get().get("items");
+
+            // When
+            List<String> result = IdentityUtils.getNodeArrayAsStringList(arrayNode, null);
+
+            // Then
+            assertThat(result).containsExactly("a", "b", "c");
+        }
+
+        @Test
+        @DisplayName("getNodeArrayAsStringList should return empty for null node")
+        void getNodeArrayAsStringList_should_return_empty_for_null() {
+            // When
+            List<String> result = IdentityUtils.getNodeArrayAsStringList(null, null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getNodeArrayAsStringList should return empty for non-array node")
+        void getNodeArrayAsStringList_should_return_empty_for_non_array() {
+            // Given
+            String json = "{\"notArray\":\"value\"}";
+            Optional<JsonNode> root = IdentityUtils.parseJson(json, null);
+            JsonNode nonArrayNode = root.get().get("notArray");
+
+            // When
+            List<String> result = IdentityUtils.getNodeArrayAsStringList(nonArrayNode, null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getNodeArrayAsStringList should filter blank entries")
+        void getNodeArrayAsStringList_should_filter_blank_entries() {
+            // Given
+            String json = "{\"items\":[\"a\",\"   \",\"b\",\"\"]}";
+            Optional<JsonNode> root = IdentityUtils.parseJson(json, null);
+            JsonNode arrayNode = root.get().get("items");
+
+            // When
+            List<String> result = IdentityUtils.getNodeArrayAsStringList(arrayNode, null);
+
+            // Then
+            assertThat(result).containsExactly("a", "b");
+        }
+
+        @Test
+        @DisplayName("getNodeArrayAsStringList should return empty for empty array")
+        void getNodeArrayAsStringList_should_return_empty_for_empty_array() {
+            // Given
+            String json = "{\"items\":[]}";
+            Optional<JsonNode> root = IdentityUtils.parseJson(json, null);
+            JsonNode arrayNode = root.get().get("items");
+
+            // When
+            List<String> result = IdentityUtils.getNodeArrayAsStringList(arrayNode, null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("extractFieldFromJson should extract field value")
+        void extractFieldFromJson_should_extract_field() {
+            // Given
+            String json = "{\"userId\":\"12345\"}";
+
+            // When
+            Optional<String> result = IdentityUtils.extractFieldFromJson(json, "userId", null);
+
+            // Then
+            assertThat(result).isPresent();
+            assertThat(result.get()).isEqualTo("12345");
+        }
+
+        @Test
+        @DisplayName("extractFieldFromJson should return empty for missing field")
+        void extractFieldFromJson_should_return_empty_for_missing_field() {
+            // Given
+            String json = "{\"name\":\"test\"}";
+
+            // When
+            Optional<String> result = IdentityUtils.extractFieldFromJson(json, "userId", null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+    }
+
+    // =========================================================================
+    // getUsersForMembership TESTS
+    // =========================================================================
+
+    @Nested
+    @DisplayName("getUsersForMembership Tests")
+    class GetUsersForMembershipTests {
+
+        @Test
+        @DisplayName("getUsersForMembership should return empty for null identityAPI")
+        void getUsersForMembership_should_return_empty_for_null_api() {
+            // When
+            Set<Long> result = IdentityUtils.getUsersForMembership(10L, 20L, null, null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getUsersForMembership should return empty when both IDs are invalid")
+        void getUsersForMembership_should_return_empty_for_invalid_ids() {
+            // When
+            Set<Long> result = IdentityUtils.getUsersForMembership(null, 0L, identityAPI, null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getUsersForMembership should search by group and role when both valid")
+        void getUsersForMembership_should_search_by_group_and_role() throws Exception {
+            // Given
+            User user1 = mock(User.class);
+            User user2 = mock(User.class);
+            when(user1.getId()).thenReturn(1L);
+            when(user2.getId()).thenReturn(2L);
+            when(searchResult.getResult()).thenReturn(Arrays.asList(user1, user2));
+            when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
+
+            // When
+            Set<Long> result = IdentityUtils.getUsersForMembership(10L, 20L, identityAPI, null);
+
+            // Then
+            assertThat(result).containsExactlyInAnyOrder(1L, 2L);
+            verify(identityAPI).searchUsers(any(SearchOptions.class));
+        }
+
+        @Test
+        @DisplayName("getUsersForMembership should search by group only when role invalid")
+        void getUsersForMembership_should_search_by_group_only() throws Exception {
+            // Given
+            User user1 = mock(User.class);
+            when(user1.getId()).thenReturn(4L);
+            when(searchResult.getResult()).thenReturn(Collections.singletonList(user1));
+            when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
+
+            // When
+            Set<Long> result = IdentityUtils.getUsersForMembership(10L, null, identityAPI, null);
+
+            // Then
+            assertThat(result).containsExactly(4L);
+            verify(identityAPI).searchUsers(any(SearchOptions.class));
+        }
+
+        @Test
+        @DisplayName("getUsersForMembership should search by role only when group invalid")
+        void getUsersForMembership_should_search_by_role_only() throws Exception {
+            // Given
+            User user1 = mock(User.class);
+            when(user1.getId()).thenReturn(6L);
+            when(searchResult.getResult()).thenReturn(Collections.singletonList(user1));
+            when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
+
+            // When
+            Set<Long> result = IdentityUtils.getUsersForMembership(0L, 20L, identityAPI, null);
+
+            // Then
+            assertThat(result).containsExactly(6L);
+            verify(identityAPI).searchUsers(any(SearchOptions.class));
+        }
+
+        @Test
+        @DisplayName("getUsersForMembership should return empty on exception")
+        void getUsersForMembership_should_return_empty_on_exception() throws Exception {
+            // Given
+            when(identityAPI.searchUsers(any(SearchOptions.class)))
+                    .thenThrow(new RuntimeException("API error"));
+
+            // When
+            Set<Long> result = IdentityUtils.getUsersForMembership(10L, 20L, identityAPI, null);
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getUsersForMembership should use logger when provided")
+        void getUsersForMembership_should_use_logger() throws Exception {
+            // Given
+            Logger logger = mock(Logger.class);
+            when(searchResult.getResult()).thenReturn(Collections.emptyList());
+            when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
+
+            // When
+            IdentityUtils.getUsersForMembership(10L, 20L, identityAPI, logger);
+
+            // Then - verify logger was used (varargs signature)
+            verify(logger).debug(any(String.class), any(Object[].class));
+        }
+    }
+
+    // =========================================================================
+    // getUsersByMemberships (Supplier version) TESTS
+    // =========================================================================
+
+    @Nested
+    @DisplayName("getUsersByMemberships Supplier Version Tests")
+    class GetUsersByMembershipsSupplierTests {
+
+        @Test
+        @DisplayName("getUsersByMemberships should return empty for null supplier")
+        void getUsersByMemberships_should_return_empty_for_null_supplier() {
+            // When
+            Set<Long> result = IdentityUtils.getUsersByMemberships(
+                    null,
+                    MockMembershipData::getGroupId,
+                    MockMembershipData::getRoleId,
+                    identityAPI,
+                    null
+            );
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getUsersByMemberships should return empty for null identityAPI")
+        void getUsersByMemberships_supplier_should_return_empty_for_null_api() {
+            // Given
+            Supplier<List<MockMembershipData>> supplier = () -> Collections.singletonList(
+                    new MockMembershipData(10L, 20L)
+            );
+
+            // When
+            Set<Long> result = IdentityUtils.getUsersByMemberships(
+                    supplier,
+                    MockMembershipData::getGroupId,
+                    MockMembershipData::getRoleId,
+                    null,
+                    null
+            );
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getUsersByMemberships should return empty for empty supplier result")
+        void getUsersByMemberships_supplier_should_return_empty_for_empty_list() {
+            // Given
+            Supplier<List<MockMembershipData>> supplier = Collections::emptyList;
+
+            // When
+            Set<Long> result = IdentityUtils.getUsersByMemberships(
+                    supplier,
+                    MockMembershipData::getGroupId,
+                    MockMembershipData::getRoleId,
+                    identityAPI,
+                    null
+            );
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getUsersByMemberships should return empty for null supplier result")
+        void getUsersByMemberships_supplier_should_return_empty_for_null_result() {
+            // Given
+            Supplier<List<MockMembershipData>> supplier = () -> null;
+
+            // When
+            Set<Long> result = IdentityUtils.getUsersByMemberships(
+                    supplier,
+                    MockMembershipData::getGroupId,
+                    MockMembershipData::getRoleId,
+                    identityAPI,
+                    null
+            );
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getUsersByMemberships should aggregate users from multiple memberships")
+        void getUsersByMemberships_supplier_should_aggregate_users() throws Exception {
+            // Given
+            Supplier<List<MockMembershipData>> supplier = () -> Arrays.asList(
+                    new MockMembershipData(10L, 20L),
+                    new MockMembershipData(30L, null)
+            );
+            User user1 = mock(User.class);
+            User user2 = mock(User.class);
+            User user3 = mock(User.class);
+            when(user1.getId()).thenReturn(1L);
+            when(user2.getId()).thenReturn(2L);
+            when(user3.getId()).thenReturn(3L);
+
+            // First call returns users 1, 2; second call returns users 2, 3
+            when(searchResult.getResult())
+                    .thenReturn(Arrays.asList(user1, user2))
+                    .thenReturn(Arrays.asList(user2, user3));
+            when(identityAPI.searchUsers(any(SearchOptions.class))).thenReturn(searchResult);
+
+            // When
+            Set<Long> result = IdentityUtils.getUsersByMemberships(
+                    supplier,
+                    MockMembershipData::getGroupId,
+                    MockMembershipData::getRoleId,
+                    identityAPI,
+                    null
+            );
+
+            // Then
+            assertThat(result).containsExactlyInAnyOrder(1L, 2L, 3L);
+        }
+
+        @Test
+        @DisplayName("getUsersByMemberships should return empty on supplier exception")
+        void getUsersByMemberships_supplier_should_return_empty_on_exception() {
+            // Given
+            Supplier<List<MockMembershipData>> supplier = () -> {
+                throw new RuntimeException("Supplier error");
+            };
+
+            // When
+            Set<Long> result = IdentityUtils.getUsersByMemberships(
+                    supplier,
+                    MockMembershipData::getGroupId,
+                    MockMembershipData::getRoleId,
+                    identityAPI,
+                    null
+            );
+
+            // Then
+            assertThat(result).isEmpty();
+        }
+    }
+
+    // =========================================================================
+    // findMostRecentInstance TESTS
+    // =========================================================================
+
+    @Nested
+    @DisplayName("findMostRecentInstance Tests")
+    class FindMostRecentInstanceTests {
+
+        @Test
+        @DisplayName("findMostRecentInstance should return null for null supplier")
+        void findMostRecentInstance_should_return_null_for_null_supplier() {
+            // When
+            Object result = IdentityUtils.findMostRecentInstance(null, "TestType", null);
+
+            // Then
+            assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("findMostRecentInstance should return null for empty list")
+        void findMostRecentInstance_should_return_null_for_empty_list() {
+            // Given
+            Supplier<List<String>> supplier = Collections::emptyList;
+
+            // When
+            String result = IdentityUtils.findMostRecentInstance(supplier, "TestType", null);
+
+            // Then
+            assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("findMostRecentInstance should return null for null list")
+        void findMostRecentInstance_should_return_null_for_null_list() {
+            // Given
+            Supplier<List<String>> supplier = () -> null;
+
+            // When
+            String result = IdentityUtils.findMostRecentInstance(supplier, "TestType", null);
+
+            // Then
+            assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("findMostRecentInstance should return first element")
+        void findMostRecentInstance_should_return_first_element() {
+            // Given
+            Supplier<List<String>> supplier = () -> Arrays.asList("first", "second", "third");
+
+            // When
+            String result = IdentityUtils.findMostRecentInstance(supplier, "TestType", null);
+
+            // Then
+            assertThat(result).isEqualTo("first");
+        }
+
+        @Test
+        @DisplayName("findMostRecentInstance should return null on exception")
+        void findMostRecentInstance_should_return_null_on_exception() {
+            // Given
+            Supplier<List<String>> supplier = () -> {
+                throw new RuntimeException("Error");
+            };
+
+            // When
+            String result = IdentityUtils.findMostRecentInstance(supplier, "TestType", null);
+
+            // Then
+            assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("findMostRecentInstance should use logger when provided")
+        void findMostRecentInstance_should_use_logger() {
+            // Given
+            Logger logger = mock(Logger.class);
+            Supplier<List<String>> supplier = () -> Collections.singletonList("value");
+
+            // When
+            IdentityUtils.findMostRecentInstance(supplier, "TestType", logger);
+
+            // Then - verify logger was used (varargs signature)
+            verify(logger).debug(any(String.class), any(Object[].class));
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Mock Helper Classes
     // -------------------------------------------------------------------------
+
+    /**
+     * Mock class for testing getUsersByMemberships with Supplier version.
+     */
+    private static class MockMembershipData {
+        private final Long groupId;
+        private final Long roleId;
+
+        public MockMembershipData(Long groupId, Long roleId) {
+            this.groupId = groupId;
+            this.roleId = roleId;
+        }
+
+        public Long getGroupId() {
+            return groupId;
+        }
+
+        public Long getRoleId() {
+            return roleId;
+        }
+    }
 
     /**
      * Mock class to simulate a user object with getUserId() method.

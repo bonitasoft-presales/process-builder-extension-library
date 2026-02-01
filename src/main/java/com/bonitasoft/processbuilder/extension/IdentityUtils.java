@@ -8,12 +8,19 @@ import org.bonitasoft.engine.search.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +37,7 @@ import java.util.stream.Collectors;
 public final class IdentityUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IdentityUtils.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private IdentityUtils() {
         throw new UnsupportedOperationException("This is a " + this.getClass().getSimpleName() + " class and cannot be instantiated.");
@@ -463,5 +471,298 @@ public final class IdentityUtils {
 
         LOGGER.debug("Extracted {} valid user IDs from {} objects", userIds.size(), userObjects.size());
         return userIds;
+    }
+
+    // ========================================================================
+    // JSON Parsing Utilities
+    // ========================================================================
+
+    /**
+     * Parses a JSON string and returns the root JsonNode.
+     *
+     * @param jsonContent JSON string to parse
+     * @param logger      Logger for error reporting (nullable)
+     * @return Optional containing the root JsonNode, or empty if parsing fails
+     */
+    public static Optional<JsonNode> parseJson(String jsonContent, Logger logger) {
+        if (jsonContent == null || jsonContent.isBlank()) {
+            logWarn(logger, "JSON content is null or blank");
+            return Optional.empty();
+        }
+
+        try {
+            JsonNode rootNode = OBJECT_MAPPER.readTree(jsonContent);
+            return Optional.ofNullable(rootNode);
+        } catch (JsonProcessingException e) {
+            logWarn(logger, "Failed to parse JSON content: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Parses JSON and extracts a specific node by key.
+     *
+     * @param jsonContent JSON string to parse
+     * @param nodeKey     Key of the node to extract
+     * @param logger      Logger for error reporting (nullable)
+     * @return Optional containing the extracted JsonNode, or empty if not found
+     */
+    public static Optional<JsonNode> parseJsonAndGetNode(String jsonContent, String nodeKey, Logger logger) {
+        return parseJson(jsonContent, logger)
+                .flatMap(root -> getJsonNode(root, nodeKey, logger));
+    }
+
+    /**
+     * Extracts a child node from a parent JsonNode.
+     *
+     * @param parentNode Parent node to search in
+     * @param nodeKey    Key of the child node
+     * @param logger     Logger for error reporting (nullable)
+     * @return Optional containing the child JsonNode, or empty if not found
+     */
+    public static Optional<JsonNode> getJsonNode(JsonNode parentNode, String nodeKey, Logger logger) {
+        if (parentNode == null) {
+            logWarn(logger, "Parent node is null when searching for key '{}'", nodeKey);
+            return Optional.empty();
+        }
+
+        JsonNode childNode = parentNode.get(nodeKey);
+        if (childNode == null || childNode.isNull()) {
+            logWarn(logger, "Key '{}' not found in JSON node", nodeKey);
+            return Optional.empty();
+        }
+
+        return Optional.of(childNode);
+    }
+
+    /**
+     * Extracts a non-empty text value from a JsonNode.
+     *
+     * @param node   JsonNode to extract text from
+     * @param logger Logger for debug reporting (nullable)
+     * @return Optional containing the trimmed text, or empty if null/blank
+     */
+    public static Optional<String> getNodeText(JsonNode node, Logger logger) {
+        if (node == null || node.isNull()) {
+            return Optional.empty();
+        }
+
+        String text = node.asText();
+        if (text == null || text.isBlank()) {
+            logDebug(logger, "Node text is null or blank");
+            return Optional.empty();
+        }
+
+        return Optional.of(text.trim());
+    }
+
+    /**
+     * Extracts a list of strings from a JsonNode array.
+     *
+     * @param arrayNode JsonNode that should be an array
+     * @param logger    Logger for error reporting (nullable)
+     * @return List of strings (empty if node is not an array or is empty)
+     */
+    public static List<String> getNodeArrayAsStringList(JsonNode arrayNode, Logger logger) {
+        if (arrayNode == null || !arrayNode.isArray() || arrayNode.isEmpty()) {
+            logDebug(logger, "Node is null, not an array, or empty");
+            return Collections.emptyList();
+        }
+
+        List<String> result = new ArrayList<>(arrayNode.size());
+        arrayNode.forEach(node -> {
+            String text = node.asText();
+            if (text != null && !text.isBlank()) {
+                result.add(text.trim());
+            }
+        });
+
+        return result;
+    }
+
+    // ========================================================================
+    // Membership Utilities with Functional Interface
+    // ========================================================================
+
+    /**
+     * Gets user IDs from memberships using a supplier for data access.
+     * The supplier should return a collection of objects that have group/role information.
+     *
+     * @param membershipDataSupplier Supplier that provides membership data objects
+     * @param groupIdExtractor       Function to extract group ID from membership object
+     * @param roleIdExtractor        Function to extract role ID from membership object
+     * @param identityAPI            Bonita Identity API
+     * @param logger                 Logger for reporting (nullable)
+     * @param <T>                    Type of membership data object
+     * @return Set of user IDs (empty if none found)
+     */
+    public static <T> Set<Long> getUsersByMemberships(
+            Supplier<List<T>> membershipDataSupplier,
+            java.util.function.Function<T, Long> groupIdExtractor,
+            java.util.function.Function<T, Long> roleIdExtractor,
+            IdentityAPI identityAPI,
+            Logger logger) {
+
+        if (membershipDataSupplier == null || identityAPI == null) {
+            return Collections.emptySet();
+        }
+
+        try {
+            List<T> membershipData = membershipDataSupplier.get();
+            if (membershipData == null || membershipData.isEmpty()) {
+                logDebug(logger, "No membership data provided");
+                return Collections.emptySet();
+            }
+
+            Set<Long> userIds = new HashSet<>();
+
+            for (T data : membershipData) {
+                Long groupId = groupIdExtractor.apply(data);
+                Long roleId = roleIdExtractor.apply(data);
+
+                Set<Long> users = getUsersForMembership(groupId, roleId, identityAPI, logger);
+                userIds.addAll(users);
+            }
+
+            logDebug(logger, "Found {} unique users from {} memberships", userIds.size(), membershipData.size());
+            return userIds;
+
+        } catch (Exception e) {
+            logWarn(logger, "Error getting users by memberships: {}", e.getMessage());
+            return Collections.emptySet();
+        }
+    }
+
+    /**
+     * Gets user IDs for a specific group/role combination.
+     * Handles three cases: group+role, group-only, role-only.
+     *
+     * @param groupId     Group ID (nullable)
+     * @param roleId      Role ID (nullable)
+     * @param identityAPI Bonita Identity API
+     * @param logger      Logger for reporting (nullable)
+     * @return Set of user IDs matching the membership criteria
+     */
+    public static Set<Long> getUsersForMembership(
+            Long groupId,
+            Long roleId,
+            IdentityAPI identityAPI,
+            Logger logger) {
+
+        if (identityAPI == null) {
+            return Collections.emptySet();
+        }
+
+        boolean hasGroup = groupId != null && groupId > 0;
+        boolean hasRole = roleId != null && roleId > 0;
+
+        if (!hasGroup && !hasRole) {
+            logDebug(logger, "Both groupId and roleId are invalid");
+            return Collections.emptySet();
+        }
+
+        try {
+            SearchOptionsBuilder searchBuilder = new SearchOptionsBuilder(0, Integer.MAX_VALUE);
+            searchBuilder.filter(UserSearchDescriptor.ENABLED, true);
+
+            if (hasGroup && hasRole) {
+                // Full membership: group + role
+                logDebug(logger, "Searching users with groupId={} and roleId={}", groupId, roleId);
+                searchBuilder.filter(UserSearchDescriptor.GROUP_ID, groupId);
+                searchBuilder.and();
+                searchBuilder.filter(UserSearchDescriptor.ROLE_ID, roleId);
+
+            } else if (hasGroup) {
+                // Group-only membership
+                logDebug(logger, "Searching users in groupId={}", groupId);
+                searchBuilder.filter(UserSearchDescriptor.GROUP_ID, groupId);
+
+            } else {
+                // Role-only membership
+                logDebug(logger, "Searching users with roleId={}", roleId);
+                searchBuilder.filter(UserSearchDescriptor.ROLE_ID, roleId);
+            }
+
+            SearchResult<User> result = identityAPI.searchUsers(searchBuilder.done());
+            return result.getResult().stream()
+                    .map(User::getId)
+                    .collect(Collectors.toSet());
+
+        } catch (Exception e) {
+            logWarn(logger, "Error getting users for membership (group={}, role={}): {}",
+                    groupId, roleId, e.getMessage());
+            return Collections.emptySet();
+        }
+    }
+
+    // ========================================================================
+    // Step Instance Utilities
+    // ========================================================================
+
+    /**
+     * Finds the most recent instance from a supplier result.
+     * Generic method that works with any step instance type.
+     *
+     * @param instanceSupplier Supplier that executes the DAO query and returns a list
+     * @param typeName         Name of the type for logging purposes
+     * @param logger           Logger for reporting (nullable)
+     * @param <T>              Type of the step instance
+     * @return The first (most recent) instance, or null if none found
+     */
+    public static <T> T findMostRecentInstance(
+            Supplier<List<T>> instanceSupplier,
+            String typeName,
+            Logger logger) {
+
+        if (instanceSupplier == null) {
+            return null;
+        }
+
+        try {
+            List<T> instances = instanceSupplier.get();
+
+            if (instances == null || instances.isEmpty()) {
+                logDebug(logger, "No {} instances found", typeName);
+                return null;
+            }
+
+            T mostRecent = instances.get(0);
+            logDebug(logger, "Found most recent {} instance", typeName);
+            return mostRecent;
+
+        } catch (Exception e) {
+            logWarn(logger, "Error finding most recent {}: {}", typeName, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Extracts a field value from a JSON string.
+     *
+     * @param jsonString JSON string to parse
+     * @param fieldName  Field name to extract
+     * @param logger     Logger for reporting (nullable)
+     * @return Optional containing the field value as string, or empty if not found
+     */
+    public static Optional<String> extractFieldFromJson(String jsonString, String fieldName, Logger logger) {
+        return parseJson(jsonString, logger)
+                .flatMap(root -> getJsonNode(root, fieldName, logger))
+                .flatMap(node -> getNodeText(node, logger));
+    }
+
+    // ========================================================================
+    // Private Logging Helpers
+    // ========================================================================
+
+    private static void logDebug(Logger logger, String message, Object... args) {
+        if (logger != null) {
+            logger.debug(message, args);
+        }
+    }
+
+    private static void logWarn(Logger logger, String message, Object... args) {
+        if (logger != null) {
+            logger.warn(message, args);
+        }
     }
 }

@@ -58,9 +58,61 @@ The following files contain all mandatory conventions, architecture principles, 
 
 **Action Required:** Use the Read tool to load each of these files at the start of every conversation session. The rules contained in these files have ABSOLUTE PRIORITY over any conflicting general AI knowledge or assumptions.
 
-## 5. **MANDATORY: Post-Change Verification & Commit Workflow**
+## 5. **MANDATORY: Test File Requirements**
 
-### 5.1. Build Verification
+### 5.1. Every Class Must Have Tests
+**CRITICAL REQUIREMENT:** Every Java class in `src/main/java` MUST have corresponding test files:
+
+| Class Type | Required Test Files |
+|------------|---------------------|
+| `MyClass.java` | `MyClassTest.java` + `MyClassPropertyTest.java` |
+| `MyEnum.java` | `MyEnumTest.java` + `MyEnumPropertyTest.java` |
+| `MyRecord.java` | `MyRecordTest.java` + `MyRecordPropertyTest.java` |
+| `MyValidator.java` | `MyValidatorTest.java` + `MyValidatorPropertyTest.java` |
+| `MyConstants.java` | `MyConstantsTest.java` + `MyConstantsPropertyTest.java` |
+
+**NO EXCEPTIONS.** Even constant classes and utility classes with only static fields must have property tests verifying:
+- Field immutability
+- Value consistency
+- Class structure (final class, private constructor)
+
+### 5.2. Coverage Requirements
+| Metric | Minimum | Target |
+|--------|---------|--------|
+| **Line Coverage** | 95% | 100% |
+| **Branch Coverage** | 95% | 100% |
+| **Mutation Coverage** | 85% | 95% |
+
+### 5.3. Test Types Required
+
+1. **Unit Tests (`*Test.java`):**
+   - Test all public methods
+   - Test all edge cases (null, empty, boundary values)
+   - Test all exception paths
+   - Test private constructors of utility classes
+
+2. **Property Tests (`*PropertyTest.java`):**
+   - Test invariants that must hold for ANY valid input
+   - Use jqwik framework with `@Property` annotation
+   - Minimum 50-100 tries per property
+   - Test: equality, hashCode, toString, null safety, determinism
+
+### 5.4. Verification Command
+After creating or modifying any class, run:
+```bash
+mvn clean test -DfailIfNoTests=false
+```
+
+To verify coverage:
+```bash
+mvn clean verify
+```
+
+---
+
+## 6. **MANDATORY: Post-Change Verification & Commit Workflow**
+
+### 6.1. Build Verification
 **After ANY code change**, the AI agent MUST execute the following command to verify compilation and run all tests (unit tests, property-based tests, and mutation testing):
 
 ```bash
@@ -76,7 +128,7 @@ This ensures:
 
 **DO NOT skip this step.** All tests must pass before proceeding to commit.
 
-### 5.2. Commit Workflow
+### 6.2. Commit Workflow
 After successful verification, the AI agent MUST:
 
 1. **Ask the user** if they want to commit the changed files

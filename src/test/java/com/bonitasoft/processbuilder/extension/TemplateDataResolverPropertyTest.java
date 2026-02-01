@@ -116,8 +116,11 @@ class TemplateDataResolverPropertyTest {
 
         assertThat(result)
                 .startsWith(hostUrl)
-                .contains("taskId=" + taskId)
-                .doesNotContain("//app"); // No double slashes
+                .contains("taskId=" + taskId);
+
+        // Verify no double slashes in the path portion (after the host)
+        String pathPortion = result.substring(hostUrl.length());
+        assertThat(pathPortion).doesNotContain("//");
     }
 
     @Property(tries = 300)

@@ -65,6 +65,57 @@ void method_should_handle_exception_gracefully() {
 * Integration tests (`@BonitaTest`, if used) must be clearly separated and minimized.
 * **Assertion Library:** Use **AssertJ** for all assertions for enhanced readability and fluid syntax.
 
+### 1.6. **MANDATORY: Property-Based Testing**
+**Every class MUST have a corresponding `*PropertyTest.java` file** in addition to the unit test file.
+
+| Source File | Required Test Files |
+|-------------|---------------------|
+| `MyClass.java` | `MyClassTest.java` + `MyClassPropertyTest.java` |
+
+**Property Test Requirements:**
+* Use **jqwik** framework with `@Property` annotations
+* Minimum **50-100 tries** per property
+* Test **invariants** that must hold for ANY valid input:
+  - Null safety
+  - Determinism (same input = same output)
+  - Consistency (hashCode/equals contract)
+  - Immutability (for constants and records)
+  - Boundary conditions
+
+```java
+// PATTERN: Property test for utility class
+@Label("MyUtils Property-Based Tests")
+class MyUtilsPropertyTest {
+
+    @Property(tries = 100)
+    @Label("Method should be deterministic")
+    void methodShouldBeDeterministic(
+            @ForAll @AlphaChars @StringLength(min = 1, max = 50) String input) {
+
+        String result1 = MyUtils.method(input);
+        String result2 = MyUtils.method(input);
+
+        assertThat(result1).isEqualTo(result2);
+    }
+
+    @Property(tries = 50)
+    @Label("Class should be final")
+    void classShouldBeFinal() {
+        assertThat(Modifier.isFinal(MyUtils.class.getModifiers())).isTrue();
+    }
+}
+```
+
+### 1.7. Coverage Targets Summary
+| Metric | Minimum | Target | Excellent |
+|--------|---------|--------|-----------|
+| **Line Coverage** | 95% | 98% | 100% |
+| **Branch Coverage** | 95% | 98% | 100% |
+| **Method Coverage** | 100% | 100% | 100% |
+| **Mutation Coverage** | 85% | 90% | 95% |
+
+**NO CLASS MAY BE COMMITTED WITHOUT BOTH `*Test.java` AND `*PropertyTest.java` FILES.**
+
 ---
 
 ## 2. Static Analysis Tools
