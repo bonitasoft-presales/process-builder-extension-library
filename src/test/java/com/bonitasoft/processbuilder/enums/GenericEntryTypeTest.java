@@ -18,7 +18,7 @@ import java.util.Map;
  */
 class GenericEntryTypeTest {
 
-    private static final int EXPECTED_CONSTANT_COUNT = 2;
+    private static final int EXPECTED_CONSTANT_COUNT = 3;
 
     // -------------------------------------------------------------------------
     // Constant Existence Tests
@@ -40,6 +40,15 @@ class GenericEntryTypeTest {
     @DisplayName("CRITICALITY constant should be defined")
     void should_define_CRITICALITY_constant() {
         assertEquals("CRITICALITY", GenericEntryType.CRITICALITY.name());
+    }
+
+    /**
+     * Tests the existence and name of the DOCUMENTS_FOLDER constant.
+     */
+    @Test
+    @DisplayName("DOCUMENTS_FOLDER constant should be defined")
+    void should_define_DOCUMENTS_FOLDER_constant() {
+        assertEquals("DOCUMENTS_FOLDER", GenericEntryType.DOCUMENTS_FOLDER.name());
     }
 
     // -------------------------------------------------------------------------
@@ -66,6 +75,16 @@ class GenericEntryTypeTest {
         assertTrue(GenericEntryType.CRITICALITY.getDescription().contains("priority level"));
     }
 
+    /**
+     * Tests the key and description of the DOCUMENTS_FOLDER constant.
+     */
+    @Test
+    @DisplayName("DOCUMENTS_FOLDER should have correct key and description")
+    void documentsFolder_should_have_correct_key_and_description() {
+        assertEquals("DocumentsFolder", GenericEntryType.DOCUMENTS_FOLDER.getKey());
+        assertTrue(GenericEntryType.DOCUMENTS_FOLDER.getDescription().contains("directory paths"));
+    }
+
     // -------------------------------------------------------------------------
     // Utility Method Tests
     // -------------------------------------------------------------------------
@@ -78,6 +97,7 @@ class GenericEntryTypeTest {
     void isValid_should_return_true_for_valid_uppercase() {
         assertTrue(GenericEntryType.isValid("PROCESS_STORAGE"));
         assertTrue(GenericEntryType.isValid("CRITICALITY"));
+        assertTrue(GenericEntryType.isValid("DOCUMENTS_FOLDER"));
     }
 
     /**
@@ -88,6 +108,7 @@ class GenericEntryTypeTest {
     void isValid_should_return_true_for_valid_lowercase() {
         assertTrue(GenericEntryType.isValid("process_storage"));
         assertTrue(GenericEntryType.isValid("criticality"));
+        assertTrue(GenericEntryType.isValid("documents_folder"));
     }
 
     /**
@@ -98,6 +119,7 @@ class GenericEntryTypeTest {
     void isValid_should_return_true_for_mixed_case() {
         assertTrue(GenericEntryType.isValid("Process_Storage"));
         assertTrue(GenericEntryType.isValid("Criticality"));
+        assertTrue(GenericEntryType.isValid("Documents_Folder"));
     }
 
     /**
@@ -138,6 +160,7 @@ class GenericEntryTypeTest {
         assertEquals(EXPECTED_CONSTANT_COUNT, data.size());
         assertTrue(data.containsKey("ProcessStorage"));
         assertTrue(data.containsKey("Criticality"));
+        assertTrue(data.containsKey("DocumentsFolder"));
         assertThrows(UnsupportedOperationException.class, () -> data.clear());
     }
 
@@ -151,6 +174,7 @@ class GenericEntryTypeTest {
         assertEquals(EXPECTED_CONSTANT_COUNT, keys.size());
         assertTrue(keys.contains("ProcessStorage"));
         assertTrue(keys.contains("Criticality"));
+        assertTrue(keys.contains("DocumentsFolder"));
         assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 
@@ -171,6 +195,7 @@ class GenericEntryTypeTest {
     void isValid_should_return_true_for_whitespace_padded_name() {
         assertTrue(GenericEntryType.isValid("  PROCESS_STORAGE  "));
         assertTrue(GenericEntryType.isValid("\tCRITICALITY\t"));
+        assertTrue(GenericEntryType.isValid("  DOCUMENTS_FOLDER  "));
     }
 
     /**

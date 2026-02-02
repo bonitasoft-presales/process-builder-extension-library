@@ -29,10 +29,18 @@ public enum GenericEntryType {
 
     /**
      * Represents the classification key for **Process Criticality** definitions.
-     * This type is used to identify and retrieve master data records that 
+     * This type is used to identify and retrieve master data records that
      * define the business impact or priority level of a process (e.g., Low, Medium, High).
      */
-    CRITICALITY("Criticality", "Defines the business priority level (e.g., High, Medium, Low) of the process.");
+    CRITICALITY("Criticality", "Defines the business priority level (e.g., High, Medium, Low) of the process."),
+
+    /**
+     * Represents the classification key for **Documents Folder** definitions.
+     * This type is used to identify and retrieve master data records that
+     * define the directory paths where process documents should be stored.
+     * Multiple folder configurations can be defined and selected per PBProcess.
+     */
+    DOCUMENTS_FOLDER("DocumentsFolder", "Defines the directory paths for storing process documents.");
 
     private final String key;
     private final String description;
