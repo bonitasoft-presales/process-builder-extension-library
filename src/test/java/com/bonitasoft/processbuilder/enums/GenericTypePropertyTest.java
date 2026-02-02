@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.*;
 @Label("GenericType Property-Based Tests")
 class GenericTypePropertyTest {
 
-    private static final int EXPECTED_ENUM_COUNT = 2;
+    private static final int EXPECTED_ENUM_COUNT = 3;
 
     // =========================================================================
     // ENUM INVARIANT PROPERTIES
@@ -149,9 +149,11 @@ class GenericTypePropertyTest {
     }
 
     @Property(tries = 100)
-    @Label("Key should be lowercase")
-    void keyShouldBeLowercase(@ForAll @From("genericTypes") GenericType type) {
-        assertThat(type.getKey()).isEqualTo(type.getKey().toLowerCase());
+    @Label("Key should start with lowercase letter (lowercase or camelCase)")
+    void keyShouldStartWithLowercaseLetter(@ForAll @From("genericTypes") GenericType type) {
+        assertThat(type.getKey())
+            .isNotBlank()
+            .matches("^[a-z].*");
     }
 
     // =========================================================================

@@ -34,7 +34,16 @@ public enum GenericType {
      * absolute links in notifications, emails, and other external communications.
      * </p>
      */
-    HOST("host", "Base URL of the application host for generating absolute links in notifications and emails.");
+    HOST("host", "Base URL of the application host for generating absolute links in notifications and emails."),
+
+    /**
+     * Default storage root directory configuration.
+     * <p>
+     * Stores the default root directory path for document storage. This value is used
+     * as the default location for DOCUMENTS_FOLDER when no specific folder is configured.
+     * </p>
+     */
+    STORAGE_ROOT_DEFAULT("storageRootDefault", "Default root directory path for document storage when no specific folder is configured.");
 
     private final String key;
     private final String description;
@@ -111,7 +120,8 @@ public enum GenericType {
     public static List<String> getAllKeysList() {
         return List.of(
             LANG.getKey(),
-            HOST.getKey()
+            HOST.getKey(),
+            STORAGE_ROOT_DEFAULT.getKey()
         );
     }
 }

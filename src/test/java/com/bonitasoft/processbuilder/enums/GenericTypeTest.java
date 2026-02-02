@@ -23,7 +23,7 @@ class GenericTypeTest {
     // CONSTANTS
     // =========================================================================
 
-    private static final int EXPECTED_ENUM_COUNT = 2;
+    private static final int EXPECTED_ENUM_COUNT = 3;
 
     // =========================================================================
     // ENUM CONSTANTS TESTS
@@ -34,7 +34,7 @@ class GenericTypeTest {
     class EnumConstantsTests {
 
         @Test
-        @DisplayName("values() should return all 2 enum constants")
+        @DisplayName("values() should return all 3 enum constants")
         void values_should_return_all_constants() {
             GenericType[] values = GenericType.values();
 
@@ -42,7 +42,8 @@ class GenericTypeTest {
                 .hasSize(EXPECTED_ENUM_COUNT)
                 .containsExactly(
                     GenericType.LANG,
-                    GenericType.HOST
+                    GenericType.HOST,
+                    GenericType.STORAGE_ROOT_DEFAULT
                 );
         }
 
@@ -71,6 +72,19 @@ class GenericTypeTest {
             assertThat(host.name()).isEqualTo("HOST");
             assertThat(host.ordinal()).isEqualTo(1);
         }
+
+        @Test
+        @DisplayName("STORAGE_ROOT_DEFAULT should have correct key and description")
+        void storageRootDefault_should_have_correct_attributes() {
+            GenericType storageRoot = GenericType.STORAGE_ROOT_DEFAULT;
+
+            assertThat(storageRoot.getKey()).isEqualTo("storageRootDefault");
+            assertThat(storageRoot.getDescription())
+                .contains("storage")
+                .contains("directory");
+            assertThat(storageRoot.name()).isEqualTo("STORAGE_ROOT_DEFAULT");
+            assertThat(storageRoot.ordinal()).isEqualTo(2);
+        }
     }
 
     // =========================================================================
@@ -86,6 +100,7 @@ class GenericTypeTest {
         void should_return_true_for_valid_uppercase_names() {
             assertThat(GenericType.isValid("LANG")).isTrue();
             assertThat(GenericType.isValid("HOST")).isTrue();
+            assertThat(GenericType.isValid("STORAGE_ROOT_DEFAULT")).isTrue();
         }
 
         @Test
@@ -93,6 +108,7 @@ class GenericTypeTest {
         void should_return_true_for_valid_lowercase_names() {
             assertThat(GenericType.isValid("lang")).isTrue();
             assertThat(GenericType.isValid("host")).isTrue();
+            assertThat(GenericType.isValid("storage_root_default")).isTrue();
         }
 
         @Test
@@ -100,6 +116,7 @@ class GenericTypeTest {
         void should_return_true_for_mixed_case_names() {
             assertThat(GenericType.isValid("Lang")).isTrue();
             assertThat(GenericType.isValid("HoSt")).isTrue();
+            assertThat(GenericType.isValid("Storage_Root_Default")).isTrue();
         }
 
         @Test
@@ -107,6 +124,7 @@ class GenericTypeTest {
         void should_return_true_for_names_with_spaces() {
             assertThat(GenericType.isValid("  LANG  ")).isTrue();
             assertThat(GenericType.isValid("\tHOST\t")).isTrue();
+            assertThat(GenericType.isValid("  STORAGE_ROOT_DEFAULT  ")).isTrue();
         }
 
         @Test
@@ -161,7 +179,7 @@ class GenericTypeTest {
             Map<String, String> data = GenericType.getAllData();
 
             assertThat(data.keySet())
-                .containsExactlyInAnyOrder("lang", "host");
+                .containsExactlyInAnyOrder("lang", "host", "storageRootDefault");
         }
 
         @Test
@@ -171,6 +189,7 @@ class GenericTypeTest {
 
             assertThat(data.get("lang")).contains("language");
             assertThat(data.get("host")).contains("URL");
+            assertThat(data.get("storageRootDefault")).contains("storage");
         }
 
         @Test
@@ -233,7 +252,7 @@ class GenericTypeTest {
             List<String> keys = GenericType.getAllKeysList();
 
             assertThat(keys)
-                .containsExactlyInAnyOrder("lang", "host");
+                .containsExactlyInAnyOrder("lang", "host", "storageRootDefault");
         }
 
         @Test
@@ -241,7 +260,7 @@ class GenericTypeTest {
         void should_preserve_enum_declaration_order() {
             List<String> keys = GenericType.getAllKeysList();
 
-            assertThat(keys).containsExactly("lang", "host");
+            assertThat(keys).containsExactly("lang", "host", "storageRootDefault");
         }
 
         @Test
@@ -285,6 +304,7 @@ class GenericTypeTest {
         void should_return_correct_enum_for_valid_name() {
             assertThat(GenericType.valueOf("LANG")).isEqualTo(GenericType.LANG);
             assertThat(GenericType.valueOf("HOST")).isEqualTo(GenericType.HOST);
+            assertThat(GenericType.valueOf("STORAGE_ROOT_DEFAULT")).isEqualTo(GenericType.STORAGE_ROOT_DEFAULT);
         }
 
         @Test
