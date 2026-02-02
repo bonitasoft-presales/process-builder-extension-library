@@ -18,7 +18,7 @@ import java.util.Map;
  */
 class GenericEntryTypeTest {
 
-    private static final int EXPECTED_CONSTANT_COUNT = 3;
+    private static final int EXPECTED_CONSTANT_COUNT = 4;
 
     // -------------------------------------------------------------------------
     // Constant Existence Tests
@@ -49,6 +49,15 @@ class GenericEntryTypeTest {
     @DisplayName("DOCUMENTS_FOLDER constant should be defined")
     void should_define_DOCUMENTS_FOLDER_constant() {
         assertEquals("DOCUMENTS_FOLDER", GenericEntryType.DOCUMENTS_FOLDER.name());
+    }
+
+    /**
+     * Tests the existence and name of the REST_APIS constant.
+     */
+    @Test
+    @DisplayName("REST_APIS constant should be defined")
+    void should_define_REST_APIS_constant() {
+        assertEquals("REST_APIS", GenericEntryType.REST_APIS.name());
     }
 
     // -------------------------------------------------------------------------
@@ -85,6 +94,16 @@ class GenericEntryTypeTest {
         assertTrue(GenericEntryType.DOCUMENTS_FOLDER.getDescription().contains("directory paths"));
     }
 
+    /**
+     * Tests the key and description of the REST_APIS constant.
+     */
+    @Test
+    @DisplayName("REST_APIS should have correct key and description")
+    void restApis_should_have_correct_key_and_description() {
+        assertEquals("RestApis", GenericEntryType.REST_APIS.getKey());
+        assertTrue(GenericEntryType.REST_APIS.getDescription().contains("REST API"));
+    }
+
     // -------------------------------------------------------------------------
     // Utility Method Tests
     // -------------------------------------------------------------------------
@@ -98,6 +117,7 @@ class GenericEntryTypeTest {
         assertTrue(GenericEntryType.isValid("PROCESS_STORAGE"));
         assertTrue(GenericEntryType.isValid("CRITICALITY"));
         assertTrue(GenericEntryType.isValid("DOCUMENTS_FOLDER"));
+        assertTrue(GenericEntryType.isValid("REST_APIS"));
     }
 
     /**
@@ -109,6 +129,7 @@ class GenericEntryTypeTest {
         assertTrue(GenericEntryType.isValid("process_storage"));
         assertTrue(GenericEntryType.isValid("criticality"));
         assertTrue(GenericEntryType.isValid("documents_folder"));
+        assertTrue(GenericEntryType.isValid("rest_apis"));
     }
 
     /**
@@ -120,6 +141,7 @@ class GenericEntryTypeTest {
         assertTrue(GenericEntryType.isValid("Process_Storage"));
         assertTrue(GenericEntryType.isValid("Criticality"));
         assertTrue(GenericEntryType.isValid("Documents_Folder"));
+        assertTrue(GenericEntryType.isValid("Rest_Apis"));
     }
 
     /**
@@ -161,6 +183,7 @@ class GenericEntryTypeTest {
         assertTrue(data.containsKey("ProcessStorage"));
         assertTrue(data.containsKey("Criticality"));
         assertTrue(data.containsKey("DocumentsFolder"));
+        assertTrue(data.containsKey("RestApis"));
         assertThrows(UnsupportedOperationException.class, () -> data.clear());
     }
 
@@ -175,6 +198,7 @@ class GenericEntryTypeTest {
         assertTrue(keys.contains("ProcessStorage"));
         assertTrue(keys.contains("Criticality"));
         assertTrue(keys.contains("DocumentsFolder"));
+        assertTrue(keys.contains("RestApis"));
         assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 
@@ -196,6 +220,7 @@ class GenericEntryTypeTest {
         assertTrue(GenericEntryType.isValid("  PROCESS_STORAGE  "));
         assertTrue(GenericEntryType.isValid("\tCRITICALITY\t"));
         assertTrue(GenericEntryType.isValid("  DOCUMENTS_FOLDER  "));
+        assertTrue(GenericEntryType.isValid("  REST_APIS  "));
     }
 
     /**

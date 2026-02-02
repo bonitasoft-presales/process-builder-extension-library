@@ -21,10 +21,10 @@ class FlowActionTypeTest {
     }
 
     @Test
-    @DisplayName("Should contain exactly three flow action constants")
-    void should_contain_three_constants() {
-        assertEquals(3, FlowActionType.values().length);
-        assertEquals(3, EXPECTED_DATA.size());
+    @DisplayName("Should contain exactly four flow action constants")
+    void should_contain_four_constants() {
+        assertEquals(4, FlowActionType.values().length);
+        assertEquals(4, EXPECTED_DATA.size());
     }
 
     @Test
@@ -42,11 +42,19 @@ class FlowActionTypeTest {
     }
 
     @Test
+    @DisplayName("REST_APIS constant should have the correct key and description")
+    void restApis_should_have_correct_values() {
+        assertEquals("restApis", FlowActionType.REST_APIS.getKey());
+        assertTrue(FlowActionType.REST_APIS.getDescription().contains("REST"));
+    }
+
+    @Test
     @DisplayName("getAllData should return an unmodifiable map with all required keys")
     void getAllData_should_return_correct_map() {
         assertTrue(EXPECTED_DATA.containsKey("form"));
         assertTrue(EXPECTED_DATA.containsKey("notifications"));
         assertTrue(EXPECTED_DATA.containsKey("redirections"));
+        assertTrue(EXPECTED_DATA.containsKey("restApis"));
 
         assertThrows(UnsupportedOperationException.class, () -> EXPECTED_DATA.put("test", "Test"));
     }
@@ -54,16 +62,18 @@ class FlowActionTypeTest {
     @Test
     void getAllData_shouldReturnCorrectMap() {
         Map<String, String> data = FlowActionType.getAllData();
-        assertEquals(3, data.size());
+        assertEquals(4, data.size());
         assertTrue(data.containsKey("notifications"));
+        assertTrue(data.containsKey("restApis"));
         assertThrows(UnsupportedOperationException.class, () -> data.clear());
     }
 
     @Test
     void getAllKeysList_shouldReturnCorrectList() {
         List<String> keys = FlowActionType.getAllKeysList();
-        assertEquals(3, keys.size());
+        assertEquals(4, keys.size());
         assertTrue(keys.contains("redirections"));
+        assertTrue(keys.contains("restApis"));
         assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }

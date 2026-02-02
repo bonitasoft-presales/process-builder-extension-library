@@ -29,7 +29,12 @@ public enum FlowActionType {
     /**
      * Action related to defining post-task navigation and flow redirection.
      */
-    REDIRECTIONS("redirections", "Redirections Action: Defines where the user is sent after completing the task.");
+    REDIRECTIONS("redirections", "Redirections Action: Defines where the user is sent after completing the task."),
+
+    /**
+     * Action related to REST APIs configuration and execution.
+     */
+    REST_APIS("restApis", "REST APIs Action: Manages configuration and execution of REST service calls.");
 
     private final String key;
     private final String description;

@@ -29,7 +29,12 @@ public enum ProcessNameType {
     /**
      * Process definition for Redirections configuration.
      */
-    REDIRECTIONS("Redirections", "Process for redirection configuration settings.");
+    REDIRECTIONS("Redirections", "Process for redirection configuration settings."),
+
+    /**
+     * Process definition for REST APIs configuration and execution.
+     */
+    REST_APIS("RestApis", "Process for executing configured REST API services.");
 
     private final String key;
     private final String description;

@@ -21,10 +21,10 @@ class ProcessNameTypeTest {
     }
 
     @Test
-    @DisplayName("Should contain exactly three process name constants")
-    void should_contain_three_constants() {
-        assertEquals(3, ProcessNameType.values().length);
-        assertEquals(3, EXPECTED_DATA.size());
+    @DisplayName("Should contain exactly four process name constants")
+    void should_contain_four_constants() {
+        assertEquals(4, ProcessNameType.values().length);
+        assertEquals(4, EXPECTED_DATA.size());
     }
 
     @Test
@@ -42,11 +42,19 @@ class ProcessNameTypeTest {
     }
 
     @Test
+    @DisplayName("REST_APIS constant should have the correct key and description")
+    void restApis_should_have_correct_values() {
+        assertEquals("RestApis", ProcessNameType.REST_APIS.getKey());
+        assertTrue(ProcessNameType.REST_APIS.getDescription().contains("REST API"));
+    }
+
+    @Test
     @DisplayName("getAllProcessData should return an unmodifiable map with all required keys")
     void getAllProcessData_should_return_correct_map() {
         assertTrue(EXPECTED_DATA.containsKey("Form"));
         assertTrue(EXPECTED_DATA.containsKey("Notifications"));
         assertTrue(EXPECTED_DATA.containsKey("Redirections"));
+        assertTrue(EXPECTED_DATA.containsKey("RestApis"));
 
         assertThrows(UnsupportedOperationException.class, () -> EXPECTED_DATA.put("TestProcess", "Test"));
     }
@@ -54,16 +62,18 @@ class ProcessNameTypeTest {
     @Test
     void getAllData_shouldReturnCorrectMap() {
         Map<String, String> data = ProcessNameType.getAllData();
-        assertEquals(3, data.size());
+        assertEquals(4, data.size());
         assertTrue(data.containsKey("Form"));
+        assertTrue(data.containsKey("RestApis"));
         assertThrows(UnsupportedOperationException.class, () -> data.clear());
     }
 
     @Test
     void getAllKeysList_shouldReturnCorrectList() {
         List<String> keys = ProcessNameType.getAllKeysList();
-        assertEquals(3, keys.size());
+        assertEquals(4, keys.size());
         assertTrue(keys.contains("Notifications"));
+        assertTrue(keys.contains("RestApis"));
         assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 }

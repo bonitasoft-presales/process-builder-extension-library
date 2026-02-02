@@ -40,7 +40,14 @@ public enum GenericEntryType {
      * define the directory paths where process documents should be stored.
      * Multiple folder configurations can be defined and selected per PBProcess.
      */
-    DOCUMENTS_FOLDER("DocumentsFolder", "Defines the directory paths for storing process documents.");
+    DOCUMENTS_FOLDER("DocumentsFolder", "Defines the directory paths for storing process documents."),
+
+    /**
+     * Represents the classification key for **REST APIs** definitions.
+     * This type is used to identify and retrieve master data records that
+     * define the configuration for REST API services that can be executed.
+     */
+    REST_APIS("RestApis", "Defines the configuration for REST API services.");
 
     private final String key;
     private final String description;
