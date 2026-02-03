@@ -17,6 +17,26 @@ import java.util.stream.Collectors;
 public enum ProcessNameType {
 
     /**
+     * Process definition for Process Builder initialization.
+     */
+    PROCESS_BUILDER_INITIALIZATION("ProcessBuilderInitialization", "Process for initializing and configuring the Process Builder."),
+
+    /**
+     * Process definition for Objects Management.
+     */
+    OBJECTS_MANAGEMENT("ObjectsManagement", "Process for managing business objects and data entities."),
+
+    /**
+     * Process definition for Objects Management List operations.
+     */
+    OBJECTS_MANAGEMENT_LIST("ObjectsManagementList", "Process for managing lists of business objects."),
+
+    /**
+     * Process definition for Execution Connector.
+     */
+    EXECUTION_CONNECTOR("ExecutionConnector", "Process for connector execution and integration."),
+
+    /**
      * Process definition for Form configuration.
      */
     FORM("Form", "Process for form configuration settings."),
@@ -27,14 +47,39 @@ public enum ProcessNameType {
     NOTIFICATIONS("Notifications", "Process for notifications configuration settings."),
 
     /**
+     * Process definition for Process Execution.
+     */
+    PROCESS_EXECUTION("ProcessExecution", "Process for executing and managing process instances."),
+
+    /**
      * Process definition for Redirections configuration.
      */
     REDIRECTIONS("Redirections", "Process for redirection configuration settings."),
 
     /**
+     * Process definition for REST API Connector.
+     */
+    REST_API_CONNECTOR("RestAPIConnector", "Process for REST API connector execution."),
+
+    /**
      * Process definition for REST APIs configuration and execution.
      */
-    REST_APIS("RestApis", "Process for executing configured REST API services.");
+    REST_APIS("RestApis", "Process for executing configured REST API services."),
+
+    /**
+     * Process definition for SMTP Connector.
+     */
+    SMTP_CONNECTOR("SmtpConnector", "Process for SMTP email connector execution."),
+
+    /**
+     * Process definition for generic Process operations.
+     */
+    PROCESS("Process", "Process for generic process operations and management."),
+
+    /**
+     * Process definition for Service Connector Action Runner.
+     */
+    SERVICE_CONNECTOR_ACTION_RUNNER("ServiceConnectorActionRunner", "Process for executing service connector actions such as notifications, REST APIs, and other integrations.");
 
     private final String key;
     private final String description;

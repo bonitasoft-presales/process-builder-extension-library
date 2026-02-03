@@ -18,6 +18,8 @@ import static org.assertj.core.api.Assertions.*;
 @Label("ProcessNameType Property-Based Tests")
 class ProcessNameTypePropertyTest {
 
+    private static final int EXPECTED_ENUM_COUNT = 13;
+
     // =========================================================================
     // ENUM INVARIANT PROPERTIES
     // =========================================================================
@@ -46,6 +48,24 @@ class ProcessNameTypePropertyTest {
     @Label("Each constant should be retrievable by name")
     void eachConstantShouldBeRetrievableByName(@ForAll @From("processNameTypes") ProcessNameType type) {
         assertThat(ProcessNameType.valueOf(type.name())).isEqualTo(type);
+    }
+
+    @Property(tries = 100)
+    @Label("Key should start with uppercase letter")
+    void keyShouldStartWithUppercaseLetter(@ForAll @From("processNameTypes") ProcessNameType type) {
+        assertThat(type.getKey()).matches("^[A-Z].*");
+    }
+
+    @Property(tries = 100)
+    @Label("Description should start with 'Process for'")
+    void descriptionShouldStartWithProcessFor(@ForAll @From("processNameTypes") ProcessNameType type) {
+        assertThat(type.getDescription()).startsWith("Process for");
+    }
+
+    @Property(tries = 100)
+    @Label("Description should end with period")
+    void descriptionShouldEndWithPeriod(@ForAll @From("processNameTypes") ProcessNameType type) {
+        assertThat(type.getDescription()).endsWith(".");
     }
 
     // =========================================================================
@@ -110,6 +130,13 @@ class ProcessNameTypePropertyTest {
     }
 
     @Property(tries = 100)
+    @Label("getAllData should contain all constants")
+    void getAllDataShouldContainAllConstants() {
+        Map<String, String> data = ProcessNameType.getAllData();
+        assertThat(data).hasSize(EXPECTED_ENUM_COUNT);
+    }
+
+    @Property(tries = 100)
     @Label("getAllKeysList should preserve enum declaration order")
     void getAllKeysListShouldPreserveOrder() {
         List<String> keys = ProcessNameType.getAllKeysList();
@@ -122,6 +149,13 @@ class ProcessNameTypePropertyTest {
     }
 
     @Property(tries = 100)
+    @Label("getAllKeysList should contain all keys in order")
+    void getAllKeysListShouldContainAllKeysInOrder() {
+        List<String> keys = ProcessNameType.getAllKeysList();
+        assertThat(keys).hasSize(EXPECTED_ENUM_COUNT);
+    }
+
+    @Property(tries = 100)
     @Label("Collections should be unmodifiable")
     void collectionsShouldBeUnmodifiable() {
         Map<String, String> data = ProcessNameType.getAllData();
@@ -131,6 +165,55 @@ class ProcessNameTypePropertyTest {
             .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> keys.add("new"))
             .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Property(tries = 100)
+    @Label("getAllData should not allow removal")
+    void getAllDataShouldNotAllowRemoval() {
+        Map<String, String> data = ProcessNameType.getAllData();
+        assertThatThrownBy(() -> data.remove("Form"))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Property(tries = 100)
+    @Label("getAllKeysList should not allow removal")
+    void getAllKeysListShouldNotAllowRemoval() {
+        List<String> keys = ProcessNameType.getAllKeysList();
+        assertThatThrownBy(() -> keys.remove(0))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    // =========================================================================
+    // SPECIFIC VALUE VERIFICATION PROPERTIES
+    // =========================================================================
+
+    @Property(tries = 50)
+    @Label("Enum values count should be exactly 13")
+    void enumValuesCountShouldBeExactly13() {
+        assertThat(ProcessNameType.values()).hasSize(EXPECTED_ENUM_COUNT);
+    }
+
+    @Property(tries = 100)
+    @Label("Each enum constant should have unique key")
+    void eachConstantShouldHaveUniqueKey() {
+        Map<String, String> data = ProcessNameType.getAllData();
+        List<String> keys = ProcessNameType.getAllKeysList();
+
+        // If all keys are unique, the map and list should have the same size
+        assertThat(data.keySet()).hasSize(keys.size());
+    }
+
+    @Property(tries = 100)
+    @Label("getKey and getDescription should return consistent values")
+    void getKeyAndDescriptionShouldReturnConsistentValues(@ForAll @From("processNameTypes") ProcessNameType type) {
+        // Call multiple times to verify consistency
+        String key1 = type.getKey();
+        String key2 = type.getKey();
+        String desc1 = type.getDescription();
+        String desc2 = type.getDescription();
+
+        assertThat(key1).isEqualTo(key2);
+        assertThat(desc1).isEqualTo(desc2);
     }
 
     // =========================================================================
