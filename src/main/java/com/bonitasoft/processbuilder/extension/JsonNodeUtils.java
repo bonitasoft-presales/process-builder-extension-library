@@ -45,7 +45,7 @@ public final class JsonNodeUtils {
     /**
      * Operator constant for not equals comparison.
      */
-    public static final String OP_NOT_EQUALS = "notequals";
+    public static final String OP_NOT_EQUALS = "not_equals";
 
     /**
      * Operator constant for not equals comparison (symbol form).
@@ -58,9 +58,14 @@ public final class JsonNodeUtils {
     public static final String OP_CONTAINS = "contains";
 
     /**
+     * Operator constant for not contains comparison.
+     */
+    public static final String OP_NOT_CONTAINS = "not_contains";
+
+    /**
      * Operator constant for greater than comparison.
      */
-    public static final String OP_GREATER_THAN = "greaterthan";
+    public static final String OP_GREATER_THAN = "greater_than";
 
     /**
      * Operator constant for greater than comparison (symbol form).
@@ -70,7 +75,7 @@ public final class JsonNodeUtils {
     /**
      * Operator constant for less than comparison.
      */
-    public static final String OP_LESS_THAN = "lessthan";
+    public static final String OP_LESS_THAN = "less_than";
 
     /**
      * Operator constant for less than comparison (symbol form).
@@ -80,7 +85,7 @@ public final class JsonNodeUtils {
     /**
      * Operator constant for greater or equal comparison.
      */
-    public static final String OP_GREATER_OR_EQUAL = "greaterorequal";
+    public static final String OP_GREATER_OR_EQUAL = "greater_or_equal";
 
     /**
      * Operator constant for greater or equal comparison (symbol form).
@@ -90,7 +95,7 @@ public final class JsonNodeUtils {
     /**
      * Operator constant for less or equal comparison.
      */
-    public static final String OP_LESS_OR_EQUAL = "lessorequal";
+    public static final String OP_LESS_OR_EQUAL = "less_or_equal";
 
     /**
      * Operator constant for less or equal comparison (symbol form).
@@ -335,6 +340,7 @@ public final class JsonNodeUtils {
             case OP_EQUALS, OP_EQUALS_SYMBOL -> evaluateEquals(currentValue, expectedValue);
             case OP_NOT_EQUALS, OP_NOT_EQUALS_SYMBOL -> evaluateNotEquals(currentValue, expectedValue);
             case OP_CONTAINS -> evaluateContains(currentValue, expectedValue);
+            case OP_NOT_CONTAINS -> !evaluateContains(currentValue, expectedValue);
             case OP_GREATER_THAN, OP_GREATER_THAN_SYMBOL ->
                 evaluateComparison(currentValue, expectedValue, 1);
             case OP_LESS_THAN, OP_LESS_THAN_SYMBOL ->

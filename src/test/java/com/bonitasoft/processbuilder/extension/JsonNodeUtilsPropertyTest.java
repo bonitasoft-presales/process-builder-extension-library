@@ -46,6 +46,7 @@ class JsonNodeUtilsPropertyTest {
         assertThat(JsonNodeUtils.OP_NOT_EQUALS).isNotNull().isNotBlank();
         assertThat(JsonNodeUtils.OP_NOT_EQUALS_SYMBOL).isNotNull().isNotBlank();
         assertThat(JsonNodeUtils.OP_CONTAINS).isNotNull().isNotBlank();
+        assertThat(JsonNodeUtils.OP_NOT_CONTAINS).isNotNull().isNotBlank();
         assertThat(JsonNodeUtils.OP_GREATER_THAN).isNotNull().isNotBlank();
         assertThat(JsonNodeUtils.OP_GREATER_THAN_SYMBOL).isNotNull().isNotBlank();
         assertThat(JsonNodeUtils.OP_LESS_THAN).isNotNull().isNotBlank();
@@ -197,12 +198,12 @@ class JsonNodeUtilsPropertyTest {
     }
 
     @Property(tries = 200)
-    @Label("evaluateCondition notequals should be opposite of equals")
+    @Label("evaluateCondition not_equals should be opposite of equals")
     void evaluateConditionNotEqualsShouldBeOppositeOfEquals(
             @ForAll @StringLength(min = 1, max = 50) String value1,
             @ForAll @StringLength(min = 1, max = 50) String value2) {
         boolean equalsResult = JsonNodeUtils.evaluateCondition(value1, "equals", value2);
-        boolean notEqualsResult = JsonNodeUtils.evaluateCondition(value1, "notequals", value2);
+        boolean notEqualsResult = JsonNodeUtils.evaluateCondition(value1, "not_equals", value2);
         assertThat(equalsResult).isNotEqualTo(notEqualsResult);
     }
 
@@ -225,6 +226,30 @@ class JsonNodeUtilsPropertyTest {
             boolean result = JsonNodeUtils.evaluateCondition(fullString, "contains", substring);
             assertThat(result).isTrue();
         }
+    }
+
+    @Property(tries = 200)
+    @Label("evaluateCondition not_contains should be opposite of contains")
+    void evaluateConditionNotContainsShouldBeOppositeOfContains(
+            @ForAll @StringLength(min = 5, max = 30) @AlphaChars String fullString,
+            @ForAll @StringLength(min = 1, max = 5) @AlphaChars String searchString) {
+        boolean containsResult = JsonNodeUtils.evaluateCondition(fullString, "contains", searchString);
+        boolean notContainsResult = JsonNodeUtils.evaluateCondition(fullString, "not_contains", searchString);
+        assertThat(containsResult).isNotEqualTo(notContainsResult);
+    }
+
+    @Property(tries = 100)
+    @Label("evaluateCondition not_contains should return true for null current value")
+    void evaluateConditionNotContainsShouldReturnTrueForNullCurrent() {
+        assertThat(JsonNodeUtils.evaluateCondition(null, "not_contains", "test")).isTrue();
+    }
+
+    @Property(tries = 200)
+    @Label("evaluateCondition not_contains should return true when substring not found")
+    void evaluateConditionNotContainsShouldReturnTrueWhenNotFound(
+            @ForAll @StringLength(min = 5, max = 20) @AlphaChars String haystack) {
+        // "zzzzz" is unlikely to be in a purely alpha string of limited length
+        assertThat(JsonNodeUtils.evaluateCondition(haystack, "not_contains", "12345")).isTrue();
     }
 
     @Property(tries = 200)
