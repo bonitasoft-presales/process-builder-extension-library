@@ -47,7 +47,14 @@ public enum GenericEntryType {
      * This type is used to identify and retrieve master data records that
      * define the configuration for REST API services that can be executed.
      */
-    REST_APIS("RestApis", "Defines the configuration for REST API services.");
+    REST_APIS("RestApis", "Defines the configuration for REST API services."),
+
+    /**
+     * Represents the classification key for **REST API Templates** definitions.
+     * This type is used to identify and retrieve master data records that
+     * define the available REST API templates/schemas that can be configured for use.
+     */
+    REST_API_TEMPLATES("RestApiTemplates", "Defines the available REST API templates that can be configured for use.");
 
     private final String key;
     private final String description;
