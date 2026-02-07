@@ -12,14 +12,13 @@ import java.util.stream.Collectors;
 
 /**
  * Catalog of predefined REST API templates.
- * <p>
- * Provides factory methods for:
+ *
+ * <p>Provides factory methods for:</p>
  * <ul>
  *   <li>Common APIs (OpenWeatherMap, NASA, GitHub, etc.)</li>
  *   <li>Generic templates for each authentication type</li>
  *   <li>Bonita BPM remote instance connectivity</li>
  * </ul>
- * </p>
  *
  * <p><b>Usage in Groovy script:</b></p>
  * <pre>{@code
