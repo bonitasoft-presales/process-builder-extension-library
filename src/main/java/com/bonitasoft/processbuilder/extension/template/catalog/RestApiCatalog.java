@@ -52,20 +52,69 @@ public final class RestApiCatalog {
      * </p>
      */
     public enum TemplateType {
+        // =====================================================================
+        // PUBLIC/TEST APIs (No credentials or free tier)
+        // =====================================================================
         /** JSONPlaceholder - Free fake REST API for testing */
         JSON_PLACEHOLDER("JSONPlaceholder", "Free fake REST API for testing - No authentication required", false, AuthType.NONE),
         /** REST Countries - Country information API */
         REST_COUNTRIES("RESTCountries", "Free public API for country information", false, AuthType.NONE),
+        /** HTTPBin - Basic Auth test service */
+        HTTP_BIN_BASIC_AUTH("HTTPBin_BasicAuth", "HTTPBin test service for Basic Authentication testing", false, AuthType.BASIC),
+
+        // =====================================================================
+        // API KEY Authentication
+        // =====================================================================
         /** OpenWeatherMap - Weather data API */
         OPEN_WEATHER_MAP("OpenWeatherMap", "Real weather data API - Requires API key from openweathermap.org", true, AuthType.API_KEY),
         /** NASA APOD - Astronomy Picture of the Day */
         NASA_APOD("NASA_APOD", "NASA Astronomy Picture of the Day - Use DEMO_KEY for testing or get free key at api.nasa.gov", true, AuthType.API_KEY),
-        /** HTTPBin - Basic Auth test service */
-        HTTP_BIN_BASIC_AUTH("HTTPBin_BasicAuth", "HTTPBin test service for Basic Authentication testing", false, AuthType.BASIC),
+        /** HubSpot - CRM and Marketing Platform */
+        HUBSPOT("HubSpot", "HubSpot CRM API - Requires API key from app.hubspot.com/api-key", true, AuthType.API_KEY),
+        /** SendGrid - Email delivery service */
+        SENDGRID("SendGrid", "SendGrid Email API - Requires API key from app.sendgrid.com/settings/api_keys", true, AuthType.API_KEY),
+
+        // =====================================================================
+        // BASIC Authentication
+        // =====================================================================
         /** Bonita Remote - Connect to another Bonita instance */
         BONITA_REMOTE("Bonita_Remote", "Connect to a remote Bonita BPM instance via REST API", true, AuthType.BASIC),
+        /** Jira - Atlassian Jira issue tracking */
+        JIRA("Jira", "Atlassian Jira REST API - Use email + API token from id.atlassian.com/manage-profile/security/api-tokens", true, AuthType.BASIC),
+        /** Zendesk - Customer service platform */
+        ZENDESK("Zendesk", "Zendesk Support API - Use email/token authentication", true, AuthType.BASIC),
+
+        // =====================================================================
+        // BEARER Token Authentication
+        // =====================================================================
         /** GitHub - GitHub REST API */
-        GITHUB("GitHub", "GitHub REST API - Requires Personal Access Token from github.com/settings/tokens", true, AuthType.BEARER);
+        GITHUB("GitHub", "GitHub REST API - Requires Personal Access Token from github.com/settings/tokens", true, AuthType.BEARER),
+        /** Slack - Team communication platform */
+        SLACK("Slack", "Slack Web API - Requires Bot Token from api.slack.com/apps", true, AuthType.BEARER),
+        /** Notion - Workspace and documentation platform */
+        NOTION("Notion", "Notion API - Requires Integration Token from notion.so/my-integrations", true, AuthType.BEARER),
+
+        // =====================================================================
+        // OAuth2 Client Credentials (Enterprise/SI)
+        // =====================================================================
+        /** Salesforce - CRM Platform */
+        SALESFORCE("Salesforce", "Salesforce REST API - Requires Connected App OAuth2 credentials", true, AuthType.OAUTH2_CLIENT),
+        /** SAP S/4HANA - ERP System */
+        SAP_S4HANA("SAP_S4HANA", "SAP S/4HANA OData API - Requires OAuth2 client credentials from SAP BTP", true, AuthType.OAUTH2_CLIENT),
+        /** SAP Business One - SMB ERP */
+        SAP_BUSINESS_ONE("SAP_BusinessOne", "SAP Business One Service Layer API - Requires session-based authentication", true, AuthType.BASIC),
+        /** Microsoft Dynamics 365 - ERP/CRM */
+        DYNAMICS_365("Dynamics365", "Microsoft Dynamics 365 Web API - Requires Azure AD OAuth2 credentials", true, AuthType.OAUTH2_CLIENT),
+        /** ServiceNow - IT Service Management */
+        SERVICENOW("ServiceNow", "ServiceNow REST API - Supports Basic Auth or OAuth2", true, AuthType.OAUTH2_CLIENT),
+        /** Workday - HCM Platform */
+        WORKDAY("Workday", "Workday REST API - Requires OAuth2 client credentials", true, AuthType.OAUTH2_CLIENT),
+
+        // =====================================================================
+        // OAuth2 Password Grant
+        // =====================================================================
+        /** DocuSign - Electronic signatures */
+        DOCUSIGN("DocuSign", "DocuSign eSignature API - Requires OAuth2 credentials from admin.docusign.com", true, AuthType.OAUTH2_PASSWORD);
 
         private final String displayName;
         private final String description;
@@ -478,6 +527,301 @@ public final class RestApiCatalog {
                 .addMethod("GetUser", "GET", "/user")
                 .addMethod("GetRepos", "GET", "/user/repos", Map.of("per_page", "10", "sort", "updated"))
                 .addMethod("GetPublicRepo", "GET", "/repos/anthropics/claude-code")
+                .build();
+    }
+
+    /**
+     * Slack Web API - Team communication.
+     *
+     * @param botToken Slack Bot Token (xoxb-...)
+     */
+    public static RestApiTemplate slack(String botToken) {
+        return RestApiTemplate.builder()
+                .name("Slack_API")
+                .displayName("Slack Web API")
+                .description("Slack messaging API - Create app at api.slack.com/apps")
+                .baseUrl("https://slack.com/api")
+                .timeoutMs(15000)
+                .auth(BearerAuthConfig.of(botToken))
+                .addMethod("PostMessage", "POST", "/chat.postMessage")
+                .addMethod("ListChannels", "GET", "/conversations.list")
+                .addMethod("GetUserInfo", "GET", "/users.info")
+                .build();
+    }
+
+    /**
+     * Notion API - Workspace platform.
+     *
+     * @param integrationToken Notion Integration Token
+     */
+    public static RestApiTemplate notion(String integrationToken) {
+        return RestApiTemplate.builder()
+                .name("Notion_API")
+                .displayName("Notion API")
+                .description("Notion workspace API - Create integration at notion.so/my-integrations")
+                .baseUrl("https://api.notion.com/v1")
+                .timeoutMs(15000)
+                .header("Notion-Version", "2022-06-28")
+                .auth(BearerAuthConfig.of(integrationToken))
+                .addMethod("ListDatabases", "POST", "/search")
+                .addMethod("GetPage", "GET", "/pages/{page_id}")
+                .addMethod("QueryDatabase", "POST", "/databases/{database_id}/query")
+                .build();
+    }
+
+    // ========================================================================
+    // PREDEFINED TEMPLATES - API KEY (Enterprise)
+    // ========================================================================
+
+    /**
+     * HubSpot CRM API.
+     *
+     * @param apiKey HubSpot API key
+     */
+    public static RestApiTemplate hubSpot(String apiKey) {
+        return RestApiTemplate.builder()
+                .name("HubSpot_API")
+                .displayName("HubSpot CRM API")
+                .description("HubSpot CRM and Marketing API")
+                .baseUrl("https://api.hubapi.com")
+                .timeoutMs(20000)
+                .auth(ApiKeyAuthConfig.header("Authorization", "Bearer " + apiKey))
+                .addMethod("GetContacts", "GET", "/crm/v3/objects/contacts")
+                .addMethod("GetCompanies", "GET", "/crm/v3/objects/companies")
+                .addMethod("GetDeals", "GET", "/crm/v3/objects/deals")
+                .addMethod("CreateContact", "POST", "/crm/v3/objects/contacts")
+                .build();
+    }
+
+    /**
+     * SendGrid Email API.
+     *
+     * @param apiKey SendGrid API key
+     */
+    public static RestApiTemplate sendGrid(String apiKey) {
+        return RestApiTemplate.builder()
+                .name("SendGrid_API")
+                .displayName("SendGrid Email API")
+                .description("SendGrid email delivery service")
+                .baseUrl("https://api.sendgrid.com/v3")
+                .timeoutMs(15000)
+                .auth(BearerAuthConfig.of(apiKey))
+                .addMethod("SendEmail", "POST", "/mail/send")
+                .addMethod("GetStats", "GET", "/stats")
+                .build();
+    }
+
+    // ========================================================================
+    // PREDEFINED TEMPLATES - BASIC AUTH (Enterprise)
+    // ========================================================================
+
+    /**
+     * Jira REST API - Atlassian issue tracking.
+     *
+     * @param domain   Jira domain (e.g., "yourcompany.atlassian.net")
+     * @param email    User email
+     * @param apiToken API token from id.atlassian.com
+     */
+    public static RestApiTemplate jira(String domain, String email, String apiToken) {
+        return RestApiTemplate.builder()
+                .name("Jira_API")
+                .displayName("Jira REST API")
+                .description("Atlassian Jira issue tracking and project management")
+                .baseUrl("https://" + domain + "/rest/api/3")
+                .timeoutMs(20000)
+                .auth(new BasicAuthConfig(email, apiToken, true))
+                .addMethod("GetProjects", "GET", "/project")
+                .addMethod("SearchIssues", "GET", "/search", Map.of("jql", "project=DEMO"))
+                .addMethod("GetIssue", "GET", "/issue/{issueKey}")
+                .addMethod("CreateIssue", "POST", "/issue")
+                .build();
+    }
+
+    /**
+     * Zendesk Support API.
+     *
+     * @param subdomain Zendesk subdomain (e.g., "yourcompany")
+     * @param email     Agent email
+     * @param apiToken  API token from Admin > Channels > API
+     */
+    public static RestApiTemplate zendesk(String subdomain, String email, String apiToken) {
+        return RestApiTemplate.builder()
+                .name("Zendesk_API")
+                .displayName("Zendesk Support API")
+                .description("Zendesk customer service platform")
+                .baseUrl("https://" + subdomain + ".zendesk.com/api/v2")
+                .timeoutMs(20000)
+                .auth(new BasicAuthConfig(email + "/token", apiToken, true))
+                .addMethod("GetTickets", "GET", "/tickets.json")
+                .addMethod("GetUsers", "GET", "/users.json")
+                .addMethod("CreateTicket", "POST", "/tickets.json")
+                .build();
+    }
+
+    /**
+     * SAP Business One Service Layer.
+     *
+     * @param baseUrl  SAP B1 Service Layer URL (e.g., "https://server:50000/b1s/v1")
+     * @param username SAP B1 username
+     * @param password SAP B1 password
+     */
+    public static RestApiTemplate sapBusinessOne(String baseUrl, String username, String password) {
+        return RestApiTemplate.builder()
+                .name("SAP_BusinessOne_API")
+                .displayName("SAP Business One Service Layer")
+                .description("SAP Business One REST API for SMB ERP")
+                .baseUrl(baseUrl)
+                .timeoutMs(30000)
+                .verifySsl(false)
+                .auth(new BasicAuthConfig(username, password, true))
+                .addMethod("Login", "POST", "/Login")
+                .addMethod("GetBusinessPartners", "GET", "/BusinessPartners")
+                .addMethod("GetItems", "GET", "/Items")
+                .addMethod("GetOrders", "GET", "/Orders")
+                .build();
+    }
+
+    // ========================================================================
+    // PREDEFINED TEMPLATES - OAuth2 (Enterprise SI)
+    // ========================================================================
+
+    /**
+     * Salesforce REST API.
+     *
+     * @param instanceUrl  Salesforce instance URL (e.g., "https://yourorg.my.salesforce.com")
+     * @param clientId     Connected App Consumer Key
+     * @param clientSecret Connected App Consumer Secret
+     */
+    public static RestApiTemplate salesforce(String instanceUrl, String clientId, String clientSecret) {
+        return RestApiTemplate.builder()
+                .name("Salesforce_API")
+                .displayName("Salesforce REST API")
+                .description("Salesforce CRM platform API")
+                .baseUrl(instanceUrl + "/services/data/v58.0")
+                .timeoutMs(30000)
+                .auth(new OAuth2ClientConfig(
+                        instanceUrl + "/services/oauth2/token",
+                        clientId, clientSecret, null))
+                .addMethod("GetAccount", "GET", "/sobjects/Account/{id}")
+                .addMethod("QuerySOQL", "GET", "/query", Map.of("q", "SELECT Id, Name FROM Account LIMIT 10"))
+                .addMethod("CreateLead", "POST", "/sobjects/Lead")
+                .addMethod("GetOpportunities", "GET", "/sobjects/Opportunity")
+                .build();
+    }
+
+    /**
+     * SAP S/4HANA OData API.
+     *
+     * @param baseUrl      SAP S/4HANA API endpoint
+     * @param tokenUrl     OAuth2 token URL from SAP BTP
+     * @param clientId     OAuth2 client ID
+     * @param clientSecret OAuth2 client secret
+     */
+    public static RestApiTemplate sapS4Hana(String baseUrl, String tokenUrl, String clientId, String clientSecret) {
+        return RestApiTemplate.builder()
+                .name("SAP_S4HANA_API")
+                .displayName("SAP S/4HANA OData API")
+                .description("SAP S/4HANA Cloud ERP API via OAuth2")
+                .baseUrl(baseUrl)
+                .timeoutMs(30000)
+                .auth(new OAuth2ClientConfig(tokenUrl, clientId, clientSecret, null))
+                .addMethod("GetBusinessPartners", "GET", "/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner")
+                .addMethod("GetSalesOrders", "GET", "/sap/opu/odata/sap/API_SALES_ORDER_SRV/A_SalesOrder")
+                .addMethod("GetProducts", "GET", "/sap/opu/odata/sap/API_PRODUCT_SRV/A_Product")
+                .build();
+    }
+
+    /**
+     * Microsoft Dynamics 365 Web API.
+     *
+     * @param orgUrl       Dynamics 365 organization URL (e.g., "https://yourorg.crm.dynamics.com")
+     * @param tenantId     Azure AD tenant ID
+     * @param clientId     Azure AD application (client) ID
+     * @param clientSecret Azure AD client secret
+     */
+    public static RestApiTemplate dynamics365(String orgUrl, String tenantId, String clientId, String clientSecret) {
+        return RestApiTemplate.builder()
+                .name("Dynamics365_API")
+                .displayName("Microsoft Dynamics 365 Web API")
+                .description("Dynamics 365 CRM/ERP platform API")
+                .baseUrl(orgUrl + "/api/data/v9.2")
+                .timeoutMs(30000)
+                .auth(new OAuth2ClientConfig(
+                        "https://login.microsoftonline.com/" + tenantId + "/oauth2/v2.0/token",
+                        clientId, clientSecret, orgUrl + "/.default"))
+                .addMethod("GetAccounts", "GET", "/accounts")
+                .addMethod("GetContacts", "GET", "/contacts")
+                .addMethod("GetOpportunities", "GET", "/opportunities")
+                .addMethod("WhoAmI", "GET", "/WhoAmI")
+                .build();
+    }
+
+    /**
+     * ServiceNow REST API.
+     *
+     * @param instanceUrl  ServiceNow instance URL (e.g., "https://yourinstance.service-now.com")
+     * @param clientId     OAuth2 client ID
+     * @param clientSecret OAuth2 client secret
+     */
+    public static RestApiTemplate serviceNow(String instanceUrl, String clientId, String clientSecret) {
+        return RestApiTemplate.builder()
+                .name("ServiceNow_API")
+                .displayName("ServiceNow REST API")
+                .description("ServiceNow IT Service Management platform")
+                .baseUrl(instanceUrl + "/api/now")
+                .timeoutMs(30000)
+                .auth(new OAuth2ClientConfig(
+                        instanceUrl + "/oauth_token.do",
+                        clientId, clientSecret, null))
+                .addMethod("GetIncidents", "GET", "/table/incident")
+                .addMethod("GetUsers", "GET", "/table/sys_user")
+                .addMethod("CreateIncident", "POST", "/table/incident")
+                .addMethod("GetChangeRequests", "GET", "/table/change_request")
+                .build();
+    }
+
+    /**
+     * Workday REST API.
+     *
+     * @param tenant       Workday tenant name
+     * @param tokenUrl     OAuth2 token endpoint
+     * @param clientId     OAuth2 client ID
+     * @param clientSecret OAuth2 client secret
+     */
+    public static RestApiTemplate workday(String tenant, String tokenUrl, String clientId, String clientSecret) {
+        return RestApiTemplate.builder()
+                .name("Workday_API")
+                .displayName("Workday REST API")
+                .description("Workday HCM platform API")
+                .baseUrl("https://wd2-impl-services1.workday.com/ccx/api/v1/" + tenant)
+                .timeoutMs(30000)
+                .auth(new OAuth2ClientConfig(tokenUrl, clientId, clientSecret, null))
+                .addMethod("GetWorkers", "GET", "/workers")
+                .addMethod("GetOrganizations", "GET", "/organizations")
+                .build();
+    }
+
+    /**
+     * DocuSign eSignature API.
+     *
+     * @param accountId    DocuSign account ID
+     * @param tokenUrl     OAuth2 token URL
+     * @param clientId     Integration Key (client ID)
+     * @param userId       User ID (for JWT)
+     * @param privateKey   RSA private key
+     */
+    public static RestApiTemplate docuSign(String accountId, String tokenUrl, String clientId,
+                                            String userId, String privateKey) {
+        return RestApiTemplate.builder()
+                .name("DocuSign_API")
+                .displayName("DocuSign eSignature API")
+                .description("DocuSign electronic signature platform")
+                .baseUrl("https://demo.docusign.net/restapi/v2.1/accounts/" + accountId)
+                .timeoutMs(30000)
+                .auth(new OAuth2PasswordConfig(tokenUrl, clientId, userId, privateKey))
+                .addMethod("GetEnvelopes", "GET", "/envelopes")
+                .addMethod("CreateEnvelope", "POST", "/envelopes")
+                .addMethod("GetTemplates", "GET", "/templates")
                 .build();
     }
 }

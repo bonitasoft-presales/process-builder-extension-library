@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RestApiCatalogTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final int EXPECTED_TEMPLATE_COUNT = 7;
+    private static final int EXPECTED_TEMPLATE_COUNT = 20;
 
     // =========================================================================
     // UTILITY CLASS STRUCTURE TESTS
@@ -456,6 +456,162 @@ class RestApiCatalogTest {
             assertThat(template.auth()).isInstanceOf(BearerAuthConfig.class);
             assertThat(((BearerAuthConfig) template.auth()).token()).isEqualTo("ghp_token123");
         }
+
+        @Test
+        @DisplayName("slack should create valid template with bearer token")
+        void slack_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.slack("xoxb-token");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("Slack_API");
+            assertThat(template.baseUrl()).isEqualTo("https://slack.com/api");
+            assertThat(template.auth()).isInstanceOf(BearerAuthConfig.class);
+        }
+
+        @Test
+        @DisplayName("notion should create valid template with bearer token")
+        void notion_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.notion("secret_token");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("Notion_API");
+            assertThat(template.baseUrl()).isEqualTo("https://api.notion.com/v1");
+            assertThat(template.auth()).isInstanceOf(BearerAuthConfig.class);
+            assertThat(template.headers()).containsKey("Notion-Version");
+        }
+
+        @Test
+        @DisplayName("hubSpot should create valid template with API key")
+        void hubSpot_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.hubSpot("api-key-123");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("HubSpot_API");
+            assertThat(template.baseUrl()).isEqualTo("https://api.hubapi.com");
+            assertThat(template.auth()).isInstanceOf(ApiKeyAuthConfig.class);
+        }
+
+        @Test
+        @DisplayName("sendGrid should create valid template with bearer token")
+        void sendGrid_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.sendGrid("SG.api-key");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("SendGrid_API");
+            assertThat(template.baseUrl()).isEqualTo("https://api.sendgrid.com/v3");
+            assertThat(template.auth()).isInstanceOf(BearerAuthConfig.class);
+        }
+
+        @Test
+        @DisplayName("jira should create valid template with basic auth")
+        void jira_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.jira("company.atlassian.net", "user@email.com", "api-token");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("Jira_API");
+            assertThat(template.baseUrl()).isEqualTo("https://company.atlassian.net/rest/api/3");
+            assertThat(template.auth()).isInstanceOf(BasicAuthConfig.class);
+            BasicAuthConfig auth = (BasicAuthConfig) template.auth();
+            assertThat(auth.username()).isEqualTo("user@email.com");
+        }
+
+        @Test
+        @DisplayName("zendesk should create valid template with basic auth")
+        void zendesk_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.zendesk("company", "agent@email.com", "api-token");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("Zendesk_API");
+            assertThat(template.baseUrl()).isEqualTo("https://company.zendesk.com/api/v2");
+            assertThat(template.auth()).isInstanceOf(BasicAuthConfig.class);
+        }
+
+        @Test
+        @DisplayName("sapBusinessOne should create valid template with basic auth")
+        void sapBusinessOne_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.sapBusinessOne(
+                    "https://sap-server:50000/b1s/v1", "manager", "password");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("SAP_BusinessOne_API");
+            assertThat(template.auth()).isInstanceOf(BasicAuthConfig.class);
+            assertThat(template.verifySsl()).isFalse();
+        }
+
+        @Test
+        @DisplayName("salesforce should create valid template with OAuth2")
+        void salesforce_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.salesforce(
+                    "https://myorg.my.salesforce.com", "client-id", "client-secret");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("Salesforce_API");
+            assertThat(template.baseUrl()).contains("salesforce.com");
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+            OAuth2ClientConfig auth = (OAuth2ClientConfig) template.auth();
+            assertThat(auth.clientId()).isEqualTo("client-id");
+        }
+
+        @Test
+        @DisplayName("sapS4Hana should create valid template with OAuth2")
+        void sapS4Hana_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.sapS4Hana(
+                    "https://sap-api.example.com", "https://auth.sap.com/token", "client-id", "client-secret");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("SAP_S4HANA_API");
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+        }
+
+        @Test
+        @DisplayName("dynamics365 should create valid template with OAuth2")
+        void dynamics365_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.dynamics365(
+                    "https://myorg.crm.dynamics.com", "tenant-id", "client-id", "client-secret");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("Dynamics365_API");
+            assertThat(template.baseUrl()).contains("dynamics.com");
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+            OAuth2ClientConfig auth = (OAuth2ClientConfig) template.auth();
+            assertThat(auth.tokenUrl()).contains("login.microsoftonline.com");
+        }
+
+        @Test
+        @DisplayName("serviceNow should create valid template with OAuth2")
+        void serviceNow_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.serviceNow(
+                    "https://instance.service-now.com", "client-id", "client-secret");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("ServiceNow_API");
+            assertThat(template.baseUrl()).contains("service-now.com");
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+        }
+
+        @Test
+        @DisplayName("workday should create valid template with OAuth2")
+        void workday_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.workday(
+                    "tenant123", "https://auth.workday.com/token", "client-id", "client-secret");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("Workday_API");
+            assertThat(template.baseUrl()).contains("workday.com");
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+        }
+
+        @Test
+        @DisplayName("docuSign should create valid template with OAuth2 Password")
+        void docuSign_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.docuSign(
+                    "account-id", "https://auth.docusign.com/token", "client-id", "user-id", "private-key");
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("DocuSign_API");
+            assertThat(template.baseUrl()).contains("docusign.net");
+            assertThat(template.auth()).isInstanceOf(OAuth2PasswordConfig.class);
+        }
     }
 
     // =========================================================================
@@ -466,45 +622,95 @@ class RestApiCatalogTest {
     @DisplayName("Integration Tests")
     class IntegrationTests {
 
+        private RestApiTemplate[] getAllPredefinedTemplates() {
+            return new RestApiTemplate[] {
+                    // Public APIs (No auth)
+                    RestApiCatalog.jsonPlaceholder(),
+                    RestApiCatalog.restCountries(),
+                    // Basic Auth
+                    RestApiCatalog.httpBinBasicAuth(),
+                    RestApiCatalog.bonitaRemote("http://localhost:8080", "admin", "bpm"),
+                    RestApiCatalog.jira("company.atlassian.net", "user@email.com", "token"),
+                    RestApiCatalog.zendesk("company", "agent@email.com", "token"),
+                    RestApiCatalog.sapBusinessOne("https://sap:50000/b1s/v1", "user", "pass"),
+                    // API Key
+                    RestApiCatalog.openWeatherMap("test-key"),
+                    RestApiCatalog.nasaApod("DEMO_KEY"),
+                    RestApiCatalog.hubSpot("api-key"),
+                    // Bearer
+                    RestApiCatalog.gitHub("test-token"),
+                    RestApiCatalog.slack("xoxb-token"),
+                    RestApiCatalog.notion("secret_token"),
+                    RestApiCatalog.sendGrid("SG.api-key"),
+                    // OAuth2 Client Credentials
+                    RestApiCatalog.salesforce("https://org.salesforce.com", "client", "secret"),
+                    RestApiCatalog.sapS4Hana("https://api.sap.com", "https://auth.sap.com/token", "client", "secret"),
+                    RestApiCatalog.dynamics365("https://org.crm.dynamics.com", "tenant", "client", "secret"),
+                    RestApiCatalog.serviceNow("https://instance.service-now.com", "client", "secret"),
+                    RestApiCatalog.workday("tenant", "https://auth.workday.com/token", "client", "secret"),
+                    // OAuth2 Password
+                    RestApiCatalog.docuSign("account", "https://auth.docusign.com/token", "client", "user", "key")
+            };
+        }
+
         @Test
         @DisplayName("all predefined templates should serialize to valid JSON")
         void all_predefined_templates_should_serialize_to_valid_json() {
-            RestApiTemplate[] templates = {
-                    RestApiCatalog.jsonPlaceholder(),
-                    RestApiCatalog.restCountries(),
-                    RestApiCatalog.openWeatherMap("test-key"),
-                    RestApiCatalog.nasaApod("DEMO_KEY"),
-                    RestApiCatalog.httpBinBasicAuth(),
-                    RestApiCatalog.bonitaRemote("http://localhost:8080", "admin", "bpm"),
-                    RestApiCatalog.gitHub("test-token")
-            };
-
-            for (RestApiTemplate template : templates) {
+            for (RestApiTemplate template : getAllPredefinedTemplates()) {
                 String json = template.toJsonString(MAPPER);
-                assertThat(json).isNotNull().isNotBlank();
-                assertThat(json).startsWith("{");
-                assertThat(json).endsWith("}");
+                assertThat(json)
+                        .as("Template %s should serialize to valid JSON", template.name())
+                        .isNotNull()
+                        .isNotBlank()
+                        .startsWith("{")
+                        .endsWith("}");
             }
         }
 
         @Test
         @DisplayName("all predefined templates should have unique names")
         void all_predefined_templates_should_have_unique_names() {
-            RestApiTemplate[] templates = {
-                    RestApiCatalog.jsonPlaceholder(),
-                    RestApiCatalog.restCountries(),
-                    RestApiCatalog.openWeatherMap("test-key"),
-                    RestApiCatalog.nasaApod("DEMO_KEY"),
-                    RestApiCatalog.httpBinBasicAuth(),
-                    RestApiCatalog.bonitaRemote("http://localhost:8080", "admin", "bpm"),
-                    RestApiCatalog.gitHub("test-token")
-            };
-
-            List<String> names = java.util.Arrays.stream(templates)
+            List<String> names = java.util.Arrays.stream(getAllPredefinedTemplates())
                     .map(RestApiTemplate::name)
                     .toList();
 
             assertThat(names).doesNotHaveDuplicates();
+        }
+
+        @Test
+        @DisplayName("predefined template count should match TemplateType count")
+        void predefined_template_count_should_match_templateType_count() {
+            assertThat(getAllPredefinedTemplates()).hasSize(EXPECTED_TEMPLATE_COUNT);
+        }
+
+        @Test
+        @DisplayName("all templates should have at least one method")
+        void all_templates_should_have_at_least_one_method() {
+            for (RestApiTemplate template : getAllPredefinedTemplates()) {
+                assertThat(template.methods())
+                        .as("Template %s should have at least one method", template.name())
+                        .isNotEmpty();
+            }
+        }
+
+        @Test
+        @DisplayName("all templates should have valid timeout")
+        void all_templates_should_have_valid_timeout() {
+            for (RestApiTemplate template : getAllPredefinedTemplates()) {
+                assertThat(template.timeoutMs())
+                        .as("Template %s should have positive timeout", template.name())
+                        .isPositive();
+            }
+        }
+
+        @Test
+        @DisplayName("all templates should have non-blank baseUrl")
+        void all_templates_should_have_non_blank_baseUrl() {
+            for (RestApiTemplate template : getAllPredefinedTemplates()) {
+                assertThat(template.baseUrl())
+                        .as("Template %s should have non-blank baseUrl", template.name())
+                        .isNotBlank();
+            }
         }
     }
 }

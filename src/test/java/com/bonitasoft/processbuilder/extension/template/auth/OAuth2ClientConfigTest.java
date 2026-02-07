@@ -132,6 +132,15 @@ class OAuth2ClientConfigTest {
         }
 
         @Test
+        @DisplayName("fromString should return HEADER for 'HEADER' (case insensitive)")
+        void fromString_should_return_header_case_insensitive() {
+            assertThat(OAuth2ClientConfig.ClientAuthMethod.fromString("HEADER"))
+                    .isEqualTo(OAuth2ClientConfig.ClientAuthMethod.HEADER);
+            assertThat(OAuth2ClientConfig.ClientAuthMethod.fromString("Header"))
+                    .isEqualTo(OAuth2ClientConfig.ClientAuthMethod.HEADER);
+        }
+
+        @Test
         @DisplayName("fromString should return BODY for other values")
         void fromString_should_return_body_for_other_values() {
             assertThat(OAuth2ClientConfig.ClientAuthMethod.fromString("body"))
@@ -222,22 +231,122 @@ class OAuth2ClientConfigTest {
             assertThat(json.get("clientSecret").asText()).isEqualTo(TEST_CLIENT_SECRET);
             assertThat(json.get("clientAuthMethod").asText()).isEqualTo("header");
         }
+
+        @Test
+        @DisplayName("toJson should exclude scope when blank")
+        void toJson_should_exclude_scope_when_blank() {
+            OAuth2ClientConfig config = new OAuth2ClientConfig(
+                    TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET,
+                    "   ", null, OAuth2ClientConfig.ClientAuthMethod.BODY);
+            JsonNode json = config.toJson(MAPPER);
+
+            assertThat(json.has("scope")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJson should exclude audience when null")
+        void toJson_should_exclude_audience_when_null() {
+            OAuth2ClientConfig config = new OAuth2ClientConfig(
+                    TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
+            JsonNode json = config.toJson(MAPPER);
+
+            assertThat(json.has("audience")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJson should exclude audience when blank")
+        void toJson_should_exclude_audience_when_blank() {
+            OAuth2ClientConfig config = new OAuth2ClientConfig(
+                    TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET,
+                    TEST_SCOPE, "   ", OAuth2ClientConfig.ClientAuthMethod.BODY);
+            JsonNode json = config.toJson(MAPPER);
+
+            assertThat(json.has("audience")).isFalse();
+        }
     }
 
     // =========================================================================
     // toJsonEncrypted() TESTS
     // =========================================================================
 
-    @Test
-    @DisplayName("toJsonEncrypted should include all required fields")
-    void toJsonEncrypted_should_include_all_required_fields() {
-        OAuth2ClientConfig config = new OAuth2ClientConfig(TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
-        JsonNode json = config.toJsonEncrypted(MAPPER);
+    @Nested
+    @DisplayName("toJsonEncrypted() Tests")
+    class ToJsonEncryptedTests {
 
-        assertThat(json.has("authType")).isTrue();
-        assertThat(json.has("tokenUrl")).isTrue();
-        assertThat(json.has("clientId")).isTrue();
-        assertThat(json.has("clientSecret")).isTrue();
+        @Test
+        @DisplayName("toJsonEncrypted should include all required fields")
+        void toJsonEncrypted_should_include_all_required_fields() {
+            OAuth2ClientConfig config = new OAuth2ClientConfig(TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
+            JsonNode json = config.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("authType")).isTrue();
+            assertThat(json.has("tokenUrl")).isTrue();
+            assertThat(json.has("clientId")).isTrue();
+            assertThat(json.has("clientSecret")).isTrue();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should include scope when not blank")
+        void toJsonEncrypted_should_include_scope_when_not_blank() {
+            OAuth2ClientConfig config = new OAuth2ClientConfig(
+                    TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_SCOPE);
+            JsonNode json = config.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("scope")).isTrue();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should exclude scope when null")
+        void toJsonEncrypted_should_exclude_scope_when_null() {
+            OAuth2ClientConfig config = new OAuth2ClientConfig(
+                    TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
+            JsonNode json = config.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("scope")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should exclude scope when blank")
+        void toJsonEncrypted_should_exclude_scope_when_blank() {
+            OAuth2ClientConfig config = new OAuth2ClientConfig(
+                    TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET,
+                    "   ", null, OAuth2ClientConfig.ClientAuthMethod.BODY);
+            JsonNode json = config.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("scope")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should include audience when not blank")
+        void toJsonEncrypted_should_include_audience_when_not_blank() {
+            OAuth2ClientConfig config = new OAuth2ClientConfig(
+                    TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET,
+                    TEST_SCOPE, TEST_AUDIENCE, OAuth2ClientConfig.ClientAuthMethod.BODY);
+            JsonNode json = config.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("audience")).isTrue();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should exclude audience when null")
+        void toJsonEncrypted_should_exclude_audience_when_null() {
+            OAuth2ClientConfig config = new OAuth2ClientConfig(
+                    TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
+            JsonNode json = config.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("audience")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should exclude audience when blank")
+        void toJsonEncrypted_should_exclude_audience_when_blank() {
+            OAuth2ClientConfig config = new OAuth2ClientConfig(
+                    TEST_TOKEN_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET,
+                    TEST_SCOPE, "   ", OAuth2ClientConfig.ClientAuthMethod.BODY);
+            JsonNode json = config.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("audience")).isFalse();
+        }
     }
 
     // =========================================================================

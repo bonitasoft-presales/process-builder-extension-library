@@ -89,13 +89,33 @@ class RestApiTemplateTest {
         }
 
         @Test
-        @DisplayName("should default timeoutMs to 30000 when zero or negative")
-        void should_default_timeoutMs_when_invalid() {
+        @DisplayName("should default timeoutMs to 30000 when zero")
+        void should_default_timeoutMs_when_zero() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
                     0, true, NoAuthConfig.INSTANCE, null, null);
 
             assertThat(template.timeoutMs()).isEqualTo(30000);
+        }
+
+        @Test
+        @DisplayName("should default timeoutMs to 30000 when negative")
+        void should_default_timeoutMs_when_negative() {
+            RestApiTemplate template = new RestApiTemplate(
+                    TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
+                    -1, true, NoAuthConfig.INSTANCE, null, null);
+
+            assertThat(template.timeoutMs()).isEqualTo(30000);
+        }
+
+        @Test
+        @DisplayName("should preserve timeoutMs when positive")
+        void should_preserve_timeoutMs_when_positive() {
+            RestApiTemplate template = new RestApiTemplate(
+                    TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
+                    15000, true, NoAuthConfig.INSTANCE, null, null);
+
+            assertThat(template.timeoutMs()).isEqualTo(15000);
         }
 
         @Test
@@ -353,18 +373,71 @@ class RestApiTemplateTest {
     // toJsonEncrypted() TESTS
     // =========================================================================
 
+    @Nested
+    @DisplayName("toJsonEncrypted() Tests")
+    class ToJsonEncryptedTests {
+
+        @Test
+        @DisplayName("toJsonEncrypted should include auth field")
+        void toJsonEncrypted_should_include_auth() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .auth(new BasicAuthConfig("user", "pass"))
+                    .build();
+
+            JsonNode json = template.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("auth")).isTrue();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should include headers when not empty")
+        void toJsonEncrypted_should_include_headers() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .header("X-Test", "value")
+                    .build();
+
+            JsonNode json = template.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("headers")).isTrue();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should include methods when not empty")
+        void toJsonEncrypted_should_include_methods() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .addMethod("Test", "GET", "/test")
+                    .build();
+
+            JsonNode json = template.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("methods")).isTrue();
+        }
+    }
+
+    // =========================================================================
+    // toJsonStringEncrypted() TESTS
+    // =========================================================================
+
     @Test
-    @DisplayName("toJsonEncrypted should include auth field")
-    void toJsonEncrypted_should_include_auth() {
+    @DisplayName("toJsonStringEncrypted should return valid JSON string")
+    void toJsonStringEncrypted_should_return_valid_json_string() {
         RestApiTemplate template = RestApiTemplate.builder()
                 .name(TEST_NAME)
                 .baseUrl(TEST_BASE_URL)
                 .auth(new BasicAuthConfig("user", "pass"))
                 .build();
 
-        JsonNode json = template.toJsonEncrypted(MAPPER);
+        String json = template.toJsonStringEncrypted(MAPPER);
 
-        assertThat(json.has("auth")).isTrue();
+        assertThat(json).isNotNull().isNotBlank();
+        assertThat(json).startsWith("{");
+        assertThat(json).endsWith("}");
     }
 
     // =========================================================================
@@ -492,6 +565,82 @@ class RestApiTemplateTest {
             JsonNode json = method.toJson(MAPPER);
 
             assertThat(json.has("bodyTemplate")).isTrue();
+        }
+
+        @Test
+        @DisplayName("toJson should exclude bodyTemplate when null")
+        void toJson_should_exclude_bodyTemplate_when_null() {
+            RestApiTemplate.Method method = new RestApiTemplate.Method(
+                    "Get", "Get", null, "GET", "/get",
+                    null, null, null);
+            JsonNode json = method.toJson(MAPPER);
+
+            assertThat(json.has("bodyTemplate")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJson should exclude bodyTemplate when blank")
+        void toJson_should_exclude_bodyTemplate_when_blank() {
+            RestApiTemplate.Method method = new RestApiTemplate.Method(
+                    "Get", "Get", null, "GET", "/get",
+                    null, null, "   ");
+            JsonNode json = method.toJson(MAPPER);
+
+            assertThat(json.has("bodyTemplate")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJson should include headers when not empty")
+        void toJson_should_include_headers_when_not_empty() {
+            RestApiTemplate.Method method = new RestApiTemplate.Method(
+                    "Test", "Test", null, "GET", "/test",
+                    null, Map.of("X-Custom", "value"), null);
+            JsonNode json = method.toJson(MAPPER);
+
+            assertThat(json.has("headers")).isTrue();
+            assertThat(json.get("headers").get("X-Custom").asText()).isEqualTo("value");
+        }
+
+        @Test
+        @DisplayName("toJson should exclude headers when empty")
+        void toJson_should_exclude_headers_when_empty() {
+            RestApiTemplate.Method method = new RestApiTemplate.Method(
+                    "Test", "Test", null, "GET", "/test",
+                    null, null, null);
+            JsonNode json = method.toJson(MAPPER);
+
+            assertThat(json.has("headers")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJson should exclude queryParams when empty")
+        void toJson_should_exclude_queryParams_when_empty() {
+            RestApiTemplate.Method method = new RestApiTemplate.Method(
+                    "Test", "Test", null, "GET", "/test",
+                    null, null, null);
+            JsonNode json = method.toJson(MAPPER);
+
+            assertThat(json.has("queryParams")).isFalse();
+        }
+
+        @Test
+        @DisplayName("should default queryParams to empty map when null")
+        void should_default_queryParams_to_empty_map_when_null() {
+            RestApiTemplate.Method method = new RestApiTemplate.Method(
+                    "Test", "Test", null, "GET", "/test",
+                    null, null, null);
+
+            assertThat(method.queryParams()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("should default headers to empty map when null")
+        void should_default_headers_to_empty_map_when_null() {
+            RestApiTemplate.Method method = new RestApiTemplate.Method(
+                    "Test", "Test", null, "GET", "/test",
+                    null, null, null);
+
+            assertThat(method.headers()).isEmpty();
         }
 
         @Test
