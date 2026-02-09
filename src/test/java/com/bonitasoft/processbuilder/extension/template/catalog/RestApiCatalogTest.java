@@ -615,6 +615,491 @@ class RestApiCatalogTest {
     }
 
     // =========================================================================
+    // TEMPLATE DEFINITIONS TESTS
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Template Definitions Tests")
+    class TemplateDefinitionsTests {
+
+        private static final int EXPECTED_TEMPLATE_DEFINITION_COUNT = 31;
+
+        @Test
+        @DisplayName("getAllTemplateDefinitions should return expected count")
+        void getAllTemplateDefinitions_should_return_expected_count() {
+            List<RestApiTemplate> definitions = RestApiCatalog.getAllTemplateDefinitions();
+
+            assertThat(definitions).hasSize(EXPECTED_TEMPLATE_DEFINITION_COUNT);
+        }
+
+        @Test
+        @DisplayName("getAllTemplateDefinitions should return unmodifiable list")
+        void getAllTemplateDefinitions_should_return_unmodifiable_list() {
+            List<RestApiTemplate> definitions = RestApiCatalog.getAllTemplateDefinitions();
+
+            assertThatThrownBy(() -> definitions.add(RestApiCatalog.jsonPlaceholder()))
+                    .isInstanceOf(UnsupportedOperationException.class);
+        }
+
+        @Test
+        @DisplayName("all template definitions should have isTemplate=true")
+        void all_template_definitions_should_have_isTemplate_true() {
+            for (RestApiTemplate template : RestApiCatalog.getAllTemplateDefinitions()) {
+                assertThat(template.isTemplate())
+                        .as("Template %s should have isTemplate=true", template.name())
+                        .isTrue();
+            }
+        }
+
+        @Test
+        @DisplayName("all template definitions should have templateVersion")
+        void all_template_definitions_should_have_templateVersion() {
+            for (RestApiTemplate template : RestApiCatalog.getAllTemplateDefinitions()) {
+                assertThat(template.templateVersion())
+                        .as("Template %s should have templateVersion", template.name())
+                        .isNotNull()
+                        .isNotBlank();
+            }
+        }
+
+        @Test
+        @DisplayName("all template definitions should have unique names")
+        void all_template_definitions_should_have_unique_names() {
+            List<String> names = RestApiCatalog.getAllTemplateDefinitions().stream()
+                    .map(RestApiTemplate::name)
+                    .toList();
+
+            assertThat(names).doesNotHaveDuplicates();
+        }
+
+        @Test
+        @DisplayName("all template definitions should have methods")
+        void all_template_definitions_should_have_methods() {
+            for (RestApiTemplate template : RestApiCatalog.getAllTemplateDefinitions()) {
+                assertThat(template.methods())
+                        .as("Template %s should have at least one method", template.name())
+                        .isNotEmpty();
+            }
+        }
+
+        @Test
+        @DisplayName("all template definitions should serialize to valid JSON")
+        void all_template_definitions_should_serialize_to_valid_json() {
+            for (RestApiTemplate template : RestApiCatalog.getAllTemplateDefinitions()) {
+                String json = template.toJsonString(MAPPER);
+                assertThat(json)
+                        .as("Template %s should serialize to valid JSON", template.name())
+                        .isNotNull()
+                        .isNotBlank()
+                        .startsWith("{")
+                        .endsWith("}");
+            }
+        }
+
+        @Test
+        @DisplayName("all template definitions JSON should include isTemplate field")
+        void all_template_definitions_json_should_include_isTemplate_field() throws Exception {
+            for (RestApiTemplate template : RestApiCatalog.getAllTemplateDefinitions()) {
+                String json = template.toJsonString(MAPPER);
+                assertThat(json)
+                        .as("Template %s JSON should include isTemplate", template.name())
+                        .contains("\"isTemplate\":true");
+            }
+        }
+    }
+
+    // =========================================================================
+    // GENERIC AUTH TYPE TEMPLATES TESTS
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Generic Auth Type Template Tests")
+    class GenericAuthTypeTemplateTests {
+
+        @Test
+        @DisplayName("templateNoAuth should create valid template")
+        void templateNoAuth_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateNoAuth();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_REST_API_NO_AUTH");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(NoAuthConfig.class);
+            assertThat(template.requiredFields()).contains("baseUrl");
+            assertThat(template.baseUrl()).isEqualTo("{{baseUrl}}");
+        }
+
+        @Test
+        @DisplayName("templateBasicAuth should create valid template")
+        void templateBasicAuth_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateBasicAuth();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_REST_API_BASIC_AUTH");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BasicAuthConfig.class);
+            assertThat(template.requiredFields()).contains("baseUrl", "username", "password");
+        }
+
+        @Test
+        @DisplayName("templateBearerToken should create valid template")
+        void templateBearerToken_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateBearerToken();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_REST_API_BEARER_TOKEN");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BearerAuthConfig.class);
+            assertThat(template.requiredFields()).contains("baseUrl", "token");
+        }
+
+        @Test
+        @DisplayName("templateApiKey should create valid template")
+        void templateApiKey_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateApiKey();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_REST_API_KEY");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(ApiKeyAuthConfig.class);
+            assertThat(template.requiredFields()).contains("baseUrl", "keyName", "keyValue");
+        }
+
+        @Test
+        @DisplayName("templateOAuth2ClientCredentials should create valid template")
+        void templateOAuth2ClientCredentials_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateOAuth2ClientCredentials();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_OAUTH2_CLIENT_CREDENTIALS");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+            assertThat(template.requiredFields()).contains("baseUrl", "tokenUrl", "clientId", "clientSecret");
+        }
+
+        @Test
+        @DisplayName("templateOAuth2Password should create valid template")
+        void templateOAuth2Password_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateOAuth2Password();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_OAUTH2_PASSWORD");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(OAuth2PasswordConfig.class);
+            assertThat(template.requiredFields()).contains("baseUrl", "tokenUrl", "clientId", "username", "password");
+        }
+
+        @Test
+        @DisplayName("templateCustomHeaders should create valid template")
+        void templateCustomHeaders_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateCustomHeaders();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_REST_API_CUSTOM_HEADERS");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(NoAuthConfig.class);
+            assertThat(template.requiredFields()).contains("baseUrl", "authValue");
+            assertThat(template.headers()).containsKey("X-Custom-Auth");
+            assertThat(template.headers()).containsKey("X-API-Version");
+        }
+    }
+
+    // =========================================================================
+    // SERVICE-SPECIFIC TEMPLATES TESTS
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Service-Specific Template Tests")
+    class ServiceSpecificTemplateTests {
+
+        @Test
+        @DisplayName("templateJsonPlaceholder should create valid template")
+        void templateJsonPlaceholder_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateJsonPlaceholder();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_JSONPlaceholder");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.baseUrl()).isEqualTo("https://jsonplaceholder.typicode.com");
+            assertThat(template.methods()).hasSizeGreaterThan(5);
+        }
+
+        @Test
+        @DisplayName("templateRestCountries should create valid template")
+        void templateRestCountries_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateRestCountries();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_RESTCountries");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.baseUrl()).contains("restcountries.com");
+        }
+
+        @Test
+        @DisplayName("templateOpenWeatherMap should create valid template")
+        void templateOpenWeatherMap_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateOpenWeatherMap();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_OpenWeatherMap");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(ApiKeyAuthConfig.class);
+            assertThat(template.requiredFields()).contains("keyValue");
+        }
+
+        @Test
+        @DisplayName("templateExchangeRate should create valid template")
+        void templateExchangeRate_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateExchangeRate();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_ExchangeRate");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.baseUrl()).contains("exchangerate-api.com");
+        }
+
+        @Test
+        @DisplayName("templateIPGeolocation should create valid template")
+        void templateIPGeolocation_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateIPGeolocation();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_IPGeolocation");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.baseUrl()).contains("ip-api.com");
+        }
+
+        @Test
+        @DisplayName("templateCompaniesHouseUK should create valid template")
+        void templateCompaniesHouseUK_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateCompaniesHouseUK();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_CompaniesHouseUK");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BasicAuthConfig.class);
+            assertThat(template.requiredFields()).contains("username");
+        }
+
+        @Test
+        @DisplayName("templateVIESVat should create valid template")
+        void templateVIESVat_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateVIESVat();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_VIES_VAT");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.baseUrl()).contains("ec.europa.eu");
+        }
+
+        @Test
+        @DisplayName("templateClearbit should create valid template")
+        void templateClearbit_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateClearbit();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_Clearbit");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BearerAuthConfig.class);
+            assertThat(template.requiredFields()).contains("token");
+        }
+
+        @Test
+        @DisplayName("templateAbstractEmailValidation should create valid template")
+        void templateAbstractEmailValidation_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateAbstractEmailValidation();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_AbstractEmailValidation");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(ApiKeyAuthConfig.class);
+        }
+
+        @Test
+        @DisplayName("templateNumVerify should create valid template")
+        void templateNumVerify_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateNumVerify();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_NumVerify");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(ApiKeyAuthConfig.class);
+        }
+
+        @Test
+        @DisplayName("templateAlphaVantage should create valid template")
+        void templateAlphaVantage_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateAlphaVantage();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_AlphaVantage");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(ApiKeyAuthConfig.class);
+            assertThat(template.methods()).hasSizeGreaterThan(3);
+        }
+
+        @Test
+        @DisplayName("templateSapS4Hana should create valid template")
+        void templateSapS4Hana_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateSapS4Hana();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_SAP_S4HANA");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BasicAuthConfig.class);
+            assertThat(template.requiredFields()).contains("sapHost", "sapClient", "username", "password");
+            assertThat(template.headers()).containsKey("sap-client");
+        }
+
+        @Test
+        @DisplayName("templateHubSpot should create valid template")
+        void templateHubSpot_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateHubSpot();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_HubSpot");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BearerAuthConfig.class);
+            assertThat(template.requiredFields()).contains("token");
+        }
+
+        @Test
+        @DisplayName("templateMicrosoftGraph should create valid template")
+        void templateMicrosoftGraph_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateMicrosoftGraph();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_Microsoft_Graph");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+            assertThat(template.requiredFields()).contains("tenantId", "clientId", "clientSecret");
+        }
+
+        @Test
+        @DisplayName("templateServiceNow should create valid template")
+        void templateServiceNow_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateServiceNow();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_ServiceNow");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BasicAuthConfig.class);
+            assertThat(template.requiredFields()).contains("instanceName", "username", "password");
+        }
+
+        @Test
+        @DisplayName("templateDocuSign should create valid template")
+        void templateDocuSign_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateDocuSign();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_DocuSign");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+            assertThat(template.requiredFields()).contains("environment", "accountId", "clientId", "clientSecret");
+        }
+
+        @Test
+        @DisplayName("templateStripe should create valid template")
+        void templateStripe_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateStripe();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_Stripe");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BearerAuthConfig.class);
+            assertThat(template.requiredFields()).contains("token");
+            assertThat(template.headers()).containsEntry("Content-Type", "application/x-www-form-urlencoded");
+        }
+
+        @Test
+        @DisplayName("templateSlack should create valid template")
+        void templateSlack_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateSlack();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_Slack");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BearerAuthConfig.class);
+            assertThat(template.baseUrl()).isEqualTo("https://slack.com/api");
+        }
+
+        @Test
+        @DisplayName("templateGoogleDrive should create valid template")
+        void templateGoogleDrive_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateGoogleDrive();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_Google_Drive");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+            assertThat(template.requiredFields()).contains("clientId", "clientSecret");
+        }
+
+        @Test
+        @DisplayName("templateJira should create valid template")
+        void templateJira_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateJira();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_Jira");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BasicAuthConfig.class);
+            assertThat(template.requiredFields()).contains("domain", "username", "password");
+        }
+
+        @Test
+        @DisplayName("templateOneDrive should create valid template")
+        void templateOneDrive_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateOneDrive();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_Microsoft_OneDrive");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+            assertThat(template.requiredFields()).contains("tenantId", "clientId", "clientSecret");
+        }
+
+        @Test
+        @DisplayName("templateSalesforce should create valid template")
+        void templateSalesforce_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateSalesforce();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_Salesforce");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(OAuth2ClientConfig.class);
+            assertThat(template.requiredFields()).contains("instanceUrl", "consumerKey", "consumerSecret");
+        }
+
+        @Test
+        @DisplayName("templateAlfresco should create valid template")
+        void templateAlfresco_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateAlfresco();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_Alfresco");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BasicAuthConfig.class);
+            assertThat(template.requiredFields()).contains("alfrescoHost", "username", "password");
+        }
+
+        @Test
+        @DisplayName("templateBonitaUniversal should create valid template with 30 methods")
+        void templateBonitaUniversal_should_create_valid_template() {
+            RestApiTemplate template = RestApiCatalog.templateBonitaUniversal();
+
+            assertThat(template).isNotNull();
+            assertThat(template.name()).isEqualTo("TEMPLATE_Bonita_Universal");
+            assertThat(template.isTemplate()).isTrue();
+            assertThat(template.auth()).isInstanceOf(BasicAuthConfig.class);
+            assertThat(template.requiredFields()).contains("bonitaUrl", "username", "password");
+            assertThat(template.methods()).hasSize(30);
+            assertThat(template.verifySsl()).isFalse();
+        }
+    }
+
+    // =========================================================================
     // INTEGRATION TESTS - ALL TEMPLATES VALID JSON
     // =========================================================================
 

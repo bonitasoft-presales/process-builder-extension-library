@@ -41,7 +41,8 @@ class RestApiTemplateTest {
         void should_create_instance_with_required_parameters() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
-                    30000, true, NoAuthConfig.INSTANCE, null, null);
+                    30000, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null);
 
             assertThat(template.name()).isEqualTo(TEST_NAME);
             assertThat(template.displayName()).isEqualTo(TEST_DISPLAY_NAME);
@@ -53,7 +54,8 @@ class RestApiTemplateTest {
         void should_throw_npe_for_null_name() {
             assertThatThrownBy(() -> new RestApiTemplate(
                     null, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
-                    30000, true, NoAuthConfig.INSTANCE, null, null))
+                    30000, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null))
                     .isInstanceOf(NullPointerException.class)
                     .hasMessageContaining("Name");
         }
@@ -63,7 +65,8 @@ class RestApiTemplateTest {
         void should_throw_npe_for_null_baseUrl() {
             assertThatThrownBy(() -> new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, null,
-                    30000, true, NoAuthConfig.INSTANCE, null, null))
+                    30000, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null))
                     .isInstanceOf(NullPointerException.class)
                     .hasMessageContaining("Base URL");
         }
@@ -73,7 +76,8 @@ class RestApiTemplateTest {
         void should_default_displayName_to_name_when_null() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, null, TEST_DESCRIPTION, TEST_BASE_URL,
-                    30000, true, NoAuthConfig.INSTANCE, null, null);
+                    30000, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null);
 
             assertThat(template.displayName()).isEqualTo(TEST_NAME);
         }
@@ -83,7 +87,8 @@ class RestApiTemplateTest {
         void should_default_displayName_to_name_when_blank() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, "   ", TEST_DESCRIPTION, TEST_BASE_URL,
-                    30000, true, NoAuthConfig.INSTANCE, null, null);
+                    30000, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null);
 
             assertThat(template.displayName()).isEqualTo(TEST_NAME);
         }
@@ -93,7 +98,8 @@ class RestApiTemplateTest {
         void should_default_timeoutMs_when_zero() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
-                    0, true, NoAuthConfig.INSTANCE, null, null);
+                    0, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null);
 
             assertThat(template.timeoutMs()).isEqualTo(30000);
         }
@@ -103,7 +109,8 @@ class RestApiTemplateTest {
         void should_default_timeoutMs_when_negative() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
-                    -1, true, NoAuthConfig.INSTANCE, null, null);
+                    -1, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null);
 
             assertThat(template.timeoutMs()).isEqualTo(30000);
         }
@@ -113,7 +120,8 @@ class RestApiTemplateTest {
         void should_preserve_timeoutMs_when_positive() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
-                    15000, true, NoAuthConfig.INSTANCE, null, null);
+                    15000, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null);
 
             assertThat(template.timeoutMs()).isEqualTo(15000);
         }
@@ -123,7 +131,8 @@ class RestApiTemplateTest {
         void should_default_auth_to_noAuth_when_null() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
-                    30000, true, null, null, null);
+                    30000, true, null, null, null,
+                    false, null, null);
 
             assertThat(template.auth()).isEqualTo(NoAuthConfig.INSTANCE);
         }
@@ -133,7 +142,8 @@ class RestApiTemplateTest {
         void should_default_headers_when_null() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
-                    30000, true, NoAuthConfig.INSTANCE, null, null);
+                    30000, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null);
 
             assertThat(template.headers()).containsKey("Accept");
             assertThat(template.headers()).containsKey("Content-Type");
@@ -144,7 +154,8 @@ class RestApiTemplateTest {
         void should_make_headers_immutable() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
-                    30000, true, NoAuthConfig.INSTANCE, Map.of("X-Custom", "value"), null);
+                    30000, true, NoAuthConfig.INSTANCE, Map.of("X-Custom", "value"), null,
+                    false, null, null);
 
             assertThatThrownBy(() -> template.headers().put("NEW", "value"))
                     .isInstanceOf(UnsupportedOperationException.class);
@@ -155,7 +166,8 @@ class RestApiTemplateTest {
         void should_default_methods_to_empty_list_when_null() {
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
-                    30000, true, NoAuthConfig.INSTANCE, null, null);
+                    30000, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null);
 
             assertThat(template.methods()).isEmpty();
         }
@@ -166,10 +178,166 @@ class RestApiTemplateTest {
             RestApiTemplate.Method method = new RestApiTemplate.Method("Get", "Get", "/");
             RestApiTemplate template = new RestApiTemplate(
                     TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
-                    30000, true, NoAuthConfig.INSTANCE, null, List.of(method));
+                    30000, true, NoAuthConfig.INSTANCE, null, List.of(method),
+                    false, null, null);
 
             assertThatThrownBy(() -> template.methods().add(method))
                     .isInstanceOf(UnsupportedOperationException.class);
+        }
+    }
+
+    // =========================================================================
+    // TEMPLATE-SPECIFIC FIELD TESTS
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Template-Specific Field Tests")
+    class TemplateSpecificFieldTests {
+
+        @Test
+        @DisplayName("should default isTemplate to false")
+        void should_default_isTemplate_to_false() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .build();
+
+            assertThat(template.isTemplate()).isFalse();
+        }
+
+        @Test
+        @DisplayName("should set isTemplate to true with asTemplate()")
+        void should_set_isTemplate_with_asTemplate() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .build();
+
+            assertThat(template.isTemplate()).isTrue();
+        }
+
+        @Test
+        @DisplayName("should default templateVersion to 2.0 when isTemplate is true")
+        void should_default_templateVersion_when_isTemplate() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .build();
+
+            assertThat(template.templateVersion()).isEqualTo("2.0");
+        }
+
+        @Test
+        @DisplayName("should preserve custom templateVersion")
+        void should_preserve_custom_templateVersion() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .templateVersion("3.0")
+                    .build();
+
+            assertThat(template.templateVersion()).isEqualTo("3.0");
+        }
+
+        @Test
+        @DisplayName("should not default templateVersion when isTemplate is false")
+        void should_not_default_templateVersion_when_not_template() {
+            RestApiTemplate template = new RestApiTemplate(
+                    TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
+                    30000, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, null);
+
+            // When not a template, templateVersion remains null
+            assertThat(template.templateVersion()).isNull();
+        }
+
+        @Test
+        @DisplayName("should default requiredFields to empty list when null")
+        void should_default_requiredFields_to_empty_list() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .build();
+
+            assertThat(template.requiredFields()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("should add single required field")
+        void should_add_single_required_field() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .requiredField("baseUrl")
+                    .requiredField("token")
+                    .build();
+
+            assertThat(template.requiredFields()).containsExactly("baseUrl", "token");
+        }
+
+        @Test
+        @DisplayName("should add multiple required fields from list")
+        void should_add_required_fields_from_list() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .requiredFields(List.of("baseUrl", "username", "password"))
+                    .build();
+
+            assertThat(template.requiredFields()).containsExactly("baseUrl", "username", "password");
+        }
+
+        @Test
+        @DisplayName("should add multiple required fields from varargs")
+        void should_add_required_fields_from_varargs() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .requiredFields("baseUrl", "clientId", "clientSecret")
+                    .build();
+
+            assertThat(template.requiredFields()).containsExactly("baseUrl", "clientId", "clientSecret");
+        }
+
+        @Test
+        @DisplayName("should make requiredFields immutable")
+        void should_make_requiredFields_immutable() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .requiredField("baseUrl")
+                    .build();
+
+            assertThatThrownBy(() -> template.requiredFields().add("newField"))
+                    .isInstanceOf(UnsupportedOperationException.class);
+        }
+
+        @Test
+        @DisplayName("builder asTemplate should return builder for chaining")
+        void builder_asTemplate_should_return_builder() {
+            RestApiTemplate.Builder builder = RestApiTemplate.builder();
+            assertThat(builder.asTemplate()).isSameAs(builder);
+        }
+
+        @Test
+        @DisplayName("builder templateVersion should return builder for chaining")
+        void builder_templateVersion_should_return_builder() {
+            RestApiTemplate.Builder builder = RestApiTemplate.builder();
+            assertThat(builder.templateVersion("1.0")).isSameAs(builder);
+        }
+
+        @Test
+        @DisplayName("builder requiredField should return builder for chaining")
+        void builder_requiredField_should_return_builder() {
+            RestApiTemplate.Builder builder = RestApiTemplate.builder();
+            assertThat(builder.requiredField("field")).isSameAs(builder);
         }
     }
 
@@ -278,6 +446,44 @@ class RestApiTemplateTest {
             assertThat(builder.verifySsl(true)).isSameAs(builder);
             assertThat(builder.auth(NoAuthConfig.INSTANCE)).isSameAs(builder);
         }
+
+        @Test
+        @DisplayName("builder should add method with full configuration")
+        void builder_should_add_method_with_full_configuration() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .addMethod("CreateResource", "Create Resource", "Creates a new resource",
+                            "POST", "/resources", Map.of("format", "json"), "{\"name\": \"{{name}}\"}")
+                    .build();
+
+            assertThat(template.methods()).hasSize(1);
+            RestApiTemplate.Method method = template.methods().get(0);
+            assertThat(method.name()).isEqualTo("CreateResource");
+            assertThat(method.displayName()).isEqualTo("Create Resource");
+            assertThat(method.description()).isEqualTo("Creates a new resource");
+            assertThat(method.httpMethod()).isEqualTo("POST");
+            assertThat(method.path()).isEqualTo("/resources");
+            assertThat(method.queryParams()).containsEntry("format", "json");
+            assertThat(method.bodyTemplate()).isEqualTo("{\"name\": \"{{name}}\"}");
+        }
+
+        @Test
+        @DisplayName("builder should add Method record directly")
+        void builder_should_add_method_record_directly() {
+            RestApiTemplate.Method method = new RestApiTemplate.Method(
+                    "GetData", "Get Data", "Retrieve data", "GET", "/data",
+                    Map.of("limit", "10"), Map.of("X-Custom", "value"), null);
+
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .addMethod(method)
+                    .build();
+
+            assertThat(template.methods()).hasSize(1);
+            assertThat(template.methods().get(0)).isEqualTo(method);
+        }
     }
 
     // =========================================================================
@@ -346,6 +552,103 @@ class RestApiTemplateTest {
             assertThat(json.get("baseUrl").asText()).isEqualTo(TEST_BASE_URL);
             assertThat(json.get("timeoutMs").asInt()).isEqualTo(15000);
             assertThat(json.get("verifySsl").asBoolean()).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJson should include isTemplate when true")
+        void toJson_should_include_isTemplate_when_true() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .build();
+            JsonNode json = template.toJson(MAPPER);
+
+            assertThat(json.has("isTemplate")).isTrue();
+            assertThat(json.get("isTemplate").asBoolean()).isTrue();
+        }
+
+        @Test
+        @DisplayName("toJson should not include isTemplate when false")
+        void toJson_should_not_include_isTemplate_when_false() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .build();
+            JsonNode json = template.toJson(MAPPER);
+
+            assertThat(json.has("isTemplate")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJson should include templateVersion when isTemplate")
+        void toJson_should_include_templateVersion_when_isTemplate() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .templateVersion("3.0")
+                    .build();
+            JsonNode json = template.toJson(MAPPER);
+
+            assertThat(json.has("templateVersion")).isTrue();
+            assertThat(json.get("templateVersion").asText()).isEqualTo("3.0");
+        }
+
+        @Test
+        @DisplayName("toJson should default templateVersion to 2.0 when null")
+        void toJson_should_default_templateVersion_when_null() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .build();
+            JsonNode json = template.toJson(MAPPER);
+
+            assertThat(json.get("templateVersion").asText()).isEqualTo("2.0");
+        }
+
+        @Test
+        @DisplayName("toJson should include requiredFields when isTemplate and not empty")
+        void toJson_should_include_requiredFields_when_template() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .requiredFields("baseUrl", "token")
+                    .build();
+            JsonNode json = template.toJson(MAPPER);
+
+            assertThat(json.has("requiredFields")).isTrue();
+            assertThat(json.get("requiredFields").isArray()).isTrue();
+            assertThat(json.get("requiredFields").size()).isEqualTo(2);
+            assertThat(json.get("requiredFields").get(0).asText()).isEqualTo("baseUrl");
+            assertThat(json.get("requiredFields").get(1).asText()).isEqualTo("token");
+        }
+
+        @Test
+        @DisplayName("toJson should not include requiredFields when empty")
+        void toJson_should_not_include_requiredFields_when_empty() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .build();
+            JsonNode json = template.toJson(MAPPER);
+
+            assertThat(json.has("requiredFields")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJson should not include requiredFields when not a template")
+        void toJson_should_not_include_requiredFields_when_not_template() {
+            RestApiTemplate template = new RestApiTemplate(
+                    TEST_NAME, TEST_DISPLAY_NAME, TEST_DESCRIPTION, TEST_BASE_URL,
+                    30000, true, NoAuthConfig.INSTANCE, null, null,
+                    false, null, List.of("field1", "field2"));
+            JsonNode json = template.toJson(MAPPER);
+
+            assertThat(json.has("requiredFields")).isFalse();
         }
     }
 
@@ -417,6 +720,66 @@ class RestApiTemplateTest {
             JsonNode json = template.toJsonEncrypted(MAPPER);
 
             assertThat(json.has("methods")).isTrue();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should include isTemplate when true")
+        void toJsonEncrypted_should_include_isTemplate_when_true() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .build();
+
+            JsonNode json = template.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("isTemplate")).isTrue();
+            assertThat(json.get("isTemplate").asBoolean()).isTrue();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should not include isTemplate when false")
+        void toJsonEncrypted_should_not_include_isTemplate_when_false() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .build();
+
+            JsonNode json = template.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("isTemplate")).isFalse();
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should include templateVersion when isTemplate")
+        void toJsonEncrypted_should_include_templateVersion_when_isTemplate() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .templateVersion("3.0")
+                    .build();
+
+            JsonNode json = template.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("templateVersion")).isTrue();
+            assertThat(json.get("templateVersion").asText()).isEqualTo("3.0");
+        }
+
+        @Test
+        @DisplayName("toJsonEncrypted should include requiredFields when isTemplate and not empty")
+        void toJsonEncrypted_should_include_requiredFields_when_template() {
+            RestApiTemplate template = RestApiTemplate.builder()
+                    .name(TEST_NAME)
+                    .baseUrl(TEST_BASE_URL)
+                    .asTemplate()
+                    .requiredFields("baseUrl", "username", "password")
+                    .build();
+
+            JsonNode json = template.toJsonEncrypted(MAPPER);
+
+            assertThat(json.has("requiredFields")).isTrue();
+            assertThat(json.get("requiredFields").size()).isEqualTo(3);
         }
     }
 
