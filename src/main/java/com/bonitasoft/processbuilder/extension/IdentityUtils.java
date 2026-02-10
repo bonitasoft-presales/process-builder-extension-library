@@ -1,6 +1,7 @@
 package com.bonitasoft.processbuilder.extension;
 
 import org.bonitasoft.engine.api.IdentityAPI;
+import org.bonitasoft.engine.identity.ContactData;
 import org.bonitasoft.engine.identity.User;
 import org.bonitasoft.engine.identity.UserSearchDescriptor;
 import org.bonitasoft.engine.search.SearchOptionsBuilder;
@@ -11,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.bonitasoft.processbuilder.records.UserRecord;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -44,20 +47,20 @@ public final class IdentityUtils {
     }
 
     /**
-     * Gets the manager ID of a given user.
+     * Retrieves a Bonita User object by its ID.
      *
-     * @param userId      The ID of the user whose manager is to be retrieved
+     * @param userId      The ID of the user to retrieve
      * @param identityAPI The Bonita Identity API instance
-     * @return The manager's user ID, or {@code null} if not found or on error
+     * @return The User object, or {@code null} if not found, invalid ID, or on error
      */
-    public static Long getUserManager(Long userId, IdentityAPI identityAPI) {
+    public static User getUser(Long userId, IdentityAPI identityAPI) {
         if (!isValidId(userId)) {
             LOGGER.warn("Invalid userId provided: {}", userId);
             return null;
         }
 
         try {
-            LOGGER.debug("Searching for manager of user ID: {}", userId);
+            LOGGER.debug("Retrieving user with ID: {}", userId);
 
             User user = identityAPI.getUser(userId);
             if (user == null) {
@@ -65,20 +68,93 @@ public final class IdentityUtils {
                 return null;
             }
 
-            Long managerId = user.getManagerUserId();
-
-            if (!isValidId(managerId)) {
-                LOGGER.debug("User ID {} has no manager assigned (managerId: {})", userId, managerId);
-                return null;
-            }
-
-            LOGGER.debug("Found manager ID {} for user ID {}", managerId, userId);
-            return managerId;
+            LOGGER.debug("Found user '{}' for ID {}", user.getUserName(), userId);
+            return user;
 
         } catch (Exception e) {
-            LOGGER.error("Error getting manager for user ID {}: {}", userId, e.getMessage(), e);
+            LOGGER.error("Error retrieving user for ID {}: {}", userId, e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * Retrieves a UserRecord by user ID.
+     * <p>
+     * Converts the Bonita User object into a lightweight {@link UserRecord} containing
+     * the essential fields: id, userName, fullName, firstName, lastName, and email.
+     * The email is retrieved from the user's professional contact data.
+     * </p>
+     *
+     * @param userId      The ID of the user to retrieve
+     * @param identityAPI The Bonita Identity API instance
+     * @return A {@link UserRecord} with user data, or {@code null} if user not found or on error
+     */
+    public static UserRecord getUserRecord(Long userId, IdentityAPI identityAPI) {
+        User user = getUser(userId, identityAPI);
+        if (user == null) {
+            return null;
+        }
+
+        String firstName = user.getFirstName();
+        String lastName = user.getLastName();
+        String fullName = buildFullName(firstName, lastName);
+
+        String email = null;
+        try {
+            ContactData contactData = identityAPI.getUserContactData(userId, false);
+            if (contactData != null) {
+                email = contactData.getEmail();
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Could not retrieve contact data for user ID {}: {}", userId, e.getMessage());
+        }
+
+        return new UserRecord(userId, user.getUserName(), fullName, firstName, lastName, email);
+    }
+
+    /**
+     * Builds a full name from first and last name components.
+     *
+     * @param firstName First name (can be null)
+     * @param lastName  Last name (can be null)
+     * @return Full name string, or empty string if both are null/blank
+     */
+    private static String buildFullName(String firstName, String lastName) {
+        StringBuilder sb = new StringBuilder();
+        if (firstName != null && !firstName.isBlank()) {
+            sb.append(firstName);
+        }
+        if (lastName != null && !lastName.isBlank()) {
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            sb.append(lastName);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Gets the manager ID of a given user.
+     *
+     * @param userId      The ID of the user whose manager is to be retrieved
+     * @param identityAPI The Bonita Identity API instance
+     * @return The manager's user ID, or {@code null} if not found or on error
+     */
+    public static Long getUserManager(Long userId, IdentityAPI identityAPI) {
+        User user = getUser(userId, identityAPI);
+        if (user == null) {
+            return null;
+        }
+
+        Long managerId = user.getManagerUserId();
+
+        if (!isValidId(managerId)) {
+            LOGGER.debug("User ID {} has no manager assigned (managerId: {})", userId, managerId);
+            return null;
+        }
+
+        LOGGER.debug("Found manager ID {} for user ID {}", managerId, userId);
+        return managerId;
     }
 
     /**

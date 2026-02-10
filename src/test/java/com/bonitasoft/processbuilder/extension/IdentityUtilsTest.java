@@ -1,7 +1,9 @@
 package com.bonitasoft.processbuilder.extension;
 
+import com.bonitasoft.processbuilder.records.UserRecord;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.bonitasoft.engine.api.IdentityAPI;
+import org.bonitasoft.engine.identity.ContactData;
 import org.bonitasoft.engine.identity.User;
 import org.bonitasoft.engine.search.SearchOptions;
 import org.bonitasoft.engine.search.SearchResult;
@@ -190,6 +192,308 @@ class IdentityUtilsTest {
 
         // Then null should be returned
         assertThat(result).isNull();
+    }
+
+    // -------------------------------------------------------------------------
+    // getUser Tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * Tests that getUser returns the User when a valid userId is provided.
+     */
+    @Test
+    @DisplayName("getUser should return User when user exists")
+    void getUser_should_return_user_when_user_exists() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+        when(user.getUserName()).thenReturn("john.doe");
+
+        User result = IdentityUtils.getUser(USER_ID, identityAPI);
+
+        assertThat(result).isNotNull().isSameAs(user);
+        verify(identityAPI).getUser(USER_ID);
+    }
+
+    /**
+     * Tests that getUser returns null when the API returns null.
+     */
+    @Test
+    @DisplayName("getUser should return null when user not found")
+    void getUser_should_return_null_when_user_not_found() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(null);
+
+        User result = IdentityUtils.getUser(USER_ID, identityAPI);
+
+        assertThat(result).isNull();
+    }
+
+    /**
+     * Tests that getUser returns null for null userId.
+     */
+    @Test
+    @DisplayName("getUser should return null for null userId")
+    void getUser_should_return_null_for_null_userId() {
+        User result = IdentityUtils.getUser(null, identityAPI);
+
+        assertThat(result).isNull();
+        verifyNoInteractions(identityAPI);
+    }
+
+    /**
+     * Tests that getUser returns null for zero userId.
+     */
+    @Test
+    @DisplayName("getUser should return null for zero userId")
+    void getUser_should_return_null_for_zero_userId() {
+        User result = IdentityUtils.getUser(0L, identityAPI);
+
+        assertThat(result).isNull();
+        verifyNoInteractions(identityAPI);
+    }
+
+    /**
+     * Tests that getUser returns null for negative userId.
+     */
+    @Test
+    @DisplayName("getUser should return null for negative userId")
+    void getUser_should_return_null_for_negative_userId() {
+        User result = IdentityUtils.getUser(-1L, identityAPI);
+
+        assertThat(result).isNull();
+        verifyNoInteractions(identityAPI);
+    }
+
+    /**
+     * Tests that getUser returns null when an exception occurs.
+     */
+    @Test
+    @DisplayName("getUser should return null when exception occurs")
+    void getUser_should_return_null_when_exception_occurs() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenThrow(new RuntimeException("API failure"));
+
+        User result = IdentityUtils.getUser(USER_ID, identityAPI);
+
+        assertThat(result).isNull();
+    }
+
+    /**
+     * Tests that getUser does not call the API when userId is invalid.
+     */
+    @Test
+    @DisplayName("getUser should not call API for invalid userId")
+    void getUser_should_not_call_api_for_invalid_userId() {
+        IdentityUtils.getUser(0L, identityAPI);
+        IdentityUtils.getUser(-5L, identityAPI);
+        IdentityUtils.getUser(null, identityAPI);
+
+        verifyNoInteractions(identityAPI);
+    }
+
+    // -------------------------------------------------------------------------
+    // getUserRecord Tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * Tests that getUserRecord returns a fully populated UserRecord.
+     */
+    @Test
+    @DisplayName("getUserRecord should return UserRecord with all fields populated")
+    void getUserRecord_should_return_record_with_all_fields() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+        when(user.getUserName()).thenReturn("john.doe");
+        when(user.getFirstName()).thenReturn("John");
+        when(user.getLastName()).thenReturn("Doe");
+
+        ContactData contactData = mock(ContactData.class);
+        when(contactData.getEmail()).thenReturn("john@example.com");
+        when(identityAPI.getUserContactData(USER_ID, false)).thenReturn(contactData);
+
+        UserRecord result = IdentityUtils.getUserRecord(USER_ID, identityAPI);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isEqualTo(USER_ID);
+        assertThat(result.userName()).isEqualTo("john.doe");
+        assertThat(result.fullName()).isEqualTo("John Doe");
+        assertThat(result.firstName()).isEqualTo("John");
+        assertThat(result.lastName()).isEqualTo("Doe");
+        assertThat(result.email()).isEqualTo("john@example.com");
+    }
+
+    /**
+     * Tests that getUserRecord returns null when user not found.
+     */
+    @Test
+    @DisplayName("getUserRecord should return null when user not found")
+    void getUserRecord_should_return_null_when_user_not_found() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(null);
+
+        UserRecord result = IdentityUtils.getUserRecord(USER_ID, identityAPI);
+
+        assertThat(result).isNull();
+    }
+
+    /**
+     * Tests that getUserRecord returns null for invalid userId.
+     */
+    @Test
+    @DisplayName("getUserRecord should return null for invalid userId")
+    void getUserRecord_should_return_null_for_invalid_userId() {
+        UserRecord result = IdentityUtils.getUserRecord(0L, identityAPI);
+
+        assertThat(result).isNull();
+        verifyNoInteractions(identityAPI);
+    }
+
+    /**
+     * Tests that getUserRecord handles null contact data.
+     */
+    @Test
+    @DisplayName("getUserRecord should set email to null when contact data is null")
+    void getUserRecord_should_set_null_email_when_contact_data_null() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+        when(user.getUserName()).thenReturn("john.doe");
+        when(user.getFirstName()).thenReturn("John");
+        when(user.getLastName()).thenReturn("Doe");
+        when(identityAPI.getUserContactData(USER_ID, false)).thenReturn(null);
+
+        UserRecord result = IdentityUtils.getUserRecord(USER_ID, identityAPI);
+
+        assertThat(result).isNotNull();
+        assertThat(result.email()).isNull();
+    }
+
+    /**
+     * Tests that getUserRecord handles contact data exception gracefully.
+     */
+    @Test
+    @DisplayName("getUserRecord should handle contact data exception gracefully")
+    void getUserRecord_should_handle_contact_data_exception() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+        when(user.getUserName()).thenReturn("john.doe");
+        when(user.getFirstName()).thenReturn("John");
+        when(user.getLastName()).thenReturn("Doe");
+        when(identityAPI.getUserContactData(USER_ID, false)).thenThrow(new RuntimeException("Contact error"));
+
+        UserRecord result = IdentityUtils.getUserRecord(USER_ID, identityAPI);
+
+        assertThat(result).isNotNull();
+        assertThat(result.userName()).isEqualTo("john.doe");
+        assertThat(result.email()).isNull();
+    }
+
+    /**
+     * Tests that getUserRecord handles null firstName.
+     */
+    @Test
+    @DisplayName("getUserRecord should build fullName with only lastName when firstName is null")
+    void getUserRecord_should_handle_null_firstName() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+        when(user.getUserName()).thenReturn("john.doe");
+        when(user.getFirstName()).thenReturn(null);
+        when(user.getLastName()).thenReturn("Doe");
+        when(identityAPI.getUserContactData(USER_ID, false)).thenReturn(null);
+
+        UserRecord result = IdentityUtils.getUserRecord(USER_ID, identityAPI);
+
+        assertThat(result).isNotNull();
+        assertThat(result.fullName()).isEqualTo("Doe");
+        assertThat(result.firstName()).isNull();
+    }
+
+    /**
+     * Tests that getUserRecord handles blank firstName.
+     */
+    @Test
+    @DisplayName("getUserRecord should build fullName with only lastName when firstName is blank")
+    void getUserRecord_should_handle_blank_firstName() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+        when(user.getUserName()).thenReturn("john.doe");
+        when(user.getFirstName()).thenReturn("   ");
+        when(user.getLastName()).thenReturn("Doe");
+        when(identityAPI.getUserContactData(USER_ID, false)).thenReturn(null);
+
+        UserRecord result = IdentityUtils.getUserRecord(USER_ID, identityAPI);
+
+        assertThat(result).isNotNull();
+        assertThat(result.fullName()).isEqualTo("Doe");
+    }
+
+    /**
+     * Tests that getUserRecord handles null lastName.
+     */
+    @Test
+    @DisplayName("getUserRecord should build fullName with only firstName when lastName is null")
+    void getUserRecord_should_handle_null_lastName() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+        when(user.getUserName()).thenReturn("john.doe");
+        when(user.getFirstName()).thenReturn("John");
+        when(user.getLastName()).thenReturn(null);
+        when(identityAPI.getUserContactData(USER_ID, false)).thenReturn(null);
+
+        UserRecord result = IdentityUtils.getUserRecord(USER_ID, identityAPI);
+
+        assertThat(result).isNotNull();
+        assertThat(result.fullName()).isEqualTo("John");
+        assertThat(result.lastName()).isNull();
+    }
+
+    /**
+     * Tests that getUserRecord handles blank lastName.
+     */
+    @Test
+    @DisplayName("getUserRecord should build fullName with only firstName when lastName is blank")
+    void getUserRecord_should_handle_blank_lastName() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+        when(user.getUserName()).thenReturn("john.doe");
+        when(user.getFirstName()).thenReturn("John");
+        when(user.getLastName()).thenReturn("  ");
+        when(identityAPI.getUserContactData(USER_ID, false)).thenReturn(null);
+
+        UserRecord result = IdentityUtils.getUserRecord(USER_ID, identityAPI);
+
+        assertThat(result).isNotNull();
+        assertThat(result.fullName()).isEqualTo("John");
+    }
+
+    /**
+     * Tests that getUserRecord handles both names null.
+     */
+    @Test
+    @DisplayName("getUserRecord should return empty fullName when both names are null")
+    void getUserRecord_should_return_empty_fullName_when_both_null() throws Exception {
+        when(identityAPI.getUser(USER_ID)).thenReturn(user);
+        when(user.getUserName()).thenReturn("john.doe");
+        when(user.getFirstName()).thenReturn(null);
+        when(user.getLastName()).thenReturn(null);
+        when(identityAPI.getUserContactData(USER_ID, false)).thenReturn(null);
+
+        UserRecord result = IdentityUtils.getUserRecord(USER_ID, identityAPI);
+
+        assertThat(result).isNotNull();
+        assertThat(result.fullName()).isEmpty();
+    }
+
+    /**
+     * Tests that getUserRecord returns null for negative userId.
+     */
+    @Test
+    @DisplayName("getUserRecord should return null for negative userId")
+    void getUserRecord_should_return_null_for_negative_userId() {
+        UserRecord result = IdentityUtils.getUserRecord(-10L, identityAPI);
+
+        assertThat(result).isNull();
+        verifyNoInteractions(identityAPI);
+    }
+
+    /**
+     * Tests that getUserRecord returns null for null userId.
+     */
+    @Test
+    @DisplayName("getUserRecord should return null for null userId")
+    void getUserRecord_should_return_null_for_null_userId() {
+        UserRecord result = IdentityUtils.getUserRecord(null, identityAPI);
+
+        assertThat(result).isNull();
+        verifyNoInteractions(identityAPI);
     }
 
     // -------------------------------------------------------------------------
