@@ -47,17 +47,18 @@ class ObjectsManagementOptionTypeTest {
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("Should contain exactly four constants (CATEGORY, CONFIGURATION, GENERIC_ENTRY, ENTITY_TYPE)")
-    void enum_should_have_four_constants() {
+    @DisplayName("Should contain exactly five constants (CATEGORY, CONFIGURATION, GENERIC_ENTRY, ENTITY_TYPE, AI_PROVIDER)")
+    void enum_should_have_five_constants() {
         // Given & When: Get array of enum values
         ObjectsManagementOptionType[] types = ObjectsManagementOptionType.values();
 
-        // Then the enum should have exactly four constants and their names must be correct
-        assertEquals(4, types.length, "The enum should contain exactly 4 constants.");
+        // Then the enum should have exactly five constants and their names must be correct
+        assertEquals(5, types.length, "The enum should contain exactly 5 constants.");
         assertEquals("CATEGORY", ObjectsManagementOptionType.CATEGORY.name());
         assertEquals("CONFIGURATION", ObjectsManagementOptionType.CONFIGURATION.name());
         assertEquals("GENERIC_ENTRY", ObjectsManagementOptionType.GENERIC_ENTRY.name());
         assertEquals("ENTITY_TYPE", ObjectsManagementOptionType.ENTITY_TYPE.name());
+        assertEquals("AI_PROVIDER", ObjectsManagementOptionType.AI_PROVIDER.name());
     }
 
     @Test
@@ -93,6 +94,9 @@ class ObjectsManagementOptionTypeTest {
         assertTrue(ObjectsManagementOptionType.isValid("GENERIC_eNtRY"));
         assertTrue(ObjectsManagementOptionType.isValid("ENTiTY_TYPE  "));
         assertTrue(ObjectsManagementOptionType.isValid(" ENTITy_TYPE "));
+        assertTrue(ObjectsManagementOptionType.isValid("AI_PROVIDER"));
+        assertTrue(ObjectsManagementOptionType.isValid("ai_provider"));
+        assertTrue(ObjectsManagementOptionType.isValid("  AI_PROVIDER  "));
 
         // Failure cases (invalid, null, empty, blank)
         assertFalse(ObjectsManagementOptionType.isValid("INVALID_TYPE"));
@@ -149,16 +153,18 @@ class ObjectsManagementOptionTypeTest {
     @Test
     void getAllData_shouldReturnCorrectMap() {
         Map<String, String> data = ObjectsManagementOptionType.getAllData();
-        assertEquals(4, data.size());
+        assertEquals(5, data.size());
         assertTrue(data.containsKey("Category"));
+        assertTrue(data.containsKey("AiProvider"));
         assertThrows(UnsupportedOperationException.class, () -> data.clear());
     }
 
     @Test
     void getAllKeysList_shouldReturnCorrectList() {
         List<String> keys = ObjectsManagementOptionType.getAllKeysList();
-        assertEquals(4, keys.size());
+        assertEquals(5, keys.size());
         assertTrue(keys.contains("Configuration"));
+        assertTrue(keys.contains("AiProvider"));
         assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 
@@ -174,6 +180,7 @@ class ObjectsManagementOptionTypeTest {
         assertEquals("Configuration", ObjectsManagementOptionType.CONFIGURATION.getKey());
         assertEquals("GenericEntry", ObjectsManagementOptionType.GENERIC_ENTRY.getKey());
         assertEquals("EntityType", ObjectsManagementOptionType.ENTITY_TYPE.getKey());
+        assertEquals("AiProvider", ObjectsManagementOptionType.AI_PROVIDER.getKey());
     }
 
     /**
@@ -192,6 +199,8 @@ class ObjectsManagementOptionTypeTest {
             ObjectsManagementOptionType.GENERIC_ENTRY.getDescription());
         assertEquals("Defines the classification ID for a master data record.",
             ObjectsManagementOptionType.ENTITY_TYPE.getDescription());
+        assertEquals("Represents an AI provider configuration for external AI/LLM service integration.",
+            ObjectsManagementOptionType.AI_PROVIDER.getDescription());
     }
 
     /**
@@ -206,6 +215,7 @@ class ObjectsManagementOptionTypeTest {
         String smtpWithSpaces = "  CONFIGURATION  ";
         String genericEntry = "GENERIC_ENTRY";
         String entityType = "ENTITY_TYPE";
+        String aiProvider = "AI_PROVIDER";
 
         // When validating these names
         // Then all should return true
@@ -215,6 +225,7 @@ class ObjectsManagementOptionTypeTest {
         assertTrue(ObjectsManagementOptionType.isValid(smtpWithSpaces));
         assertTrue(ObjectsManagementOptionType.isValid(genericEntry));
         assertTrue(ObjectsManagementOptionType.isValid(entityType));
+        assertTrue(ObjectsManagementOptionType.isValid(aiProvider));
     }
 
     /**
@@ -247,18 +258,20 @@ class ObjectsManagementOptionTypeTest {
 
         // Then it should contain all enum constants
         assertNotNull(data);
-        assertEquals(4, data.size());
+        assertEquals(5, data.size());
 
         // Verify all keys and descriptions are present
         assertTrue(data.containsKey("Category"));
         assertTrue(data.containsKey("Configuration"));
         assertTrue(data.containsKey("GenericEntry"));
         assertTrue(data.containsKey("EntityType"));
+        assertTrue(data.containsKey("AiProvider"));
 
         assertEquals("Represents a classification or grouping category.", data.get("Category"));
         assertEquals("Represents a system configuration object containing application settings and parameters.", data.get("Configuration"));
         assertEquals("Represents a single master data record or lookup table entry.", data.get("GenericEntry"));
         assertEquals("Defines the classification ID for a master data record.", data.get("EntityType"));
+        assertEquals("Represents an AI provider configuration for external AI/LLM service integration.", data.get("AiProvider"));
 
         // Verify the map is unmodifiable
         assertThrows(UnsupportedOperationException.class, () -> data.put("NEW_KEY", "New Value"));
@@ -276,13 +289,14 @@ class ObjectsManagementOptionTypeTest {
 
         // Then it should contain all enum constant keys
         assertNotNull(keys);
-        assertEquals(4, keys.size());
+        assertEquals(5, keys.size());
 
         // Verify all keys are present
         assertTrue(keys.contains("Category"));
         assertTrue(keys.contains("Configuration"));
         assertTrue(keys.contains("GenericEntry"));
         assertTrue(keys.contains("EntityType"));
+        assertTrue(keys.contains("AiProvider"));
 
         // Verify the list is unmodifiable
         assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW_KEY"));
@@ -298,15 +312,16 @@ class ObjectsManagementOptionTypeTest {
         // When calling values()
         ObjectsManagementOptionType[] values = ObjectsManagementOptionType.values();
 
-        // Then it should return all 4 constants
+        // Then it should return all 5 constants
         assertNotNull(values);
-        assertEquals(4, values.length);
+        assertEquals(5, values.length);
 
         // Verify the order and presence of all constants
         assertEquals(ObjectsManagementOptionType.CATEGORY, values[0]);
         assertEquals(ObjectsManagementOptionType.CONFIGURATION, values[1]);
         assertEquals(ObjectsManagementOptionType.GENERIC_ENTRY, values[2]);
         assertEquals(ObjectsManagementOptionType.ENTITY_TYPE, values[3]);
+        assertEquals(ObjectsManagementOptionType.AI_PROVIDER, values[4]);
     }
 
     /**
@@ -325,6 +340,8 @@ class ObjectsManagementOptionTypeTest {
             ObjectsManagementOptionType.valueOf("GENERIC_ENTRY"));
         assertEquals(ObjectsManagementOptionType.ENTITY_TYPE,
             ObjectsManagementOptionType.valueOf("ENTITY_TYPE"));
+        assertEquals(ObjectsManagementOptionType.AI_PROVIDER,
+            ObjectsManagementOptionType.valueOf("AI_PROVIDER"));
     }
 
     /**

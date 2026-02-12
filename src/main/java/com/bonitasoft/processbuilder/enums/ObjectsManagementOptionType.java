@@ -43,7 +43,14 @@ public enum ObjectsManagementOptionType {
      * of master data or lookup object the entry represents, allowing a single table
      * structure (GENERIC_ENTRY) to contain multiple logical object types.
      */
-    ENTITY_TYPE("EntityType", "Defines the classification ID for a master data record.");
+    ENTITY_TYPE("EntityType", "Defines the classification ID for a master data record."),
+
+    /**
+     * Represents an AI provider configuration for integrating external AI/LLM services.
+     * This object holds connection details, model selection, and credential information
+     * for AI providers such as OpenAI, Anthropic, or Azure OpenAI.
+     */
+    AI_PROVIDER("AiProvider", "Represents an AI provider configuration for external AI/LLM service integration.");
 
     private final String key;
     private final String description;
