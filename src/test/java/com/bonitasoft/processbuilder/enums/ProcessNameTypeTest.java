@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class ProcessNameTypeTest {
 
-    private static final int EXPECTED_ENUM_COUNT = 13;
+    private static final int EXPECTED_ENUM_COUNT = 18;
     private static final Map<String, String> EXPECTED_DATA;
 
     static {
@@ -29,8 +29,8 @@ class ProcessNameTypeTest {
     // =========================================================================
 
     @Test
-    @DisplayName("Should contain exactly thirteen process name constants")
-    void should_contain_thirteen_constants() {
+    @DisplayName("Should contain exactly eighteen process name constants")
+    void should_contain_eighteen_constants() {
         assertEquals(EXPECTED_ENUM_COUNT, ProcessNameType.values().length);
         assertEquals(EXPECTED_ENUM_COUNT, EXPECTED_DATA.size());
     }
@@ -130,6 +130,41 @@ class ProcessNameTypeTest {
         assertTrue(ProcessNameType.SERVICE_CONNECTOR_ACTION_RUNNER.getDescription().contains("service connector actions"));
     }
 
+    @Test
+    @DisplayName("MASTER_PROCESS_LIFECYCLE_MANAGER constant should have the correct key and description")
+    void masterProcessLifecycleManager_should_have_correct_values() {
+        assertEquals("MasterProcessLifecycleManager", ProcessNameType.MASTER_PROCESS_LIFECYCLE_MANAGER.getKey());
+        assertTrue(ProcessNameType.MASTER_PROCESS_LIFECYCLE_MANAGER.getDescription().contains("periodic restart"));
+    }
+
+    @Test
+    @DisplayName("MASTER_PROCESS_EXECUTION_ORCHESTRATOR constant should have the correct key and description")
+    void masterProcessExecutionOrchestrator_should_have_correct_values() {
+        assertEquals("MasterProcessExecutionOrchestrator", ProcessNameType.MASTER_PROCESS_EXECUTION_ORCHESTRATOR.getKey());
+        assertTrue(ProcessNameType.MASTER_PROCESS_EXECUTION_ORCHESTRATOR.getDescription().contains("master process executions"));
+    }
+
+    @Test
+    @DisplayName("ASYNCHRONOUS_TIMER_SYNCHRONIZATION_JOB constant should have the correct key and description")
+    void asynchronousTimerSynchronizationJob_should_have_correct_values() {
+        assertEquals("AsynchronousTimerSynchronizationJob", ProcessNameType.ASYNCHRONOUS_TIMER_SYNCHRONIZATION_JOB.getKey());
+        assertTrue(ProcessNameType.ASYNCHRONOUS_TIMER_SYNCHRONIZATION_JOB.getDescription().contains("timer event triggers"));
+    }
+
+    @Test
+    @DisplayName("TECHNICAL_CASE_CANCELLATION constant should have the correct key and description")
+    void technicalCaseCancellation_should_have_correct_values() {
+        assertEquals("TechnicalCaseCancellation", ProcessNameType.TECHNICAL_CASE_CANCELLATION.getKey());
+        assertTrue(ProcessNameType.TECHNICAL_CASE_CANCELLATION.getDescription().contains("BPA process instance"));
+    }
+
+    @Test
+    @DisplayName("TEST_REST_API_CONFIGURATION constant should have the correct key and description")
+    void testRestApiConfiguration_should_have_correct_values() {
+        assertEquals("TestRestAPIConfiguration", ProcessNameType.TEST_REST_API_CONFIGURATION.getKey());
+        assertTrue(ProcessNameType.TEST_REST_API_CONFIGURATION.getDescription().contains("REST API connector test"));
+    }
+
     // =========================================================================
     // getAllData TESTS
     // =========================================================================
@@ -150,6 +185,11 @@ class ProcessNameTypeTest {
         assertTrue(EXPECTED_DATA.containsKey("SmtpConnector"));
         assertTrue(EXPECTED_DATA.containsKey("Process"));
         assertTrue(EXPECTED_DATA.containsKey("ServiceConnectorActionRunner"));
+        assertTrue(EXPECTED_DATA.containsKey("MasterProcessLifecycleManager"));
+        assertTrue(EXPECTED_DATA.containsKey("MasterProcessExecutionOrchestrator"));
+        assertTrue(EXPECTED_DATA.containsKey("AsynchronousTimerSynchronizationJob"));
+        assertTrue(EXPECTED_DATA.containsKey("TechnicalCaseCancellation"));
+        assertTrue(EXPECTED_DATA.containsKey("TestRestAPIConfiguration"));
 
         assertThrows(UnsupportedOperationException.class, () -> EXPECTED_DATA.put("TestProcess", "Test"));
     }
@@ -164,6 +204,11 @@ class ProcessNameTypeTest {
         assertTrue(data.containsKey("ProcessBuilderInitialization"));
         assertTrue(data.containsKey("SmtpConnector"));
         assertTrue(data.containsKey("ServiceConnectorActionRunner"));
+        assertTrue(data.containsKey("MasterProcessLifecycleManager"));
+        assertTrue(data.containsKey("MasterProcessExecutionOrchestrator"));
+        assertTrue(data.containsKey("AsynchronousTimerSynchronizationJob"));
+        assertTrue(data.containsKey("TechnicalCaseCancellation"));
+        assertTrue(data.containsKey("TestRestAPIConfiguration"));
         assertThrows(UnsupportedOperationException.class, () -> data.clear());
     }
 
@@ -181,6 +226,11 @@ class ProcessNameTypeTest {
         assertTrue(keys.contains("ObjectsManagement"));
         assertTrue(keys.contains("Process"));
         assertTrue(keys.contains("ServiceConnectorActionRunner"));
+        assertTrue(keys.contains("MasterProcessLifecycleManager"));
+        assertTrue(keys.contains("MasterProcessExecutionOrchestrator"));
+        assertTrue(keys.contains("AsynchronousTimerSynchronizationJob"));
+        assertTrue(keys.contains("TechnicalCaseCancellation"));
+        assertTrue(keys.contains("TestRestAPIConfiguration"));
         assertThrows(UnsupportedOperationException.class, () -> keys.add("NEW"));
     }
 
@@ -202,6 +252,11 @@ class ProcessNameTypeTest {
         assertEquals("SmtpConnector", keys.get(10));
         assertEquals("Process", keys.get(11));
         assertEquals("ServiceConnectorActionRunner", keys.get(12));
+        assertEquals("MasterProcessLifecycleManager", keys.get(13));
+        assertEquals("MasterProcessExecutionOrchestrator", keys.get(14));
+        assertEquals("AsynchronousTimerSynchronizationJob", keys.get(15));
+        assertEquals("TechnicalCaseCancellation", keys.get(16));
+        assertEquals("TestRestAPIConfiguration", keys.get(17));
     }
 
     // =========================================================================
@@ -224,6 +279,11 @@ class ProcessNameTypeTest {
         assertTrue(ProcessNameType.isValid("SMTP_CONNECTOR"));
         assertTrue(ProcessNameType.isValid("PROCESS"));
         assertTrue(ProcessNameType.isValid("SERVICE_CONNECTOR_ACTION_RUNNER"));
+        assertTrue(ProcessNameType.isValid("MASTER_PROCESS_LIFECYCLE_MANAGER"));
+        assertTrue(ProcessNameType.isValid("MASTER_PROCESS_EXECUTION_ORCHESTRATOR"));
+        assertTrue(ProcessNameType.isValid("ASYNCHRONOUS_TIMER_SYNCHRONIZATION_JOB"));
+        assertTrue(ProcessNameType.isValid("TECHNICAL_CASE_CANCELLATION"));
+        assertTrue(ProcessNameType.isValid("TEST_REST_API_CONFIGURATION"));
     }
 
     @Test

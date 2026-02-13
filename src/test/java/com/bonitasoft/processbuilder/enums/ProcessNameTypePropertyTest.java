@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.*;
 @Label("ProcessNameType Property-Based Tests")
 class ProcessNameTypePropertyTest {
 
-    private static final int EXPECTED_ENUM_COUNT = 13;
+    private static final int EXPECTED_ENUM_COUNT = 18;
 
     // =========================================================================
     // ENUM INVARIANT PROPERTIES
@@ -188,8 +188,8 @@ class ProcessNameTypePropertyTest {
     // =========================================================================
 
     @Property(tries = 50)
-    @Label("Enum values count should be exactly 13")
-    void enumValuesCountShouldBeExactly13() {
+    @Label("Enum values count should be exactly 18")
+    void enumValuesCountShouldBeExactly18() {
         assertThat(ProcessNameType.values()).hasSize(EXPECTED_ENUM_COUNT);
     }
 
