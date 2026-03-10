@@ -78,8 +78,19 @@ public enum ProcessNameType {
 
     /**
      * Process definition for Service Connector Action Runner.
+     * @deprecated Use {@link #COMMON_ACTION_EXECUTOR} instead. This process is replaced by CommonActionExecutor.
      */
+    @Deprecated(since = "0.0.0.92", forRemoval = true)
     SERVICE_CONNECTOR_ACTION_RUNNER("ServiceConnectorActionRunner", "Process for executing service connector actions such as notifications, REST APIs, and other integrations."),
+
+    /**
+     * Process definition for CommonActionExecutor.
+     * Unified process that handles ALL action types except Form and Redirection.
+     * Replaces both Notifications and ServiceConnectorActionRunner by consolidating
+     * them into a single process that iterates over PBActionContent and delegates
+     * to ExecutionConnector (which acts as a dynamic router).
+     */
+    COMMON_ACTION_EXECUTOR("CommonActionExecutor", "Process for executing all non-form, non-redirection actions (notifications, REST APIs, and future connector types)."),
 
     /**
      * Process definition for the lifecycle manager that periodically restarts the master orchestrator.
