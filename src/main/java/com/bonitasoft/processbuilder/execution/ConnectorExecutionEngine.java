@@ -18,11 +18,11 @@ import java.util.Map;
  * Facade for executing REST connectors.
  * <p>
  * This is the single entry point used by both consumers:
+ * </p>
  * <ul>
  *   <li><b>REST API Extension</b> (ExecuteRestService controller)</li>
  *   <li><b>Custom Bonita Connector</b> (RestExecutionConnector in RestAPIConnector process)</li>
  * </ul>
- * </p>
  * <p>
  * The engine parses the PBConfiguration JSON, resolves the method template,
  * substitutes parameters, normalizes + decrypts authentication, and executes
