@@ -45,6 +45,8 @@ public final class HttpExecutor {
             "^(https?://[^/]+)/bonita/API/.*", Pattern.CASE_INSENSITIVE);
     private static final String BONITA_LOGIN_PATH = "/bonita/loginservice";
     private static final String JSESSIONID_COOKIE = "JSESSIONID";
+    private static final String BONITA_API_TOKEN_COOKIE = "X-Bonita-API-Token";
+    private static final String BONITA_API_TOKEN_HEADER = "X-Bonita-API-Token";
 
     // Shared HttpClient instances for connection pooling
     private static final HttpClient SECURE_CLIENT;
@@ -103,12 +105,15 @@ public final class HttpExecutor {
             Map<String, String> allHeaders = request.buildAllHeaders();
             allHeaders.forEach(httpRequestBuilder::header);
 
-            // Handle Bonita session-based authentication
+            // Handle Bonita session-based authentication (JSESSIONID + CSRF token)
             if (request.auth() != null && isBasicAuth(request.auth()) && isBonitaApiUrl(requestUrl)) {
                 LOGGER.debug("Detected Bonita API URL, using session-based authentication");
-                String sessionCookie = getBonitaSession(requestUrl, request.auth(), request.verifySsl());
-                if (sessionCookie != null) {
-                    httpRequestBuilder.header("Cookie", JSESSIONID_COOKIE + "=" + sessionCookie);
+                CachedSession session = getBonitaSession(requestUrl, request.auth(), request.verifySsl());
+                if (session != null) {
+                    httpRequestBuilder.header("Cookie", JSESSIONID_COOKIE + "=" + session.sessionId());
+                    if (session.apiToken() != null && !session.apiToken().isEmpty()) {
+                        httpRequestBuilder.header(BONITA_API_TOKEN_HEADER, session.apiToken());
+                    }
                 }
             }
 
@@ -189,7 +194,7 @@ public final class HttpExecutor {
         return matcher.matches() ? matcher.group(1) : null;
     }
 
-    private String getBonitaSession(String requestUrl, RestAuthConfig auth, boolean verifySsl) {
+    private CachedSession getBonitaSession(String requestUrl, RestAuthConfig auth, boolean verifySsl) {
         String baseUrl = extractBonitaBaseUrl(requestUrl);
         if (baseUrl == null) return null;
 
@@ -202,24 +207,23 @@ public final class HttpExecutor {
         CachedSession cached = BONITA_SESSION_CACHE.get(cacheKey);
         if (cached != null && !cached.isExpired()) {
             LOGGER.debug("Using cached Bonita session for {}", baseUrl);
-            return cached.value;
+            return cached;
         }
 
         try {
-            String sessionId = loginToBonita(baseUrl, auth, verifySsl);
-            if (sessionId != null) {
-                BONITA_SESSION_CACHE.put(cacheKey,
-                        new CachedSession(sessionId, System.currentTimeMillis() + 25 * 60 * 1000));
+            CachedSession session = loginToBonita(baseUrl, auth, verifySsl);
+            if (session != null) {
+                BONITA_SESSION_CACHE.put(cacheKey, session);
                 LOGGER.info("Bonita session obtained and cached for {}", baseUrl);
             }
-            return sessionId;
+            return session;
         } catch (Exception e) {
             LOGGER.error("Failed to login to Bonita at {}: {}", baseUrl, e.getMessage(), e);
             return null;
         }
     }
 
-    private String loginToBonita(String baseUrl, RestAuthConfig auth, boolean verifySsl) throws Exception {
+    private CachedSession loginToBonita(String baseUrl, RestAuthConfig auth, boolean verifySsl) throws Exception {
         if (!(auth instanceof RestAuthConfig.BasicAuth basicAuth)) {
             LOGGER.error("Bonita login requires Basic auth config");
             return null;
@@ -245,10 +249,25 @@ public final class HttpExecutor {
 
         if (response.statusCode() == 200 || response.statusCode() == 204) {
             List<String> cookies = response.headers().allValues("Set-Cookie");
+            String sessionId = null;
+            String apiToken = null;
+
             for (String cookie : cookies) {
                 if (cookie.startsWith(JSESSIONID_COOKIE + "=")) {
-                    return cookie.split(";")[0].substring(JSESSIONID_COOKIE.length() + 1);
+                    sessionId = cookie.split(";")[0].substring(JSESSIONID_COOKIE.length() + 1);
                 }
+                if (cookie.startsWith(BONITA_API_TOKEN_COOKIE + "=")) {
+                    apiToken = cookie.split(";")[0].substring(BONITA_API_TOKEN_COOKIE.length() + 1);
+                }
+            }
+
+            if (sessionId != null) {
+                if (apiToken == null) {
+                    LOGGER.warn("Bonita login succeeded but no X-Bonita-API-Token cookie found. "
+                            + "POST/PUT/DELETE requests may fail with CSRF 403.");
+                }
+                return new CachedSession(sessionId, apiToken,
+                        System.currentTimeMillis() + 25 * 60 * 1000);
             }
             LOGGER.warn("Bonita login returned {} but no JSESSIONID cookie found", response.statusCode());
         } else {
@@ -346,7 +365,7 @@ public final class HttpExecutor {
         boolean isExpired() { return System.currentTimeMillis() >= expiresAt; }
     }
 
-    private record CachedSession(String value, long expiresAt) {
+    private record CachedSession(String sessionId, String apiToken, long expiresAt) {
         boolean isExpired() { return System.currentTimeMillis() >= expiresAt; }
     }
 
