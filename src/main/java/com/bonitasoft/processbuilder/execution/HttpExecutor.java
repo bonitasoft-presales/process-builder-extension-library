@@ -423,7 +423,9 @@ public final class HttpExecutor {
         String base64Payload = urlEncoder.encodeToString(payload.getBytes(StandardCharsets.UTF_8));
 
         // Parse PEM private key
+        // Handle both real newlines and literal "\n" strings (common in Google SA JSON files)
         String keyContent = privateKeyPem
+                .replace("\\n", "\n")
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replaceAll("\\s", "");

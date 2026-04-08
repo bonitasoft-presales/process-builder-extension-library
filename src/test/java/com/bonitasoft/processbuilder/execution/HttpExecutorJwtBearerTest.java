@@ -60,6 +60,28 @@ class HttpExecutorJwtBearerTest {
         }
 
         @Test
+        void should_handle_literal_backslash_n_in_pem_key() throws Exception {
+            KeyPair kp = generateRsaKeyPair();
+            // Simulate Google SA JSON format: real newlines replaced with literal \n
+            String rawPem = toPem(kp.getPrivate());
+            String googleStylePem = rawPem.replace("\n", "\\n");
+
+            String jwt = HttpExecutor.buildSignedJwt(
+                    "sa@project.iam.gserviceaccount.com", "scope",
+                    "https://oauth2.googleapis.com/token", googleStylePem);
+
+            String[] parts = jwt.split("\\.");
+            assertThat(parts).hasSize(3);
+
+            // Verify signature is still valid
+            byte[] signatureBytes = Base64.getUrlDecoder().decode(parts[2]);
+            Signature verifier = Signature.getInstance("SHA256withRSA");
+            verifier.initVerify(kp.getPublic());
+            verifier.update((parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8));
+            assertThat(verifier.verify(signatureBytes)).isTrue();
+        }
+
+        @Test
         void should_have_correct_header() throws Exception {
             KeyPair kp = generateRsaKeyPair();
             String pem = toPem(kp.getPrivate());
