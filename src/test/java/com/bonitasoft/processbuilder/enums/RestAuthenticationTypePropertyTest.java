@@ -127,7 +127,8 @@ class RestAuthenticationTypePropertyTest {
     void requiresOAuth2TokenExchangeShouldBeConsistent(@ForAll @From("authTypes") RestAuthenticationType type) {
         boolean requires = type.requiresOAuth2TokenExchange();
         if (type == RestAuthenticationType.OAUTH2_CLIENT_CREDENTIALS ||
-            type == RestAuthenticationType.OAUTH2_PASSWORD) {
+            type == RestAuthenticationType.OAUTH2_PASSWORD ||
+            type == RestAuthenticationType.OAUTH2_JWT_BEARER) {
             assertThat(requires).isTrue();
         } else {
             assertThat(requires).isFalse();

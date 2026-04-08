@@ -37,6 +37,7 @@ import java.util.Optional;
         @JsonSubTypes.Type(value = RestAuthConfig.ApiKeyAuth.class, name = "apiKey"),
         @JsonSubTypes.Type(value = RestAuthConfig.OAuth2ClientCredentials.class, name = "oauth2ClientCredentials"),
         @JsonSubTypes.Type(value = RestAuthConfig.OAuth2Password.class, name = "oauth2Password"),
+        @JsonSubTypes.Type(value = RestAuthConfig.OAuth2JwtBearer.class, name = "oauth2JwtBearer"),
         @JsonSubTypes.Type(value = RestAuthConfig.CustomAuth.class, name = "custom")
 })
 public sealed interface RestAuthConfig permits
@@ -46,6 +47,7 @@ public sealed interface RestAuthConfig permits
         RestAuthConfig.ApiKeyAuth,
         RestAuthConfig.OAuth2ClientCredentials,
         RestAuthConfig.OAuth2Password,
+        RestAuthConfig.OAuth2JwtBearer,
         RestAuthConfig.CustomAuth {
 
     /**
@@ -173,6 +175,12 @@ public sealed interface RestAuthConfig permits
                     getTextValue(authNode, "clientSecret", null),
                     getTextValue(authNode, "username", ""),
                     getTextValue(authNode, "password", ""),
+                    getTextValue(authNode, "scope", null)
+            );
+            case "oauth2jwtbearer", "oauth2_jwt_bearer" -> new OAuth2JwtBearer(
+                    getTextValue(authNode, "tokenUrl", ""),
+                    getTextValue(authNode, "serviceAccountEmail", ""),
+                    getTextValue(authNode, "privateKey", ""),
                     getTextValue(authNode, "scope", null)
             );
             case "custom" -> {
@@ -474,6 +482,42 @@ public sealed interface RestAuthConfig permits
             } catch (Exception e) {
                 return value;
             }
+        }
+    }
+
+    /**
+     * OAuth 2.0 JWT Bearer assertion authentication (RFC 7523).
+     * Used for server-to-server authentication with a service account private key
+     * (e.g., Google Service Accounts).
+     *
+     * @param tokenUrl            The token endpoint URL
+     * @param serviceAccountEmail The service account email (JWT issuer)
+     * @param privateKey          The PEM-encoded PKCS#8 private key for signing the JWT
+     * @param scope               The requested scope(s)
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record OAuth2JwtBearer(
+            String tokenUrl,
+            String serviceAccountEmail,
+            String privateKey,
+            String scope
+    ) implements RestAuthConfig {
+
+        public OAuth2JwtBearer {
+            tokenUrl = tokenUrl != null ? tokenUrl : "";
+            serviceAccountEmail = serviceAccountEmail != null ? serviceAccountEmail : "";
+            privateKey = privateKey != null ? privateKey : "";
+        }
+
+        @Override
+        public RestAuthenticationType getAuthType() {
+            return RestAuthenticationType.OAUTH2_JWT_BEARER;
+        }
+
+        @Override
+        public Map<String, String> getAuthHeaders() {
+            // Headers will be set after JWT token exchange by the executor
+            return Collections.emptyMap();
         }
     }
 

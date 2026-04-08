@@ -55,6 +55,13 @@ public enum RestAuthenticationType {
     OAUTH2_PASSWORD("oauth2Password", "OAuth 2.0 Resource Owner Password grant"),
 
     /**
+     * OAuth 2.0 JWT Bearer assertion grant type (RFC 7523).
+     * Used for server-to-server authentication with a service account private key
+     * (e.g., Google Service Accounts).
+     */
+    OAUTH2_JWT_BEARER("oauth2JwtBearer", "OAuth 2.0 JWT Bearer assertion grant (service account)"),
+
+    /**
      * Digest Authentication.
      * More secure than Basic as password is never sent in clear text.
      */
@@ -185,7 +192,7 @@ public enum RestAuthenticationType {
      * @return {@code true} if OAuth2 token exchange is required
      */
     public boolean requiresOAuth2TokenExchange() {
-        return this == OAUTH2_CLIENT_CREDENTIALS || this == OAUTH2_PASSWORD;
+        return this == OAUTH2_CLIENT_CREDENTIALS || this == OAUTH2_PASSWORD || this == OAUTH2_JWT_BEARER;
     }
 
     /**

@@ -120,6 +120,7 @@ public final class AuthPipeline {
                 decryptField(decrypted, "password");
                 decryptField(decrypted, "clientSecret");
             }
+            case "oauth2_jwt_bearer", "oauth2jwtbearer" -> decryptField(decrypted, "privateKey");
             default -> { /* No sensitive fields */ }
         }
 

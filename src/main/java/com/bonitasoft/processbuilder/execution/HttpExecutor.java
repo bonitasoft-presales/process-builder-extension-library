@@ -17,8 +17,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.Signature;
 import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -178,7 +183,8 @@ public final class HttpExecutor {
     private boolean isOAuth2Auth(RestAuthConfig auth) {
         RestAuthenticationType type = auth.getAuthType();
         return type == RestAuthenticationType.OAUTH2_CLIENT_CREDENTIALS
-                || type == RestAuthenticationType.OAUTH2_PASSWORD;
+                || type == RestAuthenticationType.OAUTH2_PASSWORD
+                || type == RestAuthenticationType.OAUTH2_JWT_BEARER;
     }
 
     private boolean isBasicAuth(RestAuthConfig auth) {
@@ -296,6 +302,25 @@ public final class HttpExecutor {
                 return null;
             }
         }
+        if (auth instanceof RestAuthConfig.OAuth2JwtBearer jwtBearer) {
+            String cacheKey = "jwt:" + jwtBearer.serviceAccountEmail() + ":" + jwtBearer.tokenUrl();
+            CachedToken cached = TOKEN_CACHE.get(cacheKey);
+            if (cached != null && !cached.isExpired()) {
+                LOGGER.debug("Using cached OAuth2 JWT Bearer token for {}", jwtBearer.serviceAccountEmail());
+                return cached.value;
+            }
+            try {
+                String token = requestJwtBearerToken(jwtBearer);
+                if (token != null) {
+                    TOKEN_CACHE.put(cacheKey,
+                            new CachedToken(token, System.currentTimeMillis() + 55 * 60 * 1000));
+                }
+                return token;
+            } catch (Exception e) {
+                LOGGER.error("Failed to get OAuth2 JWT Bearer token: {}", e.getMessage(), e);
+                return null;
+            }
+        }
         return null;
     }
 
@@ -333,6 +358,87 @@ public final class HttpExecutor {
 
         LOGGER.error("Failed to get OAuth2 token. Status: {}, Response: {}", response.statusCode(), response.body());
         return null;
+    }
+
+    private String requestJwtBearerToken(RestAuthConfig.OAuth2JwtBearer config) throws Exception {
+        LOGGER.info("Requesting OAuth2 JWT Bearer token from: {}", config.tokenUrl());
+
+        String signedJwt = buildSignedJwt(
+                config.serviceAccountEmail(), config.scope(), config.tokenUrl(), config.privateKey());
+        LOGGER.info("JWT assertion built successfully for service account: {}", config.serviceAccountEmail());
+
+        String body = "grant_type=" + encode("urn:ietf:params:oauth:grant-type:jwt-bearer")
+                + "&assertion=" + encode(signedJwt);
+
+        HttpRequest tokenRequest = HttpRequest.newBuilder()
+                .uri(URI.create(config.tokenUrl()))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .timeout(Duration.ofSeconds(30))
+                .build();
+
+        HttpResponse<String> response = SECURE_CLIENT.send(tokenRequest, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            String responseBody = response.body();
+            int tokenStart = responseBody.indexOf("\"access_token\"");
+            if (tokenStart >= 0) {
+                int valueStart = responseBody.indexOf(":", tokenStart) + 1;
+                int valueEnd = responseBody.indexOf(",", valueStart);
+                if (valueEnd < 0) valueEnd = responseBody.indexOf("}", valueStart);
+                String tokenValue = responseBody.substring(valueStart, valueEnd).trim();
+                if (tokenValue.startsWith("\"")) {
+                    tokenValue = tokenValue.substring(1, tokenValue.length() - 1);
+                }
+                LOGGER.info("OAuth2 JWT Bearer token obtained successfully");
+                return tokenValue;
+            }
+        }
+
+        LOGGER.error("Failed to get JWT Bearer token. Status: {}, Response: {}",
+                response.statusCode(), response.body());
+        return null;
+    }
+
+    /**
+     * Builds a signed JWT (RS256) for the OAuth2 JWT Bearer assertion flow.
+     * Uses only standard Java APIs (java.security, java.util.Base64).
+     */
+    static String buildSignedJwt(String serviceAccountEmail, String scope, String tokenUrl, String privateKeyPem)
+            throws Exception {
+        Base64.Encoder urlEncoder = Base64.getUrlEncoder().withoutPadding();
+
+        // Header
+        String header = "{\"alg\":\"RS256\",\"typ\":\"JWT\"}";
+        String base64Header = urlEncoder.encodeToString(header.getBytes(StandardCharsets.UTF_8));
+
+        // Payload
+        long now = System.currentTimeMillis() / 1000;
+        long exp = now + 3600;
+        String payload = "{\"iss\":\"" + serviceAccountEmail + "\""
+                + ",\"scope\":\"" + (scope != null ? scope : "") + "\""
+                + ",\"aud\":\"" + tokenUrl + "\""
+                + ",\"iat\":" + now
+                + ",\"exp\":" + exp + "}";
+        String base64Payload = urlEncoder.encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+
+        // Parse PEM private key
+        String keyContent = privateKeyPem
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+        byte[] keyBytes = Base64.getDecoder().decode(keyContent);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
+
+        // Sign
+        Signature sig = Signature.getInstance("SHA256withRSA");
+        sig.initSign(privateKey);
+        sig.update((base64Header + "." + base64Payload).getBytes(StandardCharsets.UTF_8));
+        String base64Signature = urlEncoder.encodeToString(sig.sign());
+
+        return base64Header + "." + base64Payload + "." + base64Signature;
     }
 
     // ========================================================================

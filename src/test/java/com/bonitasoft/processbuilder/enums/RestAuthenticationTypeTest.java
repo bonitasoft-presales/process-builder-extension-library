@@ -26,13 +26,14 @@ class RestAuthenticationTypeTest {
     @Test
     void values_shouldContainAllExpectedConstants() {
         RestAuthenticationType[] values = RestAuthenticationType.values();
-        assertEquals(10, values.length);
+        assertEquals(11, values.length);
         assertNotNull(RestAuthenticationType.NONE);
         assertNotNull(RestAuthenticationType.BASIC);
         assertNotNull(RestAuthenticationType.BEARER);
         assertNotNull(RestAuthenticationType.API_KEY);
         assertNotNull(RestAuthenticationType.OAUTH2_CLIENT_CREDENTIALS);
         assertNotNull(RestAuthenticationType.OAUTH2_PASSWORD);
+        assertNotNull(RestAuthenticationType.OAUTH2_JWT_BEARER);
         assertNotNull(RestAuthenticationType.DIGEST);
         assertNotNull(RestAuthenticationType.NTLM);
         assertNotNull(RestAuthenticationType.CERTIFICATE);
@@ -51,6 +52,7 @@ class RestAuthenticationTypeTest {
         assertEquals("apiKey", RestAuthenticationType.API_KEY.getKey());
         assertEquals("oauth2ClientCredentials", RestAuthenticationType.OAUTH2_CLIENT_CREDENTIALS.getKey());
         assertEquals("oauth2Password", RestAuthenticationType.OAUTH2_PASSWORD.getKey());
+        assertEquals("oauth2JwtBearer", RestAuthenticationType.OAUTH2_JWT_BEARER.getKey());
         assertEquals("digest", RestAuthenticationType.DIGEST.getKey());
         assertEquals("ntlm", RestAuthenticationType.NTLM.getKey());
         assertEquals("certificate", RestAuthenticationType.CERTIFICATE.getKey());
@@ -146,6 +148,7 @@ class RestAuthenticationTypeTest {
     void requiresOAuth2TokenExchange_shouldReturnTrueForOAuth2Types() {
         assertTrue(RestAuthenticationType.OAUTH2_CLIENT_CREDENTIALS.requiresOAuth2TokenExchange());
         assertTrue(RestAuthenticationType.OAUTH2_PASSWORD.requiresOAuth2TokenExchange());
+        assertTrue(RestAuthenticationType.OAUTH2_JWT_BEARER.requiresOAuth2TokenExchange());
     }
 
     @Test
@@ -158,6 +161,7 @@ class RestAuthenticationTypeTest {
         assertFalse(RestAuthenticationType.NTLM.requiresOAuth2TokenExchange());
         assertFalse(RestAuthenticationType.CERTIFICATE.requiresOAuth2TokenExchange());
         assertFalse(RestAuthenticationType.CUSTOM.requiresOAuth2TokenExchange());
+        // Note: OAUTH2_JWT_BEARER requires token exchange, tested in the true-case test
     }
 
     // =========================================================================
@@ -176,6 +180,7 @@ class RestAuthenticationTypeTest {
         assertFalse(RestAuthenticationType.BASIC.usesStaticToken());
         assertFalse(RestAuthenticationType.OAUTH2_CLIENT_CREDENTIALS.usesStaticToken());
         assertFalse(RestAuthenticationType.OAUTH2_PASSWORD.usesStaticToken());
+        assertFalse(RestAuthenticationType.OAUTH2_JWT_BEARER.usesStaticToken());
         assertFalse(RestAuthenticationType.DIGEST.usesStaticToken());
         assertFalse(RestAuthenticationType.NTLM.usesStaticToken());
         assertFalse(RestAuthenticationType.CERTIFICATE.usesStaticToken());
@@ -189,7 +194,7 @@ class RestAuthenticationTypeTest {
     @Test
     void getAllData_shouldReturnMapWithAllConstants() {
         Map<String, String> data = RestAuthenticationType.getAllData();
-        assertEquals(10, data.size());
+        assertEquals(11, data.size());
         assertTrue(data.containsKey("none"));
         assertTrue(data.containsKey("basic"));
         assertTrue(data.containsKey("bearer"));
@@ -206,7 +211,7 @@ class RestAuthenticationTypeTest {
     @Test
     void getAllKeysList_shouldReturnListWithAllKeys() {
         List<String> keys = RestAuthenticationType.getAllKeysList();
-        assertEquals(10, keys.size());
+        assertEquals(11, keys.size());
         assertTrue(keys.contains("none"));
         assertTrue(keys.contains("basic"));
         assertTrue(keys.contains("bearer"));
