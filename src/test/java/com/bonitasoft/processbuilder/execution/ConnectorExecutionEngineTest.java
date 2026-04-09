@@ -10,6 +10,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -152,6 +154,73 @@ class ConnectorExecutionEngineTest {
     }
 
     // ========================================================================
+    // Multipart file upload tests
+    // ========================================================================
+
+    @Test
+    void should_build_multipart_body_when_file_content_provided() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "{\"id\":\"abc\"}", RestContentType.JSON, 100L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        String config = """
+                {
+                    "baseUrl": "https://www.googleapis.com",
+                    "methods": [{
+                        "name": "uploadFile", "httpMethod": "POST",
+                        "path": "/upload/drive/v3/files",
+                        "queryParams": {"uploadType": "multipart"}
+                    }],
+                    "auth": {"authType": "none"}
+                }
+                """;
+
+        String fileBase64 = Base64.getEncoder().encodeToString("fake-pdf-bytes".getBytes(StandardCharsets.UTF_8));
+
+        ConnectorRequest request = ConnectorRequest.builder(config)
+                .methodName("uploadFile")
+                .body("{\"name\":\"report.pdf\",\"mimeType\":\"application/pdf\"}")
+                .fileContentBase64(fileBase64)
+                .fileContentType("application/pdf")
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        RestServiceRequest captured = captor.getValue();
+
+        // Should have rawBody (multipart) instead of plain text body
+        assertThat(captured.hasRawBody()).isTrue();
+        assertThat(captured.contentTypeOverride()).startsWith("multipart/related; boundary=");
+
+        // Verify multipart content contains both metadata and file
+        String multipartBody = new String(captured.rawBody(), StandardCharsets.UTF_8);
+        assertThat(multipartBody).contains("application/json");
+        assertThat(multipartBody).contains("\"name\":\"report.pdf\"");
+        assertThat(multipartBody).contains("Content-Type: application/pdf");
+        assertThat(multipartBody).contains("fake-pdf-bytes");
+    }
+
+    @Test
+    void should_not_build_multipart_when_no_file_content() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        ConnectorRequest request = ConnectorRequest.builder(NEW_CONFIG)
+                .methodName("getUsers")
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        assertThat(captor.getValue().hasRawBody()).isFalse();
+        assertThat(captor.getValue().contentTypeOverride()).isNull();
+    }
+
+    // ========================================================================
     // LEGACY structure tests
     // ========================================================================
 
@@ -190,6 +259,234 @@ class ConnectorExecutionEngineTest {
         verify(mockHttpExecutor).execute(captor.capture());
         // Auth should have been resolved through AuthPipeline (normalize + decrypt)
         assertThat(captor.getValue().auth()).isNotNull();
+    }
+
+    // ========================================================================
+    // placeholderConfig tests
+    // ========================================================================
+
+    @Test
+    void should_apply_fixed_placeholder_ignoring_pm_value() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        String config = """
+                {
+                    "baseUrl": "https://api.example.com",
+                    "methods": [{
+                        "name": "listFiles", "httpMethod": "GET", "path": "/files",
+                        "queryParams": {"pageSize": "{{limit}}"},
+                        "placeholderConfig": {
+                            "limit": {"mode": "FIXED", "value": "100"}
+                        }
+                    }],
+                    "auth": {"authType": "none"}
+                }
+                """;
+
+        ConnectorRequest request = ConnectorRequest.builder(config)
+                .methodName("listFiles")
+                .params(Map.of("limit", "50"))
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        assertThat(captor.getValue().queryParams()).containsEntry("pageSize", "100");
+    }
+
+    @Test
+    void should_apply_default_placeholder_when_pm_provides_value() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        String config = """
+                {
+                    "baseUrl": "https://api.example.com",
+                    "methods": [{
+                        "name": "listFiles", "httpMethod": "GET", "path": "/files",
+                        "queryParams": {"q": "{{query}}"},
+                        "placeholderConfig": {
+                            "query": {"mode": "DEFAULT", "value": "trashed=false"}
+                        }
+                    }],
+                    "auth": {"authType": "none"}
+                }
+                """;
+
+        ConnectorRequest request = ConnectorRequest.builder(config)
+                .methodName("listFiles")
+                .params(Map.of("query", "name='test'"))
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        assertThat(captor.getValue().queryParams()).containsEntry("q", "name='test'");
+    }
+
+    @Test
+    void should_apply_default_placeholder_when_pm_provides_nothing() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        String config = """
+                {
+                    "baseUrl": "https://api.example.com",
+                    "methods": [{
+                        "name": "listFiles", "httpMethod": "GET", "path": "/files",
+                        "queryParams": {"q": "{{query}}"},
+                        "placeholderConfig": {
+                            "query": {"mode": "DEFAULT", "value": "trashed=false"}
+                        }
+                    }],
+                    "auth": {"authType": "none"}
+                }
+                """;
+
+        ConnectorRequest request = ConnectorRequest.builder(config)
+                .methodName("listFiles")
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        assertThat(captor.getValue().queryParams()).containsEntry("q", "trashed=false");
+    }
+
+    @Test
+    void should_keep_dynamic_placeholder_from_pm() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        String config = """
+                {
+                    "baseUrl": "https://api.example.com",
+                    "methods": [{
+                        "name": "getFile", "httpMethod": "GET", "path": "/files/{{fileId}}",
+                        "placeholderConfig": {
+                            "fileId": {"mode": "DYNAMIC"}
+                        }
+                    }],
+                    "auth": {"authType": "none"}
+                }
+                """;
+
+        ConnectorRequest request = ConnectorRequest.builder(config)
+                .methodName("getFile")
+                .params(Map.of("fileId", "abc123"))
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        assertThat(captor.getValue().url()).isEqualTo("https://api.example.com/files/abc123");
+    }
+
+    @Test
+    void should_work_without_placeholder_config() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        ConnectorRequest request = ConnectorRequest.builder(NEW_CONFIG)
+                .methodName("getUsers")
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        assertThat(captor.getValue().url()).isEqualTo("https://api.example.com/v1/users");
+    }
+
+    @Test
+    void should_resolve_doc_name_placeholder_from_file_name() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        String config = """
+                {
+                    "baseUrl": "https://www.googleapis.com",
+                    "methods": [{
+                        "name": "upload", "httpMethod": "POST",
+                        "path": "/upload/drive/v3/files",
+                        "queryParams": {"uploadType": "multipart"},
+                        "bodyTemplate": "{\\"name\\":\\"{{name}}\\",\\"mimeType\\":\\"{{mimeType}}\\",\\"parents\\":[\\"{{parents}}\\"]}",
+                        "placeholderConfig": {
+                            "name":     {"mode": "DOC_NAME"},
+                            "mimeType": {"mode": "DOC_MIMETYPE"},
+                            "parents":  {"mode": "FIXED", "value": "folder123"}
+                        }
+                    }],
+                    "auth": {"authType": "none"}
+                }
+                """;
+
+        String fileBase64 = Base64.getEncoder().encodeToString("pdf-bytes".getBytes(StandardCharsets.UTF_8));
+
+        ConnectorRequest request = ConnectorRequest.builder(config)
+                .methodName("upload")
+                .fileContentBase64(fileBase64)
+                .fileContentType("application/pdf")
+                .fileName("rapport-Q1.pdf")
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        RestServiceRequest captured = captor.getValue();
+
+        // Multipart body should contain resolved metadata
+        assertThat(captured.hasRawBody()).isTrue();
+        String body = new String(captured.rawBody(), StandardCharsets.UTF_8);
+        assertThat(body).contains("\"name\":\"rapport-Q1.pdf\"");
+        assertThat(body).contains("\"mimeType\":\"application/pdf\"");
+        assertThat(body).contains("\"parents\":[\"folder123\"]");
+        assertThat(body).doesNotContain("{{name}}");
+        assertThat(body).doesNotContain("{{mimeType}}");
+    }
+
+    @Test
+    void should_resolve_doc_mimetype_without_file_upload() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        String config = """
+                {
+                    "baseUrl": "https://api.example.com",
+                    "methods": [{
+                        "name": "search", "httpMethod": "GET", "path": "/files",
+                        "queryParams": {"q": "mimeType='{{mimeType}}'"},
+                        "placeholderConfig": {
+                            "mimeType": {"mode": "DOC_MIMETYPE"}
+                        }
+                    }],
+                    "auth": {"authType": "none"}
+                }
+                """;
+
+        ConnectorRequest request = ConnectorRequest.builder(config)
+                .methodName("search")
+                .fileContentType("application/pdf")
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        assertThat(captor.getValue().queryParams()).containsEntry("q", "mimeType='application/pdf'");
     }
 
     // ========================================================================

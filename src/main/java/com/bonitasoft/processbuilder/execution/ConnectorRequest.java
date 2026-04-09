@@ -20,8 +20,11 @@ import java.util.Map;
  * @param fieldMappingJson Optional field mapping JSON for response transformation
  * @param timeoutMs        Optional timeout override (0 = use config default)
  * @param verifySsl        Optional SSL verification override (null = use config default)
- * @param methodOverride   Optional HTTP method override (e.g., "GET", "POST")
- * @param queryParams      Optional URL query parameters (appended to URL, distinct from template params)
+ * @param methodOverride      Optional HTTP method override (e.g., "GET", "POST")
+ * @param queryParams         Optional URL query parameters (appended to URL, distinct from template params)
+ * @param fileContentBase64   Optional Base64-encoded file content for upload
+ * @param fileContentType     Optional MIME type of the file being uploaded
+ * @param fileName            Optional original file name (used by DOC_NAME placeholderConfig mode)
  */
 public record ConnectorRequest(
         String configJson,
@@ -34,7 +37,10 @@ public record ConnectorRequest(
         int timeoutMs,
         Boolean verifySsl,
         String methodOverride,
-        Map<String, String> queryParams
+        Map<String, String> queryParams,
+        String fileContentBase64,
+        String fileContentType,
+        String fileName
 ) {
 
     public ConnectorRequest {
@@ -47,6 +53,9 @@ public record ConnectorRequest(
         fieldMappingJson = fieldMappingJson != null ? fieldMappingJson : "";
         methodOverride = methodOverride != null ? methodOverride : "";
         queryParams = queryParams != null ? Map.copyOf(queryParams) : Collections.emptyMap();
+        fileContentBase64 = fileContentBase64 != null ? fileContentBase64 : "";
+        fileContentType = fileContentType != null ? fileContentType : "";
+        fileName = fileName != null ? fileName : "";
     }
 
     public static Builder builder(String configJson) {
@@ -65,6 +74,9 @@ public record ConnectorRequest(
         private Boolean verifySsl = null;
         private String methodOverride = "";
         private Map<String, String> queryParams = new HashMap<>();
+        private String fileContentBase64 = "";
+        private String fileContentType = "";
+        private String fileName = "";
 
         private Builder(String configJson) {
             this.configJson = configJson;
@@ -83,10 +95,14 @@ public record ConnectorRequest(
         public Builder methodOverride(String methodOverride) { this.methodOverride = methodOverride; return this; }
         public Builder queryParams(Map<String, String> queryParams) { this.queryParams.putAll(queryParams); return this; }
         public Builder queryParam(String key, String value) { this.queryParams.put(key, value); return this; }
+        public Builder fileContentBase64(String fileContentBase64) { this.fileContentBase64 = fileContentBase64; return this; }
+        public Builder fileContentType(String fileContentType) { this.fileContentType = fileContentType; return this; }
+        public Builder fileName(String fileName) { this.fileName = fileName; return this; }
 
         public ConnectorRequest build() {
             return new ConnectorRequest(configJson, actionType, methodName, params, body, headers,
-                    fieldMappingJson, timeoutMs, verifySsl, methodOverride, queryParams);
+                    fieldMappingJson, timeoutMs, verifySsl, methodOverride, queryParams,
+                    fileContentBase64, fileContentType, fileName);
         }
     }
 }

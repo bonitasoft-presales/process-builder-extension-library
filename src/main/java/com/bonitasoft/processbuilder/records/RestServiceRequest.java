@@ -18,16 +18,18 @@ import java.util.Map;
  * including the URL, HTTP method, headers, body, authentication, and timeout settings.
  * </p>
  *
- * @param url             The full URL to call (required)
- * @param method          The HTTP method (GET, POST, PUT, etc.)
- * @param headers         Additional headers to include in the request
- * @param queryParams     Query parameters to append to the URL
- * @param body            The request body (for POST, PUT, PATCH)
- * @param contentType     The content type of the request body
- * @param auth            Authentication configuration
- * @param timeoutMs       Connection and read timeout in milliseconds
- * @param followRedirects Whether to follow HTTP redirects
- * @param verifySsl       Whether to verify SSL certificates
+ * @param url                 The full URL to call (required)
+ * @param method              The HTTP method (GET, POST, PUT, etc.)
+ * @param headers             Additional headers to include in the request
+ * @param queryParams         Query parameters to append to the URL
+ * @param body                The request body (for POST, PUT, PATCH)
+ * @param contentType         The content type of the request body
+ * @param auth                Authentication configuration
+ * @param timeoutMs           Connection and read timeout in milliseconds
+ * @param followRedirects     Whether to follow HTTP redirects
+ * @param verifySsl           Whether to verify SSL certificates
+ * @param rawBody             Optional raw binary body (takes precedence over body when present)
+ * @param contentTypeOverride Optional Content-Type string override (e.g. "multipart/related; boundary=...")
  * @author Bonitasoft
  * @since 1.0
  */
@@ -42,7 +44,9 @@ public record RestServiceRequest(
         RestAuthConfig auth,
         int timeoutMs,
         boolean followRedirects,
-        boolean verifySsl
+        boolean verifySsl,
+        byte[] rawBody,
+        String contentTypeOverride
 ) {
 
     /**
@@ -64,6 +68,7 @@ public record RestServiceRequest(
         contentType = contentType != null ? contentType : RestContentType.JSON;
         auth = auth != null ? auth : RestAuthConfig.none();
         timeoutMs = timeoutMs > 0 ? timeoutMs : DEFAULT_TIMEOUT_MS;
+        rawBody = rawBody != null ? rawBody.clone() : null;
     }
 
     // ========================================================================
@@ -94,6 +99,8 @@ public record RestServiceRequest(
         private int timeoutMs = DEFAULT_TIMEOUT_MS;
         private boolean followRedirects = true;
         private boolean verifySsl = true;
+        private byte[] rawBody;
+        private String contentTypeOverride;
 
         private Builder(String url) {
             this.url = url;
@@ -200,10 +207,26 @@ public record RestServiceRequest(
             return this;
         }
 
+        public Builder rawBody(byte[] rawBody) {
+            this.rawBody = rawBody;
+            return this;
+        }
+
+        public Builder contentTypeOverride(String contentTypeOverride) {
+            this.contentTypeOverride = contentTypeOverride;
+            return this;
+        }
+
+        /** Returns the current body value without building the request. */
+        public String peekBody() {
+            return this.body;
+        }
+
         public RestServiceRequest build() {
             return new RestServiceRequest(
                     url, method, headers, queryParams, body,
-                    contentType, auth, timeoutMs, followRedirects, verifySsl
+                    contentType, auth, timeoutMs, followRedirects, verifySsl,
+                    rawBody, contentTypeOverride
             );
         }
     }
@@ -367,8 +390,10 @@ public record RestServiceRequest(
     public Map<String, String> buildAllHeaders() {
         Map<String, String> allHeaders = new HashMap<>();
 
-        // Add content type if there's a body
-        if (body != null && !body.isEmpty()) {
+        // Add content type
+        if (contentTypeOverride != null && !contentTypeOverride.isEmpty()) {
+            allHeaders.put("Content-Type", contentTypeOverride);
+        } else if (hasBody()) {
             allHeaders.put("Content-Type", contentType.getMimeType());
         }
 
@@ -382,12 +407,21 @@ public record RestServiceRequest(
     }
 
     /**
-     * Checks if this request has a body.
+     * Checks if this request has a text body.
      *
-     * @return true if the request has a non-empty body
+     * @return true if the request has a non-empty string body
      */
     public boolean hasBody() {
         return body != null && !body.isEmpty();
+    }
+
+    /**
+     * Checks if this request has a raw binary body (e.g. multipart).
+     *
+     * @return true if the request has raw body bytes
+     */
+    public boolean hasRawBody() {
+        return rawBody != null && rawBody.length > 0;
     }
 
     private static String urlEncode(String value) {

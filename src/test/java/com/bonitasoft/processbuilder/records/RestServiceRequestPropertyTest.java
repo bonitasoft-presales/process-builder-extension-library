@@ -27,7 +27,7 @@ class RestServiceRequestPropertyTest {
     @Label("Constructor should reject null URL")
     void constructorShouldRejectNullUrl() {
         assertThatThrownBy(() -> new RestServiceRequest(
-                null, null, null, null, null, null, null, 0, true, true))
+                null, null, null, null, null, null, null, 0, true, true, null, null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -35,7 +35,7 @@ class RestServiceRequestPropertyTest {
     @Label("Constructor should reject empty URL")
     void constructorShouldRejectEmptyUrl() {
         assertThatThrownBy(() -> new RestServiceRequest(
-                "", null, null, null, null, null, null, 0, true, true))
+                "", null, null, null, null, null, null, 0, true, true, null, null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -43,7 +43,7 @@ class RestServiceRequestPropertyTest {
     @Label("Constructor should reject blank URL")
     void constructorShouldRejectBlankUrl() {
         assertThatThrownBy(() -> new RestServiceRequest(
-                "   ", null, null, null, null, null, null, 0, true, true))
+                "   ", null, null, null, null, null, null, 0, true, true, null, null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -52,7 +52,7 @@ class RestServiceRequestPropertyTest {
     void constructorShouldTrimUrl(@ForAll @From("urls") String baseUrl) {
         String paddedUrl = "  " + baseUrl + "  ";
         RestServiceRequest request = new RestServiceRequest(
-                paddedUrl, null, null, null, null, null, null, 0, true, true);
+                paddedUrl, null, null, null, null, null, null, 0, true, true, null, null);
         assertThat(request.url()).isEqualTo(baseUrl);
     }
 
@@ -64,7 +64,7 @@ class RestServiceRequestPropertyTest {
     @Label("Constructor should default method to GET")
     void constructorShouldDefaultMethodToGet(@ForAll @From("urls") String url) {
         RestServiceRequest request = new RestServiceRequest(
-                url, null, null, null, null, null, null, 0, true, true);
+                url, null, null, null, null, null, null, 0, true, true, null, null);
         assertThat(request.method()).isEqualTo(RestHttpMethod.GET);
     }
 
@@ -72,7 +72,7 @@ class RestServiceRequestPropertyTest {
     @Label("Constructor should default contentType to JSON")
     void constructorShouldDefaultContentTypeToJson(@ForAll @From("urls") String url) {
         RestServiceRequest request = new RestServiceRequest(
-                url, null, null, null, null, null, null, 0, true, true);
+                url, null, null, null, null, null, null, 0, true, true, null, null);
         assertThat(request.contentType()).isEqualTo(RestContentType.JSON);
     }
 
@@ -80,7 +80,7 @@ class RestServiceRequestPropertyTest {
     @Label("Constructor should default auth to NoAuth")
     void constructorShouldDefaultAuthToNoAuth(@ForAll @From("urls") String url) {
         RestServiceRequest request = new RestServiceRequest(
-                url, null, null, null, null, null, null, 0, true, true);
+                url, null, null, null, null, null, null, 0, true, true, null, null);
         assertThat(request.auth()).isInstanceOf(RestAuthConfig.NoAuth.class);
     }
 
@@ -88,7 +88,7 @@ class RestServiceRequestPropertyTest {
     @Label("Constructor should default timeout to DEFAULT_TIMEOUT_MS")
     void constructorShouldDefaultTimeoutToDefault(@ForAll @From("urls") String url) {
         RestServiceRequest request = new RestServiceRequest(
-                url, null, null, null, null, null, null, 0, true, true);
+                url, null, null, null, null, null, null, 0, true, true, null, null);
         assertThat(request.timeoutMs()).isEqualTo(RestServiceRequest.DEFAULT_TIMEOUT_MS);
     }
 
@@ -96,7 +96,7 @@ class RestServiceRequestPropertyTest {
     @Label("Constructor should default headers to empty map")
     void constructorShouldDefaultHeadersToEmptyMap(@ForAll @From("urls") String url) {
         RestServiceRequest request = new RestServiceRequest(
-                url, null, null, null, null, null, null, 0, true, true);
+                url, null, null, null, null, null, null, 0, true, true, null, null);
         assertThat(request.headers()).isEmpty();
     }
 
@@ -104,7 +104,7 @@ class RestServiceRequestPropertyTest {
     @Label("Constructor should default queryParams to empty map")
     void constructorShouldDefaultQueryParamsToEmptyMap(@ForAll @From("urls") String url) {
         RestServiceRequest request = new RestServiceRequest(
-                url, null, null, null, null, null, null, 0, true, true);
+                url, null, null, null, null, null, null, 0, true, true, null, null);
         assertThat(request.queryParams()).isEmpty();
     }
 

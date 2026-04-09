@@ -130,10 +130,15 @@ public final class HttpExecutor {
                 }
             }
 
-            // Set HTTP method and body
-            HttpRequest.BodyPublisher bodyPublisher = request.hasBody()
-                    ? HttpRequest.BodyPublishers.ofString(request.body())
-                    : HttpRequest.BodyPublishers.noBody();
+            // Set HTTP method and body (rawBody takes precedence for multipart)
+            HttpRequest.BodyPublisher bodyPublisher;
+            if (request.hasRawBody()) {
+                bodyPublisher = HttpRequest.BodyPublishers.ofByteArray(request.rawBody());
+            } else if (request.hasBody()) {
+                bodyPublisher = HttpRequest.BodyPublishers.ofString(request.body());
+            } else {
+                bodyPublisher = HttpRequest.BodyPublishers.noBody();
+            }
 
             switch (request.method()) {
                 case GET -> httpRequestBuilder.GET();

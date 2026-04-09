@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,11 @@ public final class ConnectorExecutionEngine {
 
             // 3. Apply runtime overrides from ConnectorRequest
             applyOverrides(builder, request);
+
+            // 4. Handle multipart file upload if fileContentBase64 is provided
+            if (!request.fileContentBase64().isEmpty()) {
+                handleFileUpload(builder, request);
+            }
 
             RestServiceRequest restRequest = builder.build();
 
@@ -149,12 +155,15 @@ public final class ConnectorExecutionEngine {
                     "Method '" + methodName + "' not found. Available: " + getMethodNames(methodsArray));
         }
 
+        // Apply placeholderConfig resolution (FIXED / DEFAULT / DYNAMIC / DOC_NAME / DOC_MIMETYPE)
+        Map<String, String> resolvedParams = resolvePlaceholderConfig(methodConfig, allParams, request);
+
         // Extract HTTP method and path
         String httpMethod = methodConfig.has("httpMethod") ? methodConfig.get("httpMethod").asText() : "GET";
         String path = methodConfig.has("path") ? methodConfig.get("path").asText() : "";
 
         // Substitute {{param}} in path
-        path = TemplateSubstitution.substitute(path, allParams);
+        path = TemplateSubstitution.substitute(path, resolvedParams);
 
         // Build final URL
         String finalUrl = TemplateSubstitution.buildFinalUrl(baseUrl, path);
@@ -166,12 +175,12 @@ public final class ConnectorExecutionEngine {
         RestHttpMethod.fromKey(httpMethod).ifPresent(builder::method);
 
         // Apply base configuration (auth, headers, timeout, SSL)
-        applyBaseConfig(builder, configJson, allParams);
+        applyBaseConfig(builder, configJson, resolvedParams);
 
         // Apply method-specific query parameters
         if (methodConfig.has("queryParams") && methodConfig.get("queryParams").isObject()) {
             methodConfig.get("queryParams").fields().forEachRemaining(entry -> {
-                String value = TemplateSubstitution.substitute(entry.getValue().asText(), allParams);
+                String value = TemplateSubstitution.substitute(entry.getValue().asText(), resolvedParams);
                 builder.queryParam(entry.getKey(), value);
             });
         }
@@ -179,14 +188,14 @@ public final class ConnectorExecutionEngine {
         // Apply method-specific headers
         if (methodConfig.has("headers") && methodConfig.get("headers").isObject()) {
             methodConfig.get("headers").fields().forEachRemaining(entry -> {
-                String value = TemplateSubstitution.substitute(entry.getValue().asText(), allParams);
+                String value = TemplateSubstitution.substitute(entry.getValue().asText(), resolvedParams);
                 builder.header(entry.getKey(), value);
             });
         }
 
         // Apply body template
         if (methodConfig.has("bodyTemplate") && !methodConfig.get("bodyTemplate").asText().isEmpty()) {
-            String body = TemplateSubstitution.substitute(methodConfig.get("bodyTemplate").asText(), allParams);
+            String body = TemplateSubstitution.substitute(methodConfig.get("bodyTemplate").asText(), resolvedParams);
             builder.body(body);
         }
 
@@ -251,6 +260,69 @@ public final class ConnectorExecutionEngine {
     // Common helpers
     // ========================================================================
 
+    /**
+     * Resolves templateParams based on the method's placeholderConfig.
+     * <ul>
+     *   <li><b>FIXED</b>  — admin value wins, PM input is ignored</li>
+     *   <li><b>DEFAULT</b> — PM value wins if provided, otherwise admin default is used</li>
+     *   <li><b>DYNAMIC</b> — PM must provide the value (no change, current behaviour)</li>
+     * </ul>
+     */
+    private Map<String, String> resolvePlaceholderConfig(JsonNode methodConfig, Map<String, String> templateParams,
+                                                         ConnectorRequest request) {
+        Map<String, String> resolved = new HashMap<>(templateParams);
+
+        if (!methodConfig.has("placeholderConfig") || !methodConfig.get("placeholderConfig").isObject()) {
+            return resolved;
+        }
+
+        JsonNode placeholderConfig = methodConfig.get("placeholderConfig");
+        placeholderConfig.fields().forEachRemaining(entry -> {
+            String name = entry.getKey();
+            JsonNode cfg = entry.getValue();
+            String mode = cfg.has("mode") ? cfg.get("mode").asText() : "DYNAMIC";
+            String adminValue = cfg.has("value") ? cfg.get("value").asText() : null;
+
+            switch (mode) {
+                case "FIXED":
+                    if (adminValue != null) {
+                        resolved.put(name, adminValue);
+                    } else {
+                        LOGGER.warn("placeholderConfig: FIXED placeholder '{}' has no value — treating as DYNAMIC", name);
+                    }
+                    break;
+                case "DEFAULT":
+                    if (adminValue != null) {
+                        if (!resolved.containsKey(name) || resolved.get(name) == null || resolved.get(name).isBlank()) {
+                            resolved.put(name, adminValue);
+                        }
+                    } else {
+                        LOGGER.warn("placeholderConfig: DEFAULT placeholder '{}' has no value — treating as DYNAMIC", name);
+                    }
+                    break;
+                case "DOC_NAME":
+                    if (!request.fileName().isEmpty()) {
+                        resolved.put(name, request.fileName());
+                    } else {
+                        LOGGER.warn("placeholderConfig: DOC_NAME placeholder '{}' but no fileName provided", name);
+                    }
+                    break;
+                case "DOC_MIMETYPE":
+                    if (!request.fileContentType().isEmpty()) {
+                        resolved.put(name, request.fileContentType());
+                    } else {
+                        LOGGER.warn("placeholderConfig: DOC_MIMETYPE placeholder '{}' but no fileContentType provided", name);
+                    }
+                    break;
+                case "DYNAMIC":
+                default:
+                    break;
+            }
+        });
+
+        return resolved;
+    }
+
     private void applyBaseConfig(RestServiceRequest.Builder builder, JsonNode configJson, Map<String, String> params) {
         if (configJson.has("timeoutMs")) {
             builder.timeout(configJson.get("timeoutMs").asInt());
@@ -275,6 +347,28 @@ public final class ConnectorExecutionEngine {
             RestAuthConfig authConfig = AuthPipeline.resolve(configJson.get("auth"));
             builder.auth(authConfig);
         }
+    }
+
+    /**
+     * Builds a multipart/related body from the current text body (metadata JSON)
+     * and the Base64-encoded file content from the connector request.
+     */
+    private void handleFileUpload(RestServiceRequest.Builder builder, ConnectorRequest request) {
+        String fileContentType = request.fileContentType().isEmpty()
+                ? "application/octet-stream"
+                : request.fileContentType();
+
+        byte[] fileContent = Base64.getDecoder().decode(request.fileContentBase64());
+        String metadataJson = builder.peekBody() != null ? builder.peekBody() : "{}";
+
+        MultipartRelatedBuilder.MultipartBody multipart =
+                MultipartRelatedBuilder.build(metadataJson, fileContent, fileContentType);
+
+        builder.rawBody(multipart.content());
+        builder.contentTypeOverride(multipart.contentType());
+
+        LOGGER.info("Multipart/related body built: {} bytes (file: {} bytes, type: {})",
+                multipart.content().length, fileContent.length, fileContentType);
     }
 
     private void applyOverrides(RestServiceRequest.Builder builder, ConnectorRequest request) {

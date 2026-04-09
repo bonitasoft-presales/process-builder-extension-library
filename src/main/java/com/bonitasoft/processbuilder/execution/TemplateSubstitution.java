@@ -51,6 +51,10 @@ public final class TemplateSubstitution {
         if (path == null || path.isEmpty()) {
             return baseUrl;
         }
+        // Absolute URL in path overrides baseUrl (e.g. upload endpoints on a different base)
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+            return path;
+        }
         String cleanBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         String cleanPath = path.startsWith("/") ? path.substring(1) : path;
         return cleanBase + "/" + cleanPath;

@@ -32,7 +32,7 @@ class RestServiceRequestTest {
     @Test
     void constructor_withValidUrl_shouldCreateRequest() {
         RestServiceRequest request = new RestServiceRequest(
-                TEST_URL, null, null, null, null, null, null, 0, true, true);
+                TEST_URL, null, null, null, null, null, null, 0, true, true, null, null);
 
         assertEquals(TEST_URL, request.url());
         assertEquals(RestHttpMethod.GET, request.method());
@@ -48,13 +48,13 @@ class RestServiceRequestTest {
     @ValueSource(strings = {"   ", "\t", "\n"})
     void constructor_withInvalidUrl_shouldThrowException(String url) {
         assertThrows(IllegalArgumentException.class, () ->
-                new RestServiceRequest(url, null, null, null, null, null, null, 0, true, true));
+                new RestServiceRequest(url, null, null, null, null, null, null, 0, true, true, null, null));
     }
 
     @Test
     void constructor_shouldTrimUrl() {
         RestServiceRequest request = new RestServiceRequest(
-                "  " + TEST_URL + "  ", null, null, null, null, null, null, 0, true, true);
+                "  " + TEST_URL + "  ", null, null, null, null, null, null, 0, true, true, null, null);
 
         assertEquals(TEST_URL, request.url());
     }

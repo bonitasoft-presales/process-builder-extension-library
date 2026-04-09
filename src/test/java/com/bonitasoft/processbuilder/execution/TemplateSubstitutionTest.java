@@ -103,4 +103,12 @@ class TemplateSubstitutionTest {
         assertThat(TemplateSubstitution.buildFinalUrl("https://api.com", null))
                 .isEqualTo("https://api.com");
     }
+
+    @Test
+    void should_use_absolute_path_when_starts_with_http() {
+        assertThat(TemplateSubstitution.buildFinalUrl(
+                "https://www.googleapis.com/drive/v3",
+                "https://www.googleapis.com/upload/drive/v3/files"))
+                .isEqualTo("https://www.googleapis.com/upload/drive/v3/files");
+    }
 }
