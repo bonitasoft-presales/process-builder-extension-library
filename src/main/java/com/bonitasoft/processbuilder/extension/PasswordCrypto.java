@@ -231,7 +231,15 @@ public final class PasswordCrypto {
      * @return true if configured, false otherwise
      */
     public static boolean isMasterPasswordConfigured() {
-        String masterPassword = System.getenv(ENV_VAR_NAME);
+        String masterPassword = System.getProperty(ENV_VAR_NAME);
+        if (masterPassword != null && !masterPassword.isBlank()) {
+            return true;
+        }
+        try {
+            masterPassword = System.getenv(ENV_VAR_NAME);
+        } catch (SecurityException e) {
+            return false;
+        }
         return masterPassword != null && !masterPassword.isBlank();
     }
 
@@ -252,10 +260,22 @@ public final class PasswordCrypto {
     }
 
     private static String getMasterPassword() {
-        String masterPassword = System.getenv(ENV_VAR_NAME);
+        // 1. Try system property first (-DMASTER_BONITA_PWD=...) — not blocked by SecurityManager
+        String masterPassword = System.getProperty(ENV_VAR_NAME);
+
+        // 2. Fall back to environment variable
+        if (masterPassword == null || masterPassword.isBlank()) {
+            try {
+                masterPassword = System.getenv(ENV_VAR_NAME);
+            } catch (SecurityException e) {
+                masterPassword = null;
+            }
+        }
+
         if (masterPassword == null || masterPassword.isBlank()) {
             throw new CryptoException(
-                "Master password not configured. Set environment variable: " + ENV_VAR_NAME
+                "Master password not configured. Set system property (-D" + ENV_VAR_NAME
+                + "=...) or environment variable: " + ENV_VAR_NAME
             );
         }
         return masterPassword;
