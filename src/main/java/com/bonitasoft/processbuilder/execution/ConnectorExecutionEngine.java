@@ -162,6 +162,12 @@ public final class ConnectorExecutionEngine {
         String httpMethod = methodConfig.has("httpMethod") ? methodConfig.get("httpMethod").asText() : "GET";
         String path = methodConfig.has("path") ? methodConfig.get("path").asText() : "";
 
+        // Apply path override (used by the frontend to test an unsaved method edit).
+        // Placeholder substitution below still applies, so override paths may contain {{...}}.
+        if (!request.pathOverride().isEmpty()) {
+            path = request.pathOverride();
+        }
+
         // Substitute {{param}} in path
         path = TemplateSubstitution.substitute(path, resolvedParams);
 
@@ -177,16 +183,26 @@ public final class ConnectorExecutionEngine {
         // Apply base configuration (auth, headers, timeout, SSL)
         applyBaseConfig(builder, configJson, resolvedParams);
 
-        // Apply method-specific query parameters
-        if (methodConfig.has("queryParams") && methodConfig.get("queryParams").isObject()) {
+        // Apply query parameters with REPLACE semantics.
+        // When request.queryParams() is non-empty, it fully replaces the method's queryParams
+        // (rather than being merged). Placeholder substitution applies in both cases.
+        if (!request.queryParams().isEmpty()) {
+            request.queryParams().forEach((key, value) ->
+                    builder.queryParam(key, TemplateSubstitution.substitute(value, resolvedParams)));
+        } else if (methodConfig.has("queryParams") && methodConfig.get("queryParams").isObject()) {
             methodConfig.get("queryParams").fields().forEachRemaining(entry -> {
                 String value = TemplateSubstitution.substitute(entry.getValue().asText(), resolvedParams);
                 builder.queryParam(entry.getKey(), value);
             });
         }
 
-        // Apply method-specific headers
-        if (methodConfig.has("headers") && methodConfig.get("headers").isObject()) {
+        // Apply headers with REPLACE semantics.
+        // When request.headers() is non-empty, it fully replaces the method's headers
+        // (rather than being merged). Placeholder substitution applies in both cases.
+        if (!request.headers().isEmpty()) {
+            request.headers().forEach((key, value) ->
+                    builder.header(key, TemplateSubstitution.substitute(value, resolvedParams)));
+        } else if (methodConfig.has("headers") && methodConfig.get("headers").isObject()) {
             methodConfig.get("headers").fields().forEachRemaining(entry -> {
                 String value = TemplateSubstitution.substitute(entry.getValue().asText(), resolvedParams);
                 builder.header(entry.getKey(), value);
@@ -252,6 +268,11 @@ public final class ConnectorExecutionEngine {
             RestAuthConfig authConfig = AuthPipeline.resolve(configJson.get("auth"));
             builder.auth(authConfig);
         }
+
+        // Legacy: merge request overrides on top of config values (preserved behavior,
+        // no placeholder substitution in legacy).
+        request.headers().forEach(builder::header);
+        request.queryParams().forEach(builder::queryParam);
 
         return builder;
     }
@@ -392,15 +413,9 @@ public final class ConnectorExecutionEngine {
             builder.verifySsl(request.verifySsl());
         }
 
-        // Add extra headers
-        if (!request.headers().isEmpty()) {
-            request.headers().forEach(builder::header);
-        }
-
-        // Add URL query parameters
-        if (!request.queryParams().isEmpty()) {
-            request.queryParams().forEach(builder::queryParam);
-        }
+        // NOTE: headers and queryParams overrides are applied inline by
+        // buildFromNewStructure (with placeholder substitution and REPLACE semantics) and
+        // buildFromLegacyStructure (merge on top of config-level values).
     }
 
     private String getMethodNames(JsonNode methodsArray) {

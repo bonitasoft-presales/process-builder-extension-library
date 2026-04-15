@@ -569,4 +569,162 @@ class ConnectorExecutionEngineTest {
         assertThat(response.success()).isFalse();
         assertThat(response.errorMessage()).contains("Connection refused");
     }
+
+    // ========================================================================
+    // Test-unsaved-method overrides (pathOverride + REPLACE headers/queryParams)
+    // ========================================================================
+
+    @Test
+    void should_apply_path_override_instead_of_method_path() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        ConnectorRequest request = ConnectorRequest.builder(NEW_CONFIG)
+                .methodName("getUsers")
+                .pathOverride("/v2/admins")
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        assertThat(captor.getValue().url()).isEqualTo("https://api.example.com/v2/admins");
+    }
+
+    @Test
+    void should_substitute_placeholders_in_path_override() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        ConnectorRequest request = ConnectorRequest.builder(NEW_CONFIG)
+                .methodName("getUsers")
+                .pathOverride("/v1/users/{{id}}/profile")
+                .params(Map.of("id", "42"))
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        assertThat(captor.getValue().url()).isEqualTo("https://api.example.com/v1/users/42/profile");
+    }
+
+    @Test
+    void should_replace_method_headers_when_request_headers_non_empty() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        String config = """
+                {
+                    "baseUrl": "https://api.example.com",
+                    "methods": [{
+                        "name": "call", "httpMethod": "GET", "path": "/x",
+                        "headers": {"X-Method-Only": "from-method", "X-Shared": "method-val"}
+                    }],
+                    "auth": {"authType": "none"}
+                }
+                """;
+
+        ConnectorRequest request = ConnectorRequest.builder(config)
+                .methodName("call")
+                .headers(Map.of("X-Override", "from-request", "X-Shared", "request-val"))
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        Map<String, String> headers = captor.getValue().headers();
+        // REPLACE semantics: method's X-Method-Only must NOT be present
+        assertThat(headers).doesNotContainKey("X-Method-Only");
+        assertThat(headers).containsEntry("X-Override", "from-request");
+        assertThat(headers).containsEntry("X-Shared", "request-val");
+    }
+
+    @Test
+    void should_replace_method_query_params_when_request_query_params_non_empty() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        String config = """
+                {
+                    "baseUrl": "https://api.example.com",
+                    "methods": [{
+                        "name": "call", "httpMethod": "GET", "path": "/x",
+                        "queryParams": {"page": "1", "size": "10"}
+                    }],
+                    "auth": {"authType": "none"}
+                }
+                """;
+
+        ConnectorRequest request = ConnectorRequest.builder(config)
+                .methodName("call")
+                .queryParams(Map.of("filter", "active"))
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        Map<String, String> qp = captor.getValue().queryParams();
+        // REPLACE semantics: method's page/size must NOT be present
+        assertThat(qp).doesNotContainKeys("page", "size");
+        assertThat(qp).containsEntry("filter", "active");
+    }
+
+    @Test
+    void should_substitute_placeholders_in_override_headers_and_query_params() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        ConnectorRequest request = ConnectorRequest.builder(NEW_CONFIG)
+                .methodName("getUsers")
+                .headers(Map.of("X-Token", "Bearer {{token}}"))
+                .queryParams(Map.of("q", "user-{{id}}"))
+                .params(Map.of("token", "secret-abc", "id", "42"))
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        assertThat(captor.getValue().headers()).containsEntry("X-Token", "Bearer secret-abc");
+        assertThat(captor.getValue().queryParams()).containsEntry("q", "user-42");
+    }
+
+    @Test
+    void should_keep_method_headers_and_query_params_when_no_override() {
+        RestServiceResponse httpResponse = RestServiceResponse.success(
+                200, Map.of(), "OK", RestContentType.JSON, 50L, "url");
+        when(mockHttpExecutor.execute(any(RestServiceRequest.class))).thenReturn(httpResponse);
+
+        String config = """
+                {
+                    "baseUrl": "https://api.example.com",
+                    "methods": [{
+                        "name": "call", "httpMethod": "GET", "path": "/x",
+                        "headers": {"X-Method": "keep"},
+                        "queryParams": {"q": "keep"}
+                    }],
+                    "auth": {"authType": "none"}
+                }
+                """;
+
+        ConnectorRequest request = ConnectorRequest.builder(config)
+                .methodName("call")
+                .build();
+
+        engine.execute(request);
+
+        ArgumentCaptor<RestServiceRequest> captor = ArgumentCaptor.forClass(RestServiceRequest.class);
+        verify(mockHttpExecutor).execute(captor.capture());
+        // Backward compat: when request has no overrides, method values are preserved
+        assertThat(captor.getValue().headers()).containsEntry("X-Method", "keep");
+        assertThat(captor.getValue().queryParams()).containsEntry("q", "keep");
+    }
 }

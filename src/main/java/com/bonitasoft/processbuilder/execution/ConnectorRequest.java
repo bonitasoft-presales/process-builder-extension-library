@@ -21,10 +21,15 @@ import java.util.Map;
  * @param timeoutMs        Optional timeout override (0 = use config default)
  * @param verifySsl        Optional SSL verification override (null = use config default)
  * @param methodOverride      Optional HTTP method override (e.g., "GET", "POST")
- * @param queryParams         Optional URL query parameters (appended to URL, distinct from template params)
+ * @param queryParams         Optional URL query parameters. When non-empty in the NEW structure
+ *                            (baseUrl + methods[]), they REPLACE the method's queryParams rather
+ *                            than being merged on top.
  * @param fileContentBase64   Optional Base64-encoded file content for upload
  * @param fileContentType     Optional MIME type of the file being uploaded
  * @param fileName            Optional original file name (used by DOC_NAME placeholderConfig mode)
+ * @param pathOverride        Optional path override for the selected method. When non-empty in the
+ *                            NEW structure, it REPLACES the method's path before placeholder
+ *                            substitution. Used by the frontend to test an unsaved method edit.
  */
 public record ConnectorRequest(
         String configJson,
@@ -40,7 +45,8 @@ public record ConnectorRequest(
         Map<String, String> queryParams,
         String fileContentBase64,
         String fileContentType,
-        String fileName
+        String fileName,
+        String pathOverride
 ) {
 
     public ConnectorRequest {
@@ -56,6 +62,7 @@ public record ConnectorRequest(
         fileContentBase64 = fileContentBase64 != null ? fileContentBase64 : "";
         fileContentType = fileContentType != null ? fileContentType : "";
         fileName = fileName != null ? fileName : "";
+        pathOverride = pathOverride != null ? pathOverride : "";
     }
 
     public static Builder builder(String configJson) {
@@ -77,6 +84,7 @@ public record ConnectorRequest(
         private String fileContentBase64 = "";
         private String fileContentType = "";
         private String fileName = "";
+        private String pathOverride = "";
 
         private Builder(String configJson) {
             this.configJson = configJson;
@@ -98,11 +106,12 @@ public record ConnectorRequest(
         public Builder fileContentBase64(String fileContentBase64) { this.fileContentBase64 = fileContentBase64; return this; }
         public Builder fileContentType(String fileContentType) { this.fileContentType = fileContentType; return this; }
         public Builder fileName(String fileName) { this.fileName = fileName; return this; }
+        public Builder pathOverride(String pathOverride) { this.pathOverride = pathOverride; return this; }
 
         public ConnectorRequest build() {
             return new ConnectorRequest(configJson, actionType, methodName, params, body, headers,
                     fieldMappingJson, timeoutMs, verifySsl, methodOverride, queryParams,
-                    fileContentBase64, fileContentType, fileName);
+                    fileContentBase64, fileContentType, fileName, pathOverride);
         }
     }
 }

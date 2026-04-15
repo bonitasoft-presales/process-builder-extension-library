@@ -27,6 +27,7 @@ class ConnectorRequestTest {
         assertThat(request.fileContentBase64()).isEmpty();
         assertThat(request.fileContentType()).isEmpty();
         assertThat(request.fileName()).isEmpty();
+        assertThat(request.pathOverride()).isEmpty();
     }
 
     @Test
@@ -45,6 +46,7 @@ class ConnectorRequestTest {
                 .fileContentBase64("dGVzdA==")
                 .fileContentType("application/pdf")
                 .fileName("report.pdf")
+                .pathOverride("/v2/admins")
                 .build();
 
         assertThat(request.configJson()).isEqualTo("{\"url\": \"test\"}");
@@ -61,16 +63,18 @@ class ConnectorRequestTest {
         assertThat(request.fileContentBase64()).isEqualTo("dGVzdA==");
         assertThat(request.fileContentType()).isEqualTo("application/pdf");
         assertThat(request.fileName()).isEqualTo("report.pdf");
+        assertThat(request.pathOverride()).isEqualTo("/v2/admins");
     }
 
     @Test
     void should_handle_null_configJson() {
         ConnectorRequest request = new ConnectorRequest(
-                null, null, null, null, null, null, null, 0, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, 0, null, null, null, null, null, null, null);
         assertThat(request.configJson()).isEqualTo("{}");
         assertThat(request.actionType()).isEmpty();
         assertThat(request.methodOverride()).isEmpty();
         assertThat(request.queryParams()).isEmpty();
+        assertThat(request.pathOverride()).isEmpty();
     }
 
     @Test
