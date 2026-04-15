@@ -7,15 +7,15 @@ import java.util.UUID;
 
 /**
  * Builds a multipart/related HTTP body (RFC 2387).
- * <p>
- * Assembles two parts:
+ *
+ * <p>Assembles two parts:</p>
  * <ol>
  *   <li>JSON metadata (e.g. file name, MIME type, parent folder)</li>
  *   <li>Binary file content</li>
  * </ol>
- * This format is used by Google Drive, Gmail, Cloud Storage, Microsoft Graph,
- * and any API accepting {@code multipart/related} uploads.
- * </p>
+ *
+ * <p>This format is used by Google Drive, Gmail, Cloud Storage, Microsoft Graph,
+ * and any API accepting {@code multipart/related} uploads.</p>
  */
 public final class MultipartRelatedBuilder {
 

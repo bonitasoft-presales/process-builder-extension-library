@@ -388,6 +388,8 @@ public final class RestApiCatalog {
 
     /**
      * JSONPlaceholder - Free fake REST API for testing.
+     *
+     * @return a preconfigured {@link RestApiTemplate} for JSONPlaceholder
      */
     public static RestApiTemplate jsonPlaceholder() {
         return RestApiTemplate.builder()
@@ -407,6 +409,8 @@ public final class RestApiCatalog {
 
     /**
      * REST Countries API - Country information.
+     *
+     * @return a preconfigured {@link RestApiTemplate} for REST Countries
      */
     public static RestApiTemplate restCountries() {
         return RestApiTemplate.builder()
@@ -430,6 +434,7 @@ public final class RestApiCatalog {
      * OpenWeatherMap API - Weather data.
      *
      * @param apiKey Your OpenWeatherMap API key (get free at openweathermap.org)
+     * @return a preconfigured {@link RestApiTemplate} for OpenWeatherMap
      */
     public static RestApiTemplate openWeatherMap(String apiKey) {
         return RestApiTemplate.builder()
@@ -448,6 +453,7 @@ public final class RestApiCatalog {
      * NASA APOD API - Astronomy Picture of the Day.
      *
      * @param apiKey Your NASA API key (use "DEMO_KEY" for testing)
+     * @return a preconfigured {@link RestApiTemplate} for NASA APOD
      */
     public static RestApiTemplate nasaApod(String apiKey) {
         return RestApiTemplate.builder()
