@@ -22,3 +22,16 @@ buildNumber.properties
 
 # Mac
 .DS_Store
+
+# Windows
+nul
+
+# JVM crash logs
+hs_err_pid*.log
+replay_pid*.log
+
+# jqwik property-based testing
+.jqwik-database
+
+# Generated flattened code
+CodeFlattened_Output/
