@@ -5,65 +5,52 @@
 :source-highlighter: rouge
 :java-version: 17
 :bonita-runtime-version: 10.2.0
-:artifact-version: 0.0.0.94-SNAPSHOT
+:artifact-version: 0.0.0.100-SNAPSHOT
 
 image:https://img.shields.io/badge/Java-17%2B-007396?logo=openjdk&logoColor=white[Java 17+]
 image:https://img.shields.io/badge/Bonita%20Runtime-10.2.0%2B-1BA7E6[Bonita Runtime 10.2.0+]
 image:https://github.com/bonitasoft-presales/process-builder-extension-library/actions/workflows/build.yml/badge.svg[Build Status,link=https://github.com/bonitasoft-presales/process-builder-extension-library/actions/workflows/build.yml]
 image:https://img.shields.io/github/v/release/bonitasoft-presales/process-builder-extension-library?include_prereleases[Latest Release,link=https://github.com/bonitasoft-presales/process-builder-extension-library/releases]
-image:https://img.shields.io/badge/License-GPL--2.0-blue.svg[License,link=./LICENSE]
 
-[abstract]
---
-A reusable Java 17 library that centralizes enums, constants, records, validators, utilities and the REST execution engine shared across the *Process Builder* ecosystem: actor filters, connectors, REST API extensions and process diagrams. Its goal is to guarantee *code reuse*, *immutability* and *consistency* across every Bonita customization produced by the Presales team.
---
+A reusable Java 17 library that centralizes enums, constants, records, validators, utilities and the REST execution engine shared across the *Process Builder* ecosystem: actor filters, connectors, REST API extensions and process diagrams.
 
-== 1. Problem It Solves
+== 1. What It Does
 
-Presales and customer projects routinely duplicate the same building blocks: JSON validation helpers, BDM audit utilities, identity and membership lookups, REST authentication logic, template substitution, email recipient resolution, password cryptography, exception translation. Duplicated code drifts, ages unevenly and becomes a liability during upgrades. This library consolidates those building blocks behind a stable, versioned contract so that every downstream project -- in particular link:https://github.com/bonitasoft-presales/bwh-rest-execution-connector[bwh-rest-execution-connector] -- consumes a single, tested source of truth.
+Presales and customer projects routinely duplicate the same building blocks: JSON validation, BDM audit utilities, identity and membership lookups, REST authentication (7 schemes including OAuth2 JWT Bearer), template substitution, multipart file uploads, email recipient resolution, password cryptography, GZIP compression and exception translation. This library consolidates them behind a stable, versioned contract so that every downstream project -- in particular link:https://github.com/bonitasoft-presales/bwh-rest-execution-connector[bwh-rest-execution-connector] -- consumes a single, tested source of truth.
 
-== 2. Features
-
-=== 2.1. Functional Areas
+== 2. Package Catalog
 
 [cols="1,3",options="header"]
 |===
 | Package | Purpose
-| `com.bonitasoft.processbuilder.constants`
-| Project-wide constants and schema keys (e.g. `Constants`, `SchemaConstants`).
 
-| `com.bonitasoft.processbuilder.enums`
-| Strongly typed enums describing Process Builder concepts: `ActionType`, `BDMObjectType`, `ConfigurationType`, `RestAuthenticationType`, `RestHttpMethod`, `RestOAuth2ClientAuthMethod`, `RestContentType`, `RestApiKeyLocation`, `SmtpType`, `ThemeType`, and more.
+| `constants`
+| Immutable constants: `Constants` (Bonita profile names, common strings), `SchemaConstants` (OpenAPI resource path, schema prefix).
 
-| `com.bonitasoft.processbuilder.execution`
-| REST execution engine: `ConnectorExecutionEngine`, `ConnectorRequest`, `ConnectorResponse`, `HttpExecutor`, `AuthPipeline`, `TemplateSubstitution`. This is the backbone of the BWH REST Execution Connector.
+| `enums` (26 enums)
+| Domain enums. Highlights: `RestAuthenticationType` (NONE, BASIC, BEARER, API_KEY, OAUTH2_CLIENT_CREDENTIALS, OAUTH2_PASSWORD, *OAUTH2_JWT_BEARER*, DIGEST, NTLM, CERTIFICATE, CUSTOM), `RestHttpMethod` (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS -- each with a `supportsBody` flag), `RestContentType` (JSON, XML, TEXT_PLAIN, FORM_URLENCODED, MULTIPART_FORM_DATA, BINARY, PDF -- each with its MIME string), `RestApiKeyLocation`, `RestOAuth2ClientAuthMethod`, `ActionType`, `ProcessStateType`, `CriticalityType`, `SmtpType`, and more.
 
-| `com.bonitasoft.processbuilder.extension`
-| Bonita-facing helpers: `BDMAuditUtils`, `ConfigurationUtils`, `EmailRecipientsHelper`, `ExceptionUtils`, `ExecuteSqlDatasource`, `IdentityUtils`, `InputValidationUtils`, `InvolvedUsersParser`, `JsonNodeUtils`, `JsonValidationUtils`, `MembershipUtils`, `PasswordCrypto`.
+| `records`
+| Immutable Java 17 records. `RestAuthConfig` (sealed interface with `NoAuth`, `BasicAuth`, `BearerAuth`, `ApiKeyAuth`, `OAuth2ClientCredentials`, `OAuth2Password`, `OAuth2JwtBearer`, `CustomAuth` implementations), `RestServiceRequest` (fluent builder), `RestServiceResponse` (body parsing, status checks, JSON field extraction), `UserRecord`, `UserList`, `InvolvedUsersData`, `StepFieldRef`, `LoadedSchema`, `UsersConfigRecord`.
 
-| `com.bonitasoft.processbuilder.extension.template`
-| Configuration templates and authentication catalog used by the execution engine (`template/auth`, `template/catalog`).
+| `execution`
+| REST execution engine -- the backbone of the BWH REST Execution Connector. `ConnectorExecutionEngine` (orchestrates the full request lifecycle), `ConnectorRequest` / `ConnectorResponse` (data contracts), `HttpExecutor` (HTTP/1.1 client with connection pooling, OAuth2 token caching, Bonita session caching), `AuthPipeline` (normalize -> decrypt -> parse auth config), `TemplateSubstitution` (`++{{placeholder}}++` resolution), `MultipartRelatedBuilder` (RFC 2387 multipart body for Google Drive, Gmail, MS Graph file uploads).
 
-| `com.bonitasoft.processbuilder.mapper`
-| DTO/POJO mappers between runtime payloads and typed records.
+| `extension` (24 utilities)
+| Bonita-facing helpers: `BDMAuditUtils`, `ConfigurationUtils`, `EmailRecipientsHelper`, `ExceptionUtils`, `ExecuteSqlDatasource`, `IdentityUtils`, `InputValidationUtils`, `InvolvedUsersParser`, `JsonNodeUtils` (comparison operators, safe navigation), `JsonValidationUtils`, `MembershipUtils`, `PBHtmlUtils`, `PBStringUtils` (template variable resolution), `PasswordCrypto` (AES/GCM encryption used by `AuthPipeline`), `ProcessInstance`, `ProcessUtils`, `ProfileUtis`, `QueryParamValidator`, `RestServiceConstants`, `StorageUtils`, `TaskAssignationUtils`, `TemplateDataResolver`, `Utils` (timing), `ValidationException`.
 
-| `com.bonitasoft.processbuilder.records`
-| Immutable Java 17 `record` types representing configurations, responses and domain objects.
+| `extension.template`
+| REST API template system: `RestApiTemplate` (record with methods, auth, headers), `AuthConfig` (sealed interface: `NoAuthConfig`, `BasicAuthConfig`, `BearerAuthConfig`, `ApiKeyAuthConfig`, `OAuth2ClientConfig`, `OAuth2PasswordConfig`), `RestApiCatalog`.
 
-| `com.bonitasoft.processbuilder.utils`
-| General-purpose stateless utilities.
+| `mapper`
+| `UserMapper` -- converts Bonita `User` lists to `Long` ID lists.
 
-| `com.bonitasoft.processbuilder.validation`
-| JSON Schema and domain validators shared by every Process Builder extension.
+| `validation`
+| `JsonSchemaValidator` (validates JSON against OpenAPI 3 schemas), `SchemaResolver` (loads and resolves `$ref` from `openapi.yaml`), `ProcessOptionValidator`.
+
+| `utils`
+| `CompressionUtils` -- GZIP + Base64 encoding/decoding (70-90% size reduction for JSON payloads).
 |===
-
-=== 2.2. Engineering Principles
-
-* *Java 17 first-class*: Records, Sealed Classes, Pattern Matching.
-* *Immutability by default* for every value-carrier type.
-* *100% test coverage goal* -- every class ships with `*Test` (JUnit 5) and `*PropertyTest` (jqwik) twins.
-* *Mutation testing* with PIT (STRONGER mutators in the `full-qa` profile).
-* *Static analysis* via Checkstyle, PMD and SpotBugs integrated into the Maven site.
 
 == 3. Prerequisites
 
@@ -71,22 +58,13 @@ Presales and customer projects routinely duplicate the same building blocks: JSO
 |===
 | Tool | Version
 
-| JDK
-| Java 17 or higher
-
-| Maven
-| 3.8+ (or use the bundled `./mvnw` wrapper)
-
-| Git
-| Any recent version
-
-| Bonita Runtime (consumer side)
-| {bonita-runtime-version} or higher
+| JDK | 17+
+| Maven | 3.8+ (or bundled `./mvnw`)
+| Git | Any recent version
+| Bonita Runtime (consumer) | {bonita-runtime-version}+
 |===
 
 == 4. Consuming the Library
-
-The artifact is published to the *GitHub Package Registry* of the `bonitasoft-presales` organization.
 
 === 4.1. Maven coordinates
 
@@ -99,9 +77,9 @@ The artifact is published to the *GitHub Package Registry* of the `bonitasoft-pr
 </dependency>
 ----
 
-=== 4.2. Authenticating against GitHub Packages
+=== 4.2. GitHub Packages authentication
 
-Add a `<server>` entry to `~/.m2/settings.xml` using a GitHub Personal Access Token with the `read:packages` scope:
+Add to `~/.m2/settings.xml` (PAT with `read:packages` scope):
 
 [source,xml]
 ----
@@ -114,7 +92,7 @@ Add a `<server>` entry to `~/.m2/settings.xml` using a GitHub Personal Access To
 </servers>
 ----
 
-Then declare the repository in your POM:
+Declare the repository in your POM:
 
 [source,xml]
 ----
@@ -126,67 +104,66 @@ Then declare the repository in your POM:
 </repositories>
 ----
 
-=== 4.3. Using the JAR inside Bonita Studio
+=== 4.3. Local JAR in Bonita Studio
 
-To test a local build inside a Bonita project, import the generated `target/process-builder-extension-library-<version>.jar` as a project dependency. Refer to the official guide on link:https://documentation.bonitasoft.com/bonita/latest/managing-extension-studio[managing Studio extensions].
+Import `target/process-builder-extension-library-<version>.jar` as a project dependency. See link:https://documentation.bonitasoft.com/bonita/latest/managing-extension-studio[managing Studio extensions].
 
-== 5. Quick Start -- Minimal Usage
+== 5. Quick Start
 
-=== 5.1. Validating a JSON payload
-
-[source,java]
-----
-import com.bonitasoft.processbuilder.extension.JsonValidationUtils;
-
-String schema  = "{ \"type\": \"object\", \"required\": [\"id\"] }";
-String payload = "{ \"id\": 42 }";
-
-boolean valid = JsonValidationUtils.isValid(payload, schema);
-----
-
-=== 5.2. Executing a configuration-driven REST call
+=== 5.1. Execute a configuration-driven REST call
 
 [source,java]
 ----
-import com.bonitasoft.processbuilder.execution.ConnectorExecutionEngine;
-import com.bonitasoft.processbuilder.execution.ConnectorRequest;
-import com.bonitasoft.processbuilder.execution.ConnectorResponse;
+ConnectorRequest  request  = ConnectorRequest.builder(configJson)
+        .params(Map.of("userId", "42"))
+        .timeoutMs(15000)
+        .verifySsl(true)
+        .build();
 
-ConnectorRequest  request  = ConnectorRequest.fromJson(configJson);
 ConnectorResponse response = new ConnectorExecutionEngine().execute(request);
 
 if (response.success()) {
-    // consume response.body(), response.statusCode(), response.headers()
+    System.out.println(response.statusCode());   // 200
+    System.out.println(response.responseBody());  // {"name":"..."}
 }
 ----
 
-NOTE: The fluent API above is the canonical entry point used by `bwh-rest-execution-connector`. Consult the generated Javadoc for the authoritative signatures.
+=== 5.2. Build a typed REST request directly
 
-== 6. Project Versioning
-
-The project version lives in the `<version>` tag of `pom.xml` (currently `{artifact-version}`). It follows a `<major>.<minor>.<patch>.<build>` scheme so that rapid internal iterations can be released without inflating the public semver.
-
-Releases are driven by the *Maven Release Plugin* and the `Tag and Release` GitHub Actions workflow:
-
-[source,xml]
+[source,java]
 ----
-<plugin>
-    <artifactId>maven-release-plugin</artifactId>
-    <configuration>
-        <tagNameFormat>v@{project.version}</tagNameFormat>
-    </configuration>
-</plugin>
+RestServiceRequest request = RestServiceRequest.builder("https://api.example.com/users")
+        .method(RestHttpMethod.GET)
+        .auth(RestAuthConfig.bearer("eyJhbGci..."))
+        .header("Accept", "application/json")
+        .timeoutMs(10000)
+        .build();
+
+RestServiceResponse response = new HttpExecutor().execute(request);
+
+if (response.isSuccessful()) {
+    Optional<JsonNode> json = response.bodyAsJson();
+}
 ----
 
-A successful run of the workflow:
+=== 5.3. Validate JSON against OpenAPI schema
 
-. Removes the `-SNAPSHOT` qualifier and commits the release version.
-. Tags the commit as `v<version>`.
-. Creates a GitHub Release with the packaged JAR attached.
-. Publishes the JAR to the GitHub Package Registry.
-. Bumps the `pom.xml` to the next `-SNAPSHOT`.
+[source,java]
+----
+boolean valid = JsonSchemaValidator.isJsonValidForType("INSERT", "Parameter", jsonString);
+----
 
-You do *not* need to edit the version manually; trigger `Tag and Release` via `workflow_dispatch` from the Actions tab.
+=== 5.4. Compress large JSON payloads
+
+[source,java]
+----
+String compressed   = CompressionUtils.compress(largeJson);   // GZIP + Base64
+String decompressed = CompressionUtils.decompress(compressed);
+----
+
+== 6. Version Management
+
+Version is in `pom.xml` (`{artifact-version}`). Releases are automated via the `Tag and Release` GitHub Actions workflow using `maven-release-plugin` (tags as `v<version>`). Trigger it from the Actions tab -- no manual version edits needed.
 
 == 7. Building from Source
 
@@ -197,121 +174,95 @@ cd process-builder-extension-library
 ./mvnw clean package
 ----
 
-The artifact lands in `target/process-builder-extension-library-<version>.jar`.
-
-=== 7.1. Useful Maven profiles
+=== 7.1. Maven profiles
 
 [cols="1,2",options="header"]
 |===
-| Profile / goal | Purpose
+| Command | Purpose
 
 | `./mvnw -Pquick package`
-| Skip tests -- fastest feedback loop for local iteration.
+| Skip tests -- fastest feedback loop.
 
 | `./mvnw clean verify`
-| Full verification: unit + property tests, JaCoCo coverage enforcement.
+| Full verification: unit + property tests, JaCoCo.
 
 | `./mvnw -Pci clean verify`
-| CI-tuned profile: parallel JUnit execution, higher jqwik trial count.
+| CI profile: parallel JUnit, 100 jqwik tries.
 
 | `./mvnw -Pfull-qa verify`
-| Full QA gate including PIT mutation testing with STRONGER mutators.
+| Full QA: PIT mutation testing (STRONGER mutators).
 
 | `./mvnw clean verify site`
-| Generates the Maven site with Javadoc, JaCoCo, PMD, Checkstyle, SpotBugs and the JSON Schema documentation.
+| Generates Maven site: Javadoc, JaCoCo, PMD, Checkstyle, SpotBugs, JSON Schema docs.
 |===
 
-== 8. Documentation
+== 8. Testing
 
-Every successful build generates:
+Every class requires *two* test files:
 
-* *Javadoc* -- API reference for every public type.
-* *JaCoCo* -- line and branch coverage reports.
-* *PMD / Checkstyle / SpotBugs* -- static-analysis reports.
-* *JSON Schema docs* -- generated via `openapi-generator-maven-plugin` from `src/main/resources/schemas/openapi.yaml`.
+- `MyClassTest.java` -- JUnit 5 + AssertJ + Mockito unit tests.
+- `MyClassPropertyTest.java` -- jqwik `@Property` tests for invariants.
 
-=== 8.1. Local access
+*Coverage targets:* 95%+ line/branch, 85%+ mutation (PIT). Goal is 100%/95%.
 
-* Project Site: `target/site/index.html`
-* Javadoc: `target/reports/apidocs/index.html`
-* JaCoCo: `target/site/jacoco/index.html`
+Tests run in parallel (JUnit Jupiter concurrent mode). Current test count: *149 test files, ~3700 tests*.
 
-=== 8.2. Online access (GitHub Pages)
+== 9. Documentation
 
-* Project Site: https://bonitasoft-presales.github.io/process-builder-extension-library/
+=== 9.1. Generated reports
+
+* *Javadoc* -- API reference.
+* *JaCoCo* -- line and branch coverage.
+* *PMD / Checkstyle / SpotBugs* -- static analysis.
+* *JSON Schema docs* -- from `src/main/resources/schemas/openapi.yaml` via `openapi-generator-maven-plugin`.
+
+=== 9.2. Online (GitHub Pages)
+
+* Site: https://bonitasoft-presales.github.io/process-builder-extension-library/
 * Javadoc: https://bonitasoft-presales.github.io/process-builder-extension-library/apidocs/index.html
 * JaCoCo: https://bonitasoft-presales.github.io/process-builder-extension-library/jacoco/index.html
 * JSON Schema: https://bonitasoft-presales.github.io/process-builder-extension-library/schema-doc/index.html
 
-To enable Pages for a fresh clone: *Settings -> Pages -> Source: GitHub Actions*.
-
-== 9. Troubleshooting
+== 10. Troubleshooting
 
 [cols="1,2,2",options="header"]
 |===
-| Symptom | Likely Cause | Resolution
+| Symptom | Cause | Resolution
 
-| `401 Unauthorized` when resolving the dependency
-| Missing or wrong GitHub token in `settings.xml`.
-| Generate a PAT with `read:packages` and update your Maven `<server>` entry.
+| `401` resolving dependency
+| Wrong GitHub token.
+| PAT with `read:packages` in `settings.xml`.
 
-| `NoClassDefFoundError: com/fasterxml/jackson/...`
-| Jackson dependencies are `provided` -- the consumer must supply them.
-| Declare Jackson on the consumer's runtime classpath (Bonita runtime already bundles it).
+| `NoClassDefFoundError: jackson`
+| Jackson is `provided`.
+| Declare on consumer's runtime classpath (Bonita bundles it).
 
-| Tests fail with `InaccessibleObjectException`
+| `InaccessibleObjectException`
 | JDK 17 module access.
-| Use the provided Surefire config (already includes `--add-opens java.base/java.lang=ALL-UNNAMED`).
+| Surefire config already includes `--add-opens`; ensure your runner inherits it.
 
 | Coverage below threshold
-| New class without a matching `*Test` / `*PropertyTest`.
-| Add the mandatory twin test files per the AGENTS.md policy.
+| Missing `*Test` / `*PropertyTest`.
+| Add twin test files per AGENTS.md policy.
 
-| Maven site fails with `openapi-generator` errors
-| Schema file missing or invalid.
-| Verify `src/main/resources/schemas/openapi.yaml`; the plugin runs with `skipValidateSpec=true` but still requires the file to exist.
+| `openapi-generator` fails
+| Schema file missing.
+| Verify `src/main/resources/schemas/openapi.yaml`.
 |===
 
-== 10. Contributing
+== 11. Contributing
 
-We follow *Clean Code* and *Git Flow*. Branch naming and PR flow:
-
-. Create a branch from `master` using the Jira ticket ID:
-+
-[source,bash]
-----
-git checkout -b <jira-ticket-id>_<short-description> master
-----
-. If `develop` does not exist yet, create and push it:
-+
-[source,bash]
-----
-git checkout -b develop master
-git push origin develop
-----
-. Run the full verification locally:
-+
-[source,bash]
-----
-./mvnw clean install site
-----
-. Open a Pull Request against `develop`. Make sure:
-
-* Every new or modified class has `*Test.java` *and* `*PropertyTest.java` twins.
-* Line coverage >= 95% (target 100%), branch coverage >= 95%, mutation coverage >= 85%.
-* No regressions reported by PMD, Checkstyle or SpotBugs.
-
-== 11. License
-
-Distributed under the *GPL-2.0* license. See the `LICENSE` file for the full text.
+. Branch from `master`: `<JIRA-ID>_<short-description>`.
+. Run `./mvnw clean install site` before the PR.
+. Every class needs `*Test.java` + `*PropertyTest.java`.
+. Open PR against `develop`.
 
 == 12. Links
 
-* *Project homepage*: https://github.com/bonitasoft-presales/process-builder-extension-library
-* *Repository*: https://github.com/bonitasoft-presales/process-builder-extension-library.git
-* *Issue tracker*: https://github.com/bonitasoft-presales/process-builder-extension-library/issues
+* *Project*: https://github.com/bonitasoft-presales/process-builder-extension-library
+* *Issues*: https://github.com/bonitasoft-presales/process-builder-extension-library/issues
 * *Site*: https://bonitasoft-presales.github.io/process-builder-extension-library/
 * *Javadoc*: https://bonitasoft-presales.github.io/process-builder-extension-library/apidocs/index.html
 * *JaCoCo*: https://bonitasoft-presales.github.io/process-builder-extension-library/jacoco/index.html
 * *JSON Schema*: https://bonitasoft-presales.github.io/process-builder-extension-library/schema-doc/index.html
-* *BWH REST Execution Connector (consumer)*: https://github.com/bonitasoft-presales/bwh-rest-execution-connector
+* *BWH REST Execution Connector*: https://github.com/bonitasoft-presales/bwh-rest-execution-connector
